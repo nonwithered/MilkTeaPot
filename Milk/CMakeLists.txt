@@ -2,6 +2,9 @@ project(milk)
 
 set(SOURCE_NAMES
     "main.cc"
+    "codec.cc"
+    "probe.cc"
+    "play.cc"
 )
 
 set(SOURCE_DIR
