@@ -10,6 +10,9 @@ class Meta final : public Message {
  public:
   static std::unique_ptr<Meta> Parse(const uint8_t *&begin, const uint8_t *const end);
   void Dump(std::vector<uint8_t> &) const final;
+  std::unique_ptr<Message> Clone() const final {
+    return std::unique_ptr<Message>(new Meta(*this));
+  }
   Meta(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : Message(delta, 0xff), type_(type), args_(std::move(args)) {
     if (type >= 0x80) {
       throw Except(Except::Type::InvalidParam);

@@ -70,7 +70,7 @@ std::unique_ptr<MilkPowder::Event> ParseEvent(const uint8_t *&begin, const uint8
   return std::unique_ptr<MilkPowder::Event>(new MilkPowder::Event(delta, type, args));
 }
 
-inline std::unique_ptr<MilkPowder::Meta> ParseMeta(const uint8_t *&begin, const uint8_t *const end, uint32_t delta, uint8_t type) {
+std::unique_ptr<MilkPowder::Meta> ParseMeta(const uint8_t *&begin, const uint8_t *const end, uint32_t delta, uint8_t type) {
   if (type != 0xff) {
     type = ParseU8(begin, end);
     if (type != 0xff) {
@@ -107,30 +107,6 @@ std::unique_ptr<MilkPowder::Sysex> ParseSysex(const uint8_t *&begin, const uint8
     items.emplace_back(delta, std::move(args));
   }
   return std::unique_ptr<MilkPowder::Sysex>(new MilkPowder::Sysex(std::move(items)));
-}
-
-std::unique_ptr<MilkPowder::Message> ParseMessage(const uint8_t *&begin, const uint8_t *const end, uint8_t last) {
-  uint32_t delta = ParseUsize(begin, end);
-  uint8_t type = ParseU8(begin, end);
-  if (type >= 0x80 && type < 0xf0) {
-    return ParseEvent(begin, end, delta, type);
-  } else if (type == 0xff) {
-    return ParseMeta(begin, end, delta, 0xff);
-  } else if (type == 0xf0) {
-    return ParseSysex(begin, end, delta, 0xf0);
-  } else if (type < 0x80) {
-    if (last < 0x80 || last >= 0xf0) {
-      throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
-    }
-    std::tuple<uint8_t, uint8_t> args = std::make_tuple(type, 0);
-    type = last;
-    if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
-      std::get<1>(args) = ParseU8(begin, end);
-    }
-    return std::unique_ptr<MilkPowder::Event>(new MilkPowder::Event(delta, type, args));
-  } else {
-    throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
-  }
 }
 
 } // namespace
@@ -184,20 +160,40 @@ std::unique_ptr<Track> Track::Parse(const uint8_t *&begin, const uint8_t *const 
   std::vector<std::unique_ptr<Message>> items;
   uint8_t last = 0;
   while (begin < position) {
-    std::unique_ptr<Message> it = ParseMessage(begin, position, last);
+    std::unique_ptr<Message> it = Message::Parse(begin, position, last);
     last = it->type();
     items.emplace_back(std::move(it));
   }
   return std::unique_ptr<MilkPowder::Track>(new MilkPowder::Track(std::move(items)));
 }
 
-std::unique_ptr<Message> Message::Parse(const uint8_t *&begin, const uint8_t *const end) {
-  return ParseMessage(begin, end, 0);
+std::unique_ptr<Message> Message::Parse(const uint8_t *&begin, const uint8_t *const end, uint8_t last) {
+  uint32_t delta = ParseUsize(begin, end);
+  uint8_t type = ParseU8(begin, end);
+  if (type >= 0x80 && type < 0xf0) {
+    return ParseEvent(begin, end, delta, type);
+  } else if (type == 0xff) {
+    return ParseMeta(begin, end, delta, 0xff);
+  } else if (type == 0xf0) {
+    return ParseSysex(begin, end, delta, 0xf0);
+  } else if (type < 0x80) {
+    if (last < 0x80 || last >= 0xf0) {
+      throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+    }
+    std::tuple<uint8_t, uint8_t> args = std::make_tuple(type, 0);
+    type = last;
+    if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
+      std::get<1>(args) = ParseU8(begin, end);
+    }
+    return std::unique_ptr<MilkPowder::Event>(new MilkPowder::Event(delta, type, args));
+  } else {
+    throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+  }
 }
   
-std::unique_ptr<Event> Event::Parse(const uint8_t *&begin, const uint8_t *const end) {
+std::unique_ptr<Event> Event::Parse(const uint8_t *&begin, const uint8_t *const end, uint8_t last) {
   uint32_t delta = ParseUsize(begin, end);
-  return ParseEvent(begin, end, delta, 0);
+  return ParseEvent(begin, end, delta, last);
 }
   
 std::unique_ptr<Meta> Meta::Parse(const uint8_t *&begin, const uint8_t *const end) {

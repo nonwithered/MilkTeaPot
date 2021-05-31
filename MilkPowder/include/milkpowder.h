@@ -18,8 +18,24 @@
 extern "C" {
 #endif
 
-enum MilkPowder_Errno_t
-{
+enum MilkPowder_Log_Level_t {
+  DEBUG,
+  INFO,
+  WARN,
+  ERROR,
+  ASSERT
+};
+
+struct MilkPowder_Log_Config_t {
+  void *obj;
+  void (*debug)(void *obj, const char *tag, const char *msg);
+  void (*info)(void *obj, const char *tag, const char *msg);
+  void (*warn)(void *obj, const char *tag, const char *msg);
+  void (*error)(void *obj, const char *tag, const char *msg);
+  enum MilkPowder_Log_Level_t level;
+};
+
+enum MilkPowder_Errno_t {
   Nil,
   Unknown,
   Assertion,
@@ -38,6 +54,8 @@ struct MilkPowder_Meta_t;
 struct MilkPowder_Sysex_t;
 
 #ifndef __cplusplus
+typedef enum MilkPowder_Log_Level_t MilkPowder_Log_Level_t;
+typedef enum MilkPowder_Log_Config_t MilkPowder_Log_Config_t;
 typedef enum MilkPowder_Errno_t MilkPowder_Errno_t;
 typedef enum MilkPowder_Midi_t MilkPowder_Midi_t;
 typedef enum MilkPowder_Track_t MilkPowder_Track_t;
@@ -46,6 +64,9 @@ typedef enum MilkPowder_Event_t MilkPowder_Event_t;
 typedef enum MilkPowder_Meta_t MilkPowder_Meta_t;
 typedef enum MilkPowder_Sysex_t MilkPowder_Sysex_t;
 #endif
+
+MilkPowder_API void
+MilkPowder_Log_Init(MilkPowder_Log_Config_t config);
 
 // Midi
 
@@ -114,13 +135,13 @@ MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_FromSysex(MilkPowder_Message_t **self, MilkPowder_Sysex_t *item);
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_IsEvent(const MilkPowder_Message_t *self, bool *b);
+MilkPowder_Message_IsEvent(const MilkPowder_Message_t *self, bool *item);
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_IsMeta(const MilkPowder_Message_t *self, bool *b);
+MilkPowder_Message_IsMeta(const MilkPowder_Message_t *self, bool *item);
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_IsSysex(const MilkPowder_Message_t *self, bool *b);
+MilkPowder_Message_IsSysex(const MilkPowder_Message_t *self, bool *item);
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_ToEvent(const MilkPowder_Message_t *self, const MilkPowder_Event_t **item);

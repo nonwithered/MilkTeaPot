@@ -11,13 +11,23 @@ namespace MilkPowder {
 
 class Message {
  public:
-  static std::unique_ptr<Message> Parse(const uint8_t *&begin, const uint8_t *const end);
+  static std::unique_ptr<Message> Parse(const uint8_t *&begin, const uint8_t *const end, uint8_t last);
   virtual void Dump(std::vector<uint8_t> &) const = 0;
+  virtual std::unique_ptr<Message> Clone() const = 0;
   virtual ~Message() = default;
   Message(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
     if (delta > 0x0fff'ffff || type < 0x80 || (type > 0xf0 && type < 0xff)) {
       throw Except(Except::Type::InvalidParam);
     }
+  }
+  bool isEvent() const {
+    return type_ >= 0x80 && type_ < 0xf0;
+  }
+  bool isMeta() const {
+    return type_ == 0xff;
+  }
+  bool isSysex() const {
+    return type_ == 0xf0;
   }
   uint32_t delta() const { return delta_; }
   uint8_t type() const { return type_; }

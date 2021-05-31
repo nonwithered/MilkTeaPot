@@ -28,6 +28,9 @@ class Except final : public std::exception {
 			default: return "Unknown";
     }
   }
+  Type type() const {
+    return type_;
+  }
  private:
   const Type type_;
 };
