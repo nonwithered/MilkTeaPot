@@ -88,33 +88,12 @@ MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Track_Destroy(MilkPowder_Track_t *self);
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Track_GetSize(const MilkPowder_Track_t *self, uint32_t *size);
-
-MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Track_GetMessage(const MilkPowder_Track_t *self, uint32_t index, const MilkPowder_Message_t **item);
+MilkPowder_Track_GetMessages(const MilkPowder_Track_t *self, void *obj, void (*callback)(void *obj, const MilkPowder_Message_t *item));
 
 // Message
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_Parse(MilkPowder_Message_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size, uint8_t last);
-
-MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_FromEvent(MilkPowder_Message_t **self, MilkPowder_Event_t *item);
-
-MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_FromMeta(MilkPowder_Message_t **self, MilkPowder_Meta_t *item);
-
-MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_FromSysex(MilkPowder_Message_t **self, MilkPowder_Sysex_t *item);
-
-MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_ToEvent(const MilkPowder_Message_t *self, const MilkPowder_Event_t **item);
-
-MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_ToMeta(const MilkPowder_Message_t *self, const MilkPowder_Meta_t **item);
-
-MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_ToSysex(const MilkPowder_Message_t *self, const MilkPowder_Sysex_t **item);
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_Clone(const MilkPowder_Message_t *self, MilkPowder_Message_t **another);
@@ -126,6 +105,15 @@ MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_GetDelta(const MilkPowder_Message_t *self, uint32_t *delta);
 
 MilkPowder_API MilkPowder_Errno_t
+MilkPowder_Message_FromEvent(MilkPowder_Message_t **self, MilkPowder_Event_t *item);
+
+MilkPowder_API MilkPowder_Errno_t
+MilkPowder_Message_FromMeta(MilkPowder_Message_t **self, MilkPowder_Meta_t *item);
+
+MilkPowder_API MilkPowder_Errno_t
+MilkPowder_Message_FromSysex(MilkPowder_Message_t **self, MilkPowder_Sysex_t *item);
+
+MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_IsEvent(const MilkPowder_Message_t *self, bool *b);
 
 MilkPowder_API MilkPowder_Errno_t
@@ -133,6 +121,15 @@ MilkPowder_Message_IsMeta(const MilkPowder_Message_t *self, bool *b);
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_IsSysex(const MilkPowder_Message_t *self, bool *b);
+
+MilkPowder_API MilkPowder_Errno_t
+MilkPowder_Message_ToEvent(const MilkPowder_Message_t *self, const MilkPowder_Event_t **item);
+
+MilkPowder_API MilkPowder_Errno_t
+MilkPowder_Message_ToMeta(const MilkPowder_Message_t *self, const MilkPowder_Meta_t **item);
+
+MilkPowder_API MilkPowder_Errno_t
+MilkPowder_Message_ToSysex(const MilkPowder_Message_t *self, const MilkPowder_Sysex_t **item);
 
 // Event
 

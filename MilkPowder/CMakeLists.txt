@@ -2,6 +2,8 @@ project(milkpowder)
 
 set(SOURCE_NAMES
     "lib.cc"
+    "parse.cc"
+    "dump.cc"
 )
 
 set(SOURCE_DIR
