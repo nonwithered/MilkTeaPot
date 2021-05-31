@@ -20,13 +20,13 @@ class Message {
       throw Except(Except::Type::InvalidParam);
     }
   }
-  bool isEvent() const {
+  bool IsEvent() const {
     return type_ >= 0x80 && type_ < 0xf0;
   }
-  bool isMeta() const {
+  bool IsMeta() const {
     return type_ == 0xff;
   }
-  bool isSysex() const {
+  bool IsSysex() const {
     return type_ == 0xf0;
   }
   uint32_t delta() const { return delta_; }

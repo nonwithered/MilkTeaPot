@@ -57,12 +57,12 @@ struct milkpowder_cast_map {
 
 #define milkpowder_cast_map_(T) \
 template<> \
-struct milkpowder_cast_map<const MilkPowder_##T##_t *> { \
-  using Type = const MilkPowder::T *; \
+struct milkpowder_cast_map<const MilkPowder_##T##_t> { \
+  using Type = const MilkPowder::T; \
 }; \
 template<> \
-struct milkpowder_cast_map<MilkPowder_##T##_t *> { \
-  using Type = MilkPowder::T *; \
+struct milkpowder_cast_map<MilkPowder_##T##_t> { \
+  using Type = MilkPowder::T; \
 };
 milkpowder_cast_map_(Midi)
 milkpowder_cast_map_(Track)
@@ -74,12 +74,12 @@ milkpowder_cast_map_(Sysex)
 
 #define milkpowder_cast_map_(T) \
 template<> \
-struct milkpowder_cast_map<const MilkPowder::T *> { \
-  using Type = const MilkPowder_##T##_t *; \
+struct milkpowder_cast_map<const MilkPowder::T> { \
+  using Type = const MilkPowder_##T##_t; \
 }; \
 template<> \
-struct milkpowder_cast_map<MilkPowder::T *> { \
-  using Type = MilkPowder_##T##_t *; \
+struct milkpowder_cast_map<MilkPowder::T> { \
+  using Type = MilkPowder_##T##_t; \
 };
 milkpowder_cast_map_(Midi)
 milkpowder_cast_map_(Track)
@@ -90,11 +90,83 @@ milkpowder_cast_map_(Sysex)
 #undef milkpowder_cast_map_
 
 template<typename From, typename To = typename milkpowder_cast_map<From>::Type>
-constexpr To milkpowder_cast(From it) {
-  return reinterpret_cast<To>(it);
+constexpr To *milkpowder_cast(From *it) {
+  return reinterpret_cast<To *>(it);
+}
+
+template<typename T>
+void MilkPowder_Parse(T **self, const uint8_t *bytes, uint32_t length, uint32_t *size) {
+  if (self == nullptr || bytes == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  const uint8_t *cursor = bytes;
+  std::unique_ptr<typename milkpowder_cast_map<T>::Type> ptr = milkpowder_cast_map<T>::Type::Parse(cursor, bytes + length);
+  if (size != nullptr) {
+    *size = cursor - bytes;
+  }
+  *self = milkpowder_cast(ptr.release());
+}
+
+template<typename T>
+void MilkPowder_Destroy(T *self) {
+  if (self == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  delete milkpowder_cast(self);
+}
+
+template<typename T>
+void MilkPowder_Message_From(MilkPowder_Message_t **self, T *item) {
+  if (self == nullptr || item == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  *self = milkpowder_cast(dynamic_cast<MilkPowder::Message *>(milkpowder_cast(item)));
+}
+
+template<bool (MilkPowder::Message::* Is)() const>
+void MilkPowder_Message_Is(const MilkPowder_Message_t *self, bool *item) {
+  if (self == nullptr || item == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  *item = (milkpowder_cast(self)->*Is)();
+}
+
+template<bool (MilkPowder::Message::* Is)() const, typename T>
+void MilkPowder_Message_To(const MilkPowder_Message_t *self, T **item) {
+  if (self == nullptr || item == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  if (!(milkpowder_cast(self)->*Is)()) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::LogicError);
+  }
+  *item = milkpowder_cast(dynamic_cast<typename milkpowder_cast_map<T>::Type *>(milkpowder_cast(self)));
+}
+
+template<typename T>
+void MilkPowder_Clone(const T *self, T **another) {
+  if (self == nullptr || another == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  *another = milkpowder_cast(new typename milkpowder_cast_map<T>::Type(*milkpowder_cast(self)));
 }
 
 void LogDefault(const char *, const char *) {
+}
+
+std::function<void(const char *, const char *)> LogCallback(void *obj, void (*callback)(void *obj, const char *tag, const char *msg)) {
+  return [obj, callback](const char *tag, const char *msg) -> void {
+    callback(obj, tag, msg);
+  };
+}
+
+inline MilkPowder::Log::Level milkpowder_log_map(MilkPowder_Log_Level_t level) {
+  switch (level) {
+      case MilkPowder_Log_Level_t::DEBUG: return MilkPowder::Log::Level::DEBUG;
+      case MilkPowder_Log_Level_t::INFO: return MilkPowder::Log::Level::INFO;
+      case MilkPowder_Log_Level_t::WARN: return MilkPowder::Log::Level::WARN;
+      case MilkPowder_Log_Level_t::ERROR: return MilkPowder::Log::Level::ERROR;
+      default: return MilkPowder::Log::Level::ASSERT;
+  }
 }
 
 } // namespace
@@ -111,42 +183,19 @@ extern "C" {
 
 MilkPowder_API void
 MilkPowder_Log_Init(MilkPowder_Log_Config_t config) {
-  std::function<void(const char *, const char *)> debug = [config](const char *tag, const char *msg) -> void {
-    config.debug(config.obj, tag, msg);
-  };
-  std::function<void(const char *, const char *)> info = [config](const char *tag, const char *msg) -> void {
-    config.info(config.obj, tag, msg);
-  };
-  std::function<void(const char *, const char *)> warn = [config](const char *tag, const char *msg) -> void {
-    config.warn(config.obj, tag, msg);
-  };
-  std::function<void(const char *, const char *)> error = [config](const char *tag, const char *msg) -> void {
-    config.error(config.obj, tag, msg);
-  };
-  MilkPowder::Log::Level level = MilkPowder::Log::Level::ASSERT;
-  switch (config.level) {
-      case MilkPowder_Log_Level_t::DEBUG: level = MilkPowder::Log::Level::DEBUG; break;
-      case MilkPowder_Log_Level_t::INFO: level = MilkPowder::Log::Level::INFO; break;
-      case MilkPowder_Log_Level_t::WARN: level = MilkPowder::Log::Level::WARN; break;
-      case MilkPowder_Log_Level_t::ERROR: level = MilkPowder::Log::Level::ERROR; break;
-      default: break;
-  }
-  MilkPowder::Log logger(debug, info, warn, error, level);
+  MilkPowder::Log logger(
+    LogCallback(config.obj, config.debug),
+    LogCallback(config.obj, config.info),
+    LogCallback(config.obj, config.warn),
+    LogCallback(config.obj, config.error),
+    milkpowder_log_map(config.level));
   MilkPowder::Log::Instance(&logger);
 }
 
 // Midi
 
 API_IMPL(MilkPowder_Midi_Parse, (MilkPowder_Midi_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  if (self == nullptr || bytes == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  const uint8_t *cursor = bytes;
-  auto ptr = MilkPowder::Midi::Parse(cursor, bytes + length);
-  if (size != nullptr) {
-    *size = cursor - bytes;
-  }
-  *self = milkpowder_cast(ptr.release());
+  MilkPowder_Parse(self, bytes, length, size);
 })
 
 API_IMPL(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t format, uint16_t ntrks, uint16_t division, MilkPowder_Track_t *items[]), {
@@ -161,17 +210,11 @@ API_IMPL(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t format, uin
 })
 
 API_IMPL(MilkPowder_Midi_Clone, (const MilkPowder_Midi_t *self, MilkPowder_Midi_t **another), {
-  if (self == nullptr || another == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *another = milkpowder_cast(new MilkPowder::Midi(*milkpowder_cast(self)));
+  MilkPowder_Clone(self, another);
 })
 
 API_IMPL(MilkPowder_Midi_Destroy, (MilkPowder_Midi_t *self), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  delete milkpowder_cast(self);
+  MilkPowder_Destroy(self);
 })
 
 API_IMPL(MilkPowder_Midi_GetFormat, (const MilkPowder_Midi_t *self, uint16_t *format), {
@@ -208,15 +251,7 @@ API_IMPL(MilkPowder_Midi_GetTrack, (const MilkPowder_Midi_t *self, uint16_t inde
 // Track
 
 API_IMPL(MilkPowder_Track_Parse, (MilkPowder_Track_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  if (self == nullptr || bytes == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  const uint8_t *cursor = bytes;
-  auto ptr = MilkPowder::Track::Parse(cursor, bytes + length);
-  if (size != nullptr) {
-    *size = cursor - bytes;
-  }
-  *self = milkpowder_cast(ptr.release());
+  MilkPowder_Parse(self, bytes, length, size);
 })
 
 API_IMPL(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_Message_t *items[], uint32_t length), {
@@ -231,17 +266,11 @@ API_IMPL(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_Message
 })
 
 API_IMPL(MilkPowder_Track_Clone, (const MilkPowder_Track_t *self, MilkPowder_Track_t **another), {
-  if (self == nullptr || another == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *another = milkpowder_cast(new MilkPowder::Track(*milkpowder_cast(self)));
+  MilkPowder_Clone(self, another);
 })
 
 API_IMPL(MilkPowder_Track_Destroy, (MilkPowder_Track_t *self), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  delete milkpowder_cast(self);
+  MilkPowder_Destroy(self);
 })
 
 API_IMPL(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *obj, void (*callback)(void *obj, const MilkPowder_Message_t *item)), {
@@ -275,10 +304,7 @@ API_IMPL(MilkPowder_Message_Clone, (const MilkPowder_Message_t *self, MilkPowder
 })
 
 API_IMPL(MilkPowder_Message_Destroy, (MilkPowder_Message_t *self), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  delete milkpowder_cast(self);
+  MilkPowder_Destroy(self);
 })
 
 API_IMPL(MilkPowder_Message_GetDelta, (const MilkPowder_Message_t *self, uint32_t *delta), {
@@ -289,75 +315,39 @@ API_IMPL(MilkPowder_Message_GetDelta, (const MilkPowder_Message_t *self, uint32_
 })
 
 API_IMPL(MilkPowder_Message_FromEvent, (MilkPowder_Message_t **self, MilkPowder_Event_t *item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *self = milkpowder_cast(dynamic_cast<MilkPowder::Message *>(milkpowder_cast(item)));
+  MilkPowder_Message_From(self, item);
 })
 
 API_IMPL(MilkPowder_Message_FromMeta, (MilkPowder_Message_t **self, MilkPowder_Meta_t *item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *self = milkpowder_cast(dynamic_cast<MilkPowder::Message *>(milkpowder_cast(item)));
+  MilkPowder_Message_From(self, item);
 })
 
 API_IMPL(MilkPowder_Message_FromSysex, (MilkPowder_Message_t **self, MilkPowder_Sysex_t *item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *self = milkpowder_cast(dynamic_cast<MilkPowder::Message *>(milkpowder_cast(item)));
+  MilkPowder_Message_From(self, item);
 })
 
 API_IMPL(MilkPowder_Message_IsEvent, (const MilkPowder_Message_t *self, bool *item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *item = milkpowder_cast(self)->isEvent();
+  MilkPowder_Message_Is<&MilkPowder::Message::IsEvent>(self, item);
 })
 
 API_IMPL(MilkPowder_Message_IsMeta, (const MilkPowder_Message_t *self, bool *item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *item = milkpowder_cast(self)->isMeta();
+  MilkPowder_Message_Is<&MilkPowder::Message::IsMeta>(self, item);
 })
 
 API_IMPL(MilkPowder_Message_IsSysex, (const MilkPowder_Message_t *self, bool *item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *item = milkpowder_cast(self)->isSysex();
+  MilkPowder_Message_Is<&MilkPowder::Message::IsSysex>(self, item);
 })
 
 API_IMPL(MilkPowder_Message_ToEvent, (const MilkPowder_Message_t *self, const MilkPowder_Event_t **item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  if (!milkpowder_cast(self)->isEvent()) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::LogicError);
-  }
-  *item = milkpowder_cast(dynamic_cast<const MilkPowder::Event *>(milkpowder_cast(self)));
+  MilkPowder_Message_To<&MilkPowder::Message::IsEvent>(self, item);
 })
 
 API_IMPL(MilkPowder_Message_ToMeta, (const MilkPowder_Message_t *self, const MilkPowder_Meta_t **item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  if (!milkpowder_cast(self)->isMeta()) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::LogicError);
-  }
-  *item = milkpowder_cast(dynamic_cast<const MilkPowder::Meta *>(milkpowder_cast(self)));
+  MilkPowder_Message_To<&MilkPowder::Message::IsMeta>(self, item);
 })
 
 API_IMPL(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, const MilkPowder_Sysex_t **item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  if (!milkpowder_cast(self)->isSysex()) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::LogicError);
-  }
-  *item = milkpowder_cast(dynamic_cast<const MilkPowder::Sysex *>(milkpowder_cast(self)));
+  MilkPowder_Message_To<&MilkPowder::Message::IsSysex>(self, item);
 })
 
 // Event
@@ -382,17 +372,11 @@ API_IMPL(MilkPowder_Event_Create, (MilkPowder_Event_t **self, uint32_t delta, ui
 })
 
 API_IMPL(MilkPowder_Event_Clone, (const MilkPowder_Event_t *self, MilkPowder_Event_t **another), {
-  if (self == nullptr || another == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *another = milkpowder_cast(new MilkPowder::Event(*milkpowder_cast(self)));
+  MilkPowder_Clone(self, another);
 })
 
 API_IMPL(MilkPowder_Event_Destroy, (MilkPowder_Event_t *self), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  delete milkpowder_cast(self);
+  MilkPowder_Destroy(self);
 })
 
 API_IMPL(MilkPowder_Event_GetType, (const MilkPowder_Event_t *self, uint8_t *type), {
@@ -417,15 +401,7 @@ API_IMPL(MilkPowder_Event_GetArgs, (const MilkPowder_Event_t *self, uint8_t *arg
 // Meta
 
 API_IMPL(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  if (self == nullptr || bytes == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  const uint8_t *cursor = bytes;
-  auto ptr = MilkPowder::Meta::Parse(cursor, bytes + length);
-  if (size != nullptr) {
-    *size = cursor - bytes;
-  }
-  *self = milkpowder_cast(ptr.release());
+  MilkPowder_Parse(self, bytes, length, size);
 })
 
 API_IMPL(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t *args, uint32_t length), {
@@ -436,17 +412,11 @@ API_IMPL(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, uint
 })
 
 API_IMPL(MilkPowder_Meta_Clone, (const MilkPowder_Meta_t *self, MilkPowder_Meta_t **another), {
-  if (self == nullptr || another == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *another = milkpowder_cast(new MilkPowder::Meta(*milkpowder_cast(self)));
+  MilkPowder_Clone(self, another);
 })
 
 API_IMPL(MilkPowder_Meta_Destroy, (MilkPowder_Meta_t *self), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  delete milkpowder_cast(self);
+  MilkPowder_Destroy(self);
 })
 
 API_IMPL(MilkPowder_Meta_GetType, (const MilkPowder_Meta_t *self, uint8_t *type), {
@@ -471,15 +441,7 @@ API_IMPL(MilkPowder_Meta_GetArgs, (const MilkPowder_Meta_t *self, const uint8_t 
 // Sysex
 
 API_IMPL(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  if (self == nullptr || bytes == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  const uint8_t *cursor = bytes;
-  auto ptr = MilkPowder::Sysex::Parse(cursor, bytes + length);
-  if (size != nullptr) {
-    *size = cursor - bytes;
-  }
-  *self = milkpowder_cast(ptr.release());
+  MilkPowder_Parse(self, bytes, length, size);
 })
 
 
@@ -497,17 +459,11 @@ API_IMPL(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t delta[], 
 })
 
 API_IMPL(MilkPowder_Sysex_Clone, (const MilkPowder_Sysex_t *self, MilkPowder_Sysex_t **another), {
-  if (self == nullptr || another == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  *another = milkpowder_cast(new MilkPowder::Sysex(*milkpowder_cast(self)));
+  MilkPowder_Clone(self, another);
 })
 
 API_IMPL(MilkPowder_Sysex_Destroy, (MilkPowder_Sysex_t *self), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
-  delete milkpowder_cast(self);
+  MilkPowder_Destroy(self);
 })
 
 API_IMPL(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, uint32_t delta, const uint8_t *args, uint32_t length)), {
