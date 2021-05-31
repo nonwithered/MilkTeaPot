@@ -180,7 +180,7 @@ MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Sysex_Parse(MilkPowder_Sysex_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size);
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Sysex_Create(MilkPowder_Sysex_t **self, uint32_t delta, const uint8_t *args[], uint32_t length[], uint32_t size);
+MilkPowder_Sysex_Create(MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *args[], uint32_t length[], uint32_t size);
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Sysex_Clone(const MilkPowder_Sysex_t *self, MilkPowder_Sysex_t **another);
@@ -189,71 +189,10 @@ MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Sysex_Destroy(MilkPowder_Sysex_t *self);
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Sysex_GetArgs(const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, const uint8_t *args, uint32_t length));
+MilkPowder_Sysex_GetArgs(const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, uint32_t delta, const uint8_t *args, uint32_t length));
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
-
-#ifdef __cplusplus
-
-template<typename T>
-constexpr MilkPowder_Errno_t(*MilkPowder_Ptr_Destroy())(T *);
-
-template<>
-constexpr MilkPowder_Errno_t(*MilkPowder_Ptr_Destroy<MilkPowder_Midi_t>())(MilkPowder_Midi_t *) {
-  return MilkPowder_Midi_Destroy;
-}
-
-template<>
-constexpr MilkPowder_Errno_t(*MilkPowder_Ptr_Destroy<MilkPowder_Track_t>())(MilkPowder_Track_t *) {
-  return MilkPowder_Track_Destroy;
-}
-
-template<>
-constexpr MilkPowder_Errno_t(*MilkPowder_Ptr_Destroy<MilkPowder_Message_t>())(MilkPowder_Message_t *) {
-  return MilkPowder_Message_Destroy;
-}
-
-template<>
-constexpr MilkPowder_Errno_t(*MilkPowder_Ptr_Destroy<MilkPowder_Event_t>())(MilkPowder_Event_t *) {
-  return MilkPowder_Event_Destroy;
-}
-
-template<>
-constexpr MilkPowder_Errno_t(*MilkPowder_Ptr_Destroy<MilkPowder_Meta_t>())(MilkPowder_Meta_t *) {
-  return MilkPowder_Meta_Destroy;
-}
-
-template<>
-constexpr MilkPowder_Errno_t(*MilkPowder_Ptr_Destroy<MilkPowder_Sysex_t>())(MilkPowder_Sysex_t *) {
-  return MilkPowder_Sysex_Destroy;
-}
-
-template<typename T, MilkPowder_Errno_t(*D)(T *) = MilkPowder_Ptr_Destroy<T>()>
-class MilkPowder_Ptr final {
- public:
-  MilkPowder_Ptr(T *ptr) : ptr_(ptr) {}
-  ~MilkPowder_Ptr() {
-    if (ptr_ != nullptr) {
-      D(release());
-    }
-  }
-  T *get() {
-    return ptr_;
-  }
-  T *release() {
-    T *ptr = ptr_;
-    ptr_ = nullptr;
-    return ptr;
-  }
- private:
-  T *ptr_;
-  MilkPowder_Ptr(const MilkPowder_Ptr<T, D> &) = delete;
-  MilkPowder_Ptr(MilkPowder_Ptr<T, D> &&) = delete;
-  MilkPowder_Ptr<T, D> &operator=(const MilkPowder_Ptr<T, D> &) = delete;
-  MilkPowder_Ptr<T, D> &operator=(MilkPowder_Ptr<T, D> &&) = delete;
-};
 #endif
 
 #endif // ifndef LIB_MILKPOWDER_H_
