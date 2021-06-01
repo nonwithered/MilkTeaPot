@@ -10,7 +10,7 @@ namespace MilkPowder {
 
 class Sysex final : public Message {
  public:
-  static std::unique_ptr<Sysex> Parse(const uint8_t *&begin, const uint8_t *const end);
+  static std::unique_ptr<Sysex> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const final;
   std::unique_ptr<Message> Clone() const final {
     return std::unique_ptr<Message>(new Sysex(*this));

@@ -10,7 +10,7 @@ namespace MilkPowder {
 
 class Event final : public Message {
  public:
-  static std::unique_ptr<Event> Parse(const uint8_t *&begin, const uint8_t *const end, uint8_t last);
+  static std::unique_ptr<Event> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
   void Dump(std::vector<uint8_t> &) const final;
   std::unique_ptr<Message> Clone() const final {
     return std::unique_ptr<Message>(new Event(*this));

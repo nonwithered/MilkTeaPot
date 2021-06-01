@@ -8,7 +8,7 @@ namespace MilkPowder {
 
 class Meta final : public Message {
  public:
-  static std::unique_ptr<Meta> Parse(const uint8_t *&begin, const uint8_t *const end);
+  static std::unique_ptr<Meta> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const final;
   std::unique_ptr<Message> Clone() const final {
     return std::unique_ptr<Message>(new Meta(*this));

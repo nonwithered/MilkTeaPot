@@ -95,16 +95,15 @@ constexpr To *milkpowder_cast(From *it) {
 }
 
 template<typename T>
-void MilkPowder_Parse(T **self, const uint8_t *bytes, uint32_t length, uint32_t *size) {
-  if (self == nullptr || bytes == nullptr) {
+void MilkPowder_Parse(T **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)) {
+  if (self == nullptr || callback == nullptr) {
     throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
   }
-  const uint8_t *cursor = bytes;
-  std::unique_ptr<typename milkpowder_cast_map<T>::Type> ptr = milkpowder_cast_map<T>::Type::Parse(cursor, bytes + length);
-  if (size != nullptr) {
-    *size = cursor - bytes;
-  }
-  *self = milkpowder_cast(ptr.release());
+  *self = milkpowder_cast(milkpowder_cast_map<T>::Type::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+    uint8_t byte;
+    bool ret = callback(obj, &byte);
+    return std::make_tuple(byte, ret);
+  }).release());
 }
 
 template<typename T>
@@ -194,8 +193,8 @@ MilkPowder_Log_Init(MilkPowder_Log_Config_t config) {
 
 // Midi
 
-API_IMPL(MilkPowder_Midi_Parse, (MilkPowder_Midi_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  MilkPowder_Parse(self, bytes, length, size);
+API_IMPL(MilkPowder_Midi_Parse, (MilkPowder_Midi_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
+  MilkPowder_Parse(self, obj, callback);
 })
 
 API_IMPL(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t format, uint16_t ntrks, uint16_t division, MilkPowder_Track_t *items[]), {
@@ -250,8 +249,8 @@ API_IMPL(MilkPowder_Midi_GetTrack, (const MilkPowder_Midi_t *self, uint16_t inde
 
 // Track
 
-API_IMPL(MilkPowder_Track_Parse, (MilkPowder_Track_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  MilkPowder_Parse(self, bytes, length, size);
+API_IMPL(MilkPowder_Track_Parse, (MilkPowder_Track_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
+  MilkPowder_Parse(self, obj, callback);
 })
 
 API_IMPL(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_Message_t *items[], uint32_t length), {
@@ -284,16 +283,15 @@ API_IMPL(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *ob
 
 // Message
 
-API_IMPL(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size, uint8_t last), {
-  if (self == nullptr || bytes == nullptr) {
+API_IMPL(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
+  if (self == nullptr || callback == nullptr) {
     throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
   }
-  const uint8_t *cursor = bytes;
-  auto ptr = MilkPowder::Message::Parse(cursor, bytes + length, last);
-  if (size != nullptr) {
-    *size = cursor - bytes;
-  }
-  *self = milkpowder_cast(ptr.release());
+  *self = milkpowder_cast(MilkPowder::Message::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+    uint8_t byte;
+    bool ret = callback(obj, &byte);
+    return std::make_tuple(byte, ret);
+  }, last).release());
 })
 
 API_IMPL(MilkPowder_Message_Clone, (const MilkPowder_Message_t *self, MilkPowder_Message_t **another), {
@@ -352,16 +350,15 @@ API_IMPL(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, const Mi
 
 // Event
 
-API_IMPL(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size, uint8_t last), {
-  if (self == nullptr || bytes == nullptr) {
+API_IMPL(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
+  if (self == nullptr || callback == nullptr) {
     throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
   }
-  const uint8_t *cursor = bytes;
-  auto ptr = MilkPowder::Event::Parse(cursor, bytes + length, last);
-  if (size != nullptr) {
-    *size = cursor - bytes;
-  }
-  *self = milkpowder_cast(ptr.release());
+  *self = milkpowder_cast(MilkPowder::Event::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+    uint8_t byte;
+    bool ret = callback(obj, &byte);
+    return std::make_tuple(byte, ret);
+  }, last).release());
 })
 
 API_IMPL(MilkPowder_Event_Create, (MilkPowder_Event_t **self, uint32_t delta, uint8_t type, uint8_t arg0, uint8_t arg1), {
@@ -400,8 +397,8 @@ API_IMPL(MilkPowder_Event_GetArgs, (const MilkPowder_Event_t *self, uint8_t *arg
 
 // Meta
 
-API_IMPL(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  MilkPowder_Parse(self, bytes, length, size);
+API_IMPL(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
+  MilkPowder_Parse(self, obj, callback);
 })
 
 API_IMPL(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t *args, uint32_t length), {
@@ -440,8 +437,8 @@ API_IMPL(MilkPowder_Meta_GetArgs, (const MilkPowder_Meta_t *self, const uint8_t 
 
 // Sysex
 
-API_IMPL(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size), {
-  MilkPowder_Parse(self, bytes, length, size);
+API_IMPL(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
+  MilkPowder_Parse(self, obj, callback);
 })
 
 

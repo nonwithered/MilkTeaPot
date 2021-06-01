@@ -71,7 +71,7 @@ MilkPowder_Log_Init(MilkPowder_Log_Config_t config);
 // Midi
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Midi_Parse(MilkPowder_Midi_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size);
+MilkPowder_Midi_Parse(MilkPowder_Midi_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte));
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Midi_Create(MilkPowder_Midi_t **self, uint16_t format, uint16_t ntrks, uint16_t division, MilkPowder_Track_t *items[]);
@@ -97,7 +97,7 @@ MilkPowder_Midi_GetTrack(const MilkPowder_Midi_t *self, uint16_t index, const Mi
 // Track
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Track_Parse(MilkPowder_Track_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size);
+MilkPowder_Track_Parse(MilkPowder_Track_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte));
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Track_Create(MilkPowder_Track_t **self, MilkPowder_Message_t *items[], uint32_t length);
@@ -114,7 +114,7 @@ MilkPowder_Track_GetMessages(const MilkPowder_Track_t *self, void *obj, void (*c
 // Message
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Message_Parse(MilkPowder_Message_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size, uint8_t last);
+MilkPowder_Message_Parse(MilkPowder_Message_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last);
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_Clone(const MilkPowder_Message_t *self, MilkPowder_Message_t **another);
@@ -155,7 +155,7 @@ MilkPowder_Message_ToSysex(const MilkPowder_Message_t *self, const MilkPowder_Sy
 // Event
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Event_Parse(MilkPowder_Event_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size, uint8_t last);
+MilkPowder_Event_Parse(MilkPowder_Event_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last);
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Event_Create(MilkPowder_Event_t **self, uint32_t delta, uint8_t type, uint8_t arg0, uint8_t arg1);
@@ -175,7 +175,7 @@ MilkPowder_Event_GetArgs(const MilkPowder_Event_t *self, uint8_t *args);
 // Meta
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Meta_Parse(MilkPowder_Meta_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size);
+MilkPowder_Meta_Parse(MilkPowder_Meta_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte));
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Meta_Create(MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t *args, uint32_t length);
@@ -195,7 +195,7 @@ MilkPowder_Meta_GetArgs(const MilkPowder_Meta_t *self, const uint8_t **args, uin
 // Sysex
 
 MilkPowder_API MilkPowder_Errno_t
-MilkPowder_Sysex_Parse(MilkPowder_Sysex_t **self, const uint8_t *bytes, uint32_t length, uint32_t *size);
+MilkPowder_Sysex_Parse(MilkPowder_Sysex_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte));
 
 MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Sysex_Create(MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *args[], uint32_t length[], uint32_t size);

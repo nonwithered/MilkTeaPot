@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
+#include <functional>
 
 #include "except.h"
 
@@ -11,7 +12,7 @@ namespace MilkPowder {
 
 class Message {
  public:
-  static std::unique_ptr<Message> Parse(const uint8_t *&begin, const uint8_t *const end, uint8_t last);
+  static std::unique_ptr<Message> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
   virtual void Dump(std::vector<uint8_t> &) const = 0;
   virtual std::unique_ptr<Message> Clone() const = 0;
   virtual ~Message() = default;

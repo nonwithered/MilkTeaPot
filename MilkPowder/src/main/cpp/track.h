@@ -10,7 +10,7 @@ namespace MilkPowder {
 
 class Track final {
  public:
-  static std::unique_ptr<Track> Parse(const uint8_t *&begin, const uint8_t *const end);
+  static std::unique_ptr<Track> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const;
   Track(std::vector<std::unique_ptr<Message>> items) : items_(std::move(items)) {}
   Track(const Track &another) : items_(Clone(another.items_)) {}

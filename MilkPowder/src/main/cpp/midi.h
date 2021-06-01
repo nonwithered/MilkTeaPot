@@ -10,7 +10,7 @@ namespace MilkPowder {
 
 class Midi final {
  public:
-  static std::unique_ptr<Midi> Parse(const uint8_t *&begin, const uint8_t *const end);
+  static std::unique_ptr<Midi> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const;
   Midi(uint16_t format, uint16_t division, std::vector<std::unique_ptr<Track>> items) : format_(format), division_(division), items_(std::move(items)) {}
   Midi(const Midi &another) : format_(another.format_), division_(another.division_), items_(Clone(another.items_)) {}
