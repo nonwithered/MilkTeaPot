@@ -18,12 +18,13 @@
 inline std::string LogTime() {
   time_t t = time(nullptr);
   tm *p = localtime(&t);
-  std::stringstream ss;
-  ss << (p->tm_year + 1900) << "-" << (p->tm_mon + 1) << "-" << p->tm_mday <<
-    " " << p->tm_hour << ":" << p->tm_min << ":" << p->tm_sec;
-  std::string s;
-  ss >> s;
-  return s;
+  std::stringstream ss[2];
+  std::string s[2];
+  ss[0] << (p->tm_year + 1900) << "-" << (p->tm_mon + 1) << "-" << p->tm_mday;
+  ss[0] >> s[0];
+  ss[1] << p->tm_hour << ":" << p->tm_min << ":" << p->tm_sec;
+  ss[1] >> s[1];
+  return s[0] + " " + s[1];
 }
 
 inline const char *ErrMsg(MilkPowder_Errno_t type) {

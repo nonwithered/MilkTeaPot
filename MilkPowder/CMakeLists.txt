@@ -20,8 +20,8 @@ target_include_directories(${PROJECT_NAME}_static
     PUBLIC "include"
 )
 
-add_library(${PROJECT_NAME}_shared SHARED ${SOURCE_FILES})
+# add_library(${PROJECT_NAME}_shared SHARED ${SOURCE_FILES})
 
-target_include_directories(${PROJECT_NAME}_shared
-    PUBLIC "include"
-)
+# target_include_directories(${PROJECT_NAME}_shared
+#     PUBLIC "include"
+# )

@@ -189,7 +189,7 @@ API_IMPL(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t format, uin
   if (self == nullptr || items == nullptr && ntrks != 0) {
     throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
   }
-  std::vector<std::unique_ptr<MilkPowder::Track>> vec(ntrks);
+  std::vector<std::unique_ptr<MilkPowder::Track>> vec;
   for (uint16_t i = 0; i < ntrks; ++i) {
     vec.emplace_back(milkpowder_cast(items[i]));
   }
@@ -245,7 +245,7 @@ API_IMPL(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_Message
   if (self == nullptr || (length != 0 && items == nullptr)) {
     throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
   }
-  std::vector<std::unique_ptr<MilkPowder::Message>> vec(length);
+  std::vector<std::unique_ptr<MilkPowder::Message>> vec;
   for (uint16_t i = 0; i < length; ++i) {
     vec.emplace_back(milkpowder_cast(items[i]));
   }
@@ -436,7 +436,7 @@ API_IMPL(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t delta[], 
   if (self == nullptr || (size != 0 && (delta == nullptr || args == nullptr || length == nullptr))) {
     throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
   }
-  Vec vec(size);
+  Vec vec;
   for (uint32_t i = 0; i < size; ++i) {
     vec.emplace_back(delta[i], std::vector<uint8_t>(args[i], args[i] + length[i]));
   }

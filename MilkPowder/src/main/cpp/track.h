@@ -14,10 +14,10 @@ class Track final {
   static std::unique_ptr<Track> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const;
   Track(std::vector<std::unique_ptr<Message>> items) : items_(std::move(items)) {
-    LOG_PRINT(INFO, TAG, "ctor: size=%" PRIu32, static_cast<uint32_t>(items_.size()));
+    LOG_PRINT(INFO, TAG, "ctor size=%" PRIu32, static_cast<uint32_t>(items_.size()));
   }
   Track(const Track &another) : items_(Clone(another.items_)) {
-    LOG_PRINT(INFO, TAG, "copy: size=%" PRIu32, static_cast<uint32_t>(items_.size()));
+    LOG_PRINT(INFO, TAG, "copy size=%" PRIu32, static_cast<uint32_t>(items_.size()));
   }
   const std::vector<std::unique_ptr<Message>> &items() const { return items_; }
  private:

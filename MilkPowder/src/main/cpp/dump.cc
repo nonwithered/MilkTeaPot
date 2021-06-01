@@ -74,7 +74,7 @@ void Track::Dump(std::vector<uint8_t> &vec) const {
   for (const std::unique_ptr<Message> &it : items_) {
     it->Dump(vec);
   }
-  std::vector<uint8_t> len(4);
+  std::vector<uint8_t> len;
   DumpU32(static_cast<uint32_t>(vec.size() - index - 4), len);
   for (size_t i = 0; i != 4; ++i) {
     vec[index + i] = len[i];
