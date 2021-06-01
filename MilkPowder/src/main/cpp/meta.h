@@ -15,6 +15,7 @@ class Meta final : public Message {
   }
   Meta(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : Message(delta, 0xff), type_(type), args_(std::move(args)) {
     if (type >= 0x80) {
+      LOG_PRINT(ERROR, TAG, "ctor type %" PRIu32, delta);
       throw Except(Except::Type::InvalidParam);
     }
   }
@@ -23,6 +24,7 @@ class Meta final : public Message {
  private:
   const uint8_t type_;
   const std::vector<uint8_t> args_;
+  static constexpr char TAG[] = "meta";
 };
 
 } // namespace MilkPowder

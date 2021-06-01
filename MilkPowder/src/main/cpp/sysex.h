@@ -17,12 +17,14 @@ class Sysex final : public Message {
   }
   Sysex(std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items) : Message(std::get<0>(items.front()), 0xf0), items_(std::move(items)) {
     if (items_.size() == 0) {
+      LOG_PRINT(ERROR, TAG, "ctor size %" PRIu32, static_cast<uint32_t>(items_.size()));
       throw Except(Except::Type::InvalidParam);
     }
   }
   const std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> &items() const { return items_; }
  private:
   const std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items_;
+  static constexpr char TAG[] = "sysex";
 };
 
 } // namespace MilkPowder

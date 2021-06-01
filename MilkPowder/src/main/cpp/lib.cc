@@ -13,17 +13,6 @@
 
 namespace {
 
-constexpr char TAG_API_BAGIN[] = "api_begin";
-constexpr char TAG_API_END[] = "api_end";
-
-inline void LogBegin(const char *section) {
-  MilkPowder::Log::Print(MilkPowder::Log::Level::DEBUG, TAG_API_BAGIN, section);
-}
-
-inline void LogEnd(const char *section) {
-  MilkPowder::Log::Print(MilkPowder::Log::Level::DEBUG, TAG_API_END, section);
-}
-
 inline MilkPowder_Errno_t milkpowder_errno_map(MilkPowder::Except::Type type) {
   switch (type) {
     case MilkPowder::Except::Type::Assertion: return MilkPowder_Errno_t::Assertion;
@@ -39,9 +28,8 @@ inline MilkPowder_Errno_t milkpowder_errno_map(MilkPowder::Except::Type type) {
 #define API_IMPL(section, list, block) \
 MilkPowder_API MilkPowder_Errno_t \
 section list { \
-  constexpr char TAG[] = #section; \
-  LogBegin(TAG); \
-  MilkPowder::Defer defer([TAG]() -> void { LogEnd(TAG); }); \
+  LOG_PRINT(INFO, "api_begin", #section); \
+  MilkPowder::Defer defer([]() -> void { LOG_PRINT(INFO, "api_end", #section); }); \
   try \
     block \
   catch (MilkPowder::Except &e) { \
@@ -170,7 +158,7 @@ inline MilkPowder::Log::Level milkpowder_log_map(MilkPowder_Log_Level_t level) {
 
 } // namespace
 
-MilkPowder::Log MilkPowder::Log::Instance(MilkPowder::Log *logger) {
+MilkPowder::Log &MilkPowder::Log::Instance(MilkPowder::Log *logger) {
   static MilkPowder::Log sLogger_(LogDefault, LogDefault, LogDefault, LogDefault, MilkPowder::Log::Level::ASSERT);
   if (logger != nullptr) {
     sLogger_ = *logger;

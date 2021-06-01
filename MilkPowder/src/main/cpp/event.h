@@ -16,13 +16,19 @@ class Event final : public Message {
     return std::unique_ptr<Message>(new Event(*this));
   }
   Event(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : Message(delta, type), args_(args) {
-    if (type >= 0xf0 || std::get<0>(args) >= 0x80 || std::get<1>(args) >= 0x80) {
+    if (type >= 0xf0) {
+      LOG_PRINT(ERROR, TAG, "ctor type %" PRIu8, type);
+      throw Except(Except::Type::InvalidParam);
+    }
+    if (std::get<0>(args) >= 0x80 || std::get<1>(args) >= 0x80) {
+      LOG_PRINT(ERROR, TAG, "ctor args [%" PRIu8 ", %" PRIu8 "]", std::get<0>(args), std::get<1>(args));
       throw Except(Except::Type::InvalidParam);
     }
   }
   std::tuple<uint8_t, uint8_t> args() const { return args_; }
  private:
   const std::tuple<uint8_t, uint8_t> args_;
+  static constexpr char TAG[] = "event";
 };
 
 } // namespace MilkPowder

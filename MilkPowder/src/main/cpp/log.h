@@ -1,7 +1,19 @@
 #ifndef MILKPOWDER_LOG_H_
 #define MILKPOWDER_LOG_H_
 
+#define LOG_PRINT(L, TAG, ...) \
+do { \
+  MilkPowder::Log log = MilkPowder::Log::Instance(); \
+  if (log.level() <= MilkPowder::Log::Level::L) { \
+    char buf[128]; \
+    sprintf(buf, ##__VA_ARGS__); \
+    log(MilkPowder::Log::Level::L, TAG, buf); \
+  } \
+} while (false)
+
+#include <cstdio>
 #include <cstdint>
+#include <cinttypes>
 #include <functional>
 
 namespace MilkPowder {
@@ -15,10 +27,7 @@ class Log final {
     ERROR,
     ASSERT
   };
-  static Log Instance(Log *logger = nullptr);
-  static void Print(Level level, const char *tag, const char *msg) {
-    Instance()(level, tag, msg);
-  }
+  static Log &Instance(Log *logger = nullptr);
   Log(
     std::function<void(const char *, const char *)> debug,
     std::function<void(const char *, const char *)> info,
@@ -26,11 +35,10 @@ class Log final {
     std::function<void(const char *, const char *)> error,
     Level level
   ) : debug_(debug), info_(info), warn_(warn), error_(error), level_(level) {}
- private:
+  Level level() const {
+    return level_;
+  }
   void operator()(Level level, const char *tag, const char *msg) {
-    if (level < level_) {
-      return;
-    }
     switch (level) {
       case Level::DEBUG: debug_(tag, msg); break;
       case Level::INFO: info_(tag, msg); break;
@@ -39,6 +47,7 @@ class Log final {
       default: break;
     }
   }
+ private:
   std::function<void(const char *, const char *)> debug_;
   std::function<void(const char *, const char *)> info_;
   std::function<void(const char *, const char *)> warn_;

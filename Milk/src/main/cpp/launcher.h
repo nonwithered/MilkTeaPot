@@ -9,12 +9,34 @@
 #include <memory>
 #include <functional>
 #include <string>
+#include <sstream>
 
 #include <milkpowder.h>
 
+#include "util.h"
+
 inline std::string LogTime() {
   time_t t = time(nullptr);
-  return ctime(&t);
+  tm *p = localtime(&t);
+  std::stringstream ss;
+  ss << (p->tm_year + 1900) << "-" << (p->tm_mon + 1) << "-" << p->tm_mday <<
+    " " << p->tm_hour << ":" << p->tm_min << ":" << p->tm_sec;
+  std::string s;
+  ss >> s;
+  return s;
+}
+
+inline const char *ErrMsg(MilkPowder_Errno_t type) {
+  switch (type) {
+    case MilkPowder_Errno_t::Nil: return "Nil";
+    case MilkPowder_Errno_t::Assertion: return "Assertion";
+    case MilkPowder_Errno_t::NullPointer: return "NullPointer";
+    case MilkPowder_Errno_t::Unsupported: return "Unsupported";
+    case MilkPowder_Errno_t::EndOfFile: return "EndOfFile";
+    case MilkPowder_Errno_t::InvalidParam: return "InvalidParam";
+    case MilkPowder_Errno_t::LogicError: return "LogicError";
+    default: return "Unknown";
+  }
 }
 
 template<MilkPowder_Log_Level_t level>

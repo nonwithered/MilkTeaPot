@@ -1,4 +1,6 @@
 #include <map>
+#include <vector>
+#include <memory>
 
 #include "launcher.h"
 
@@ -121,8 +123,20 @@ class Probe final {
     itr = args.erase(itr);
     return true;
   }
-  void Preview(std::string_view file) {
-    std::cout << file << std::endl;
+  void Preview(std::string_view filename) {
+    InputReader reader(filename);
+    if (reader.NonOpen()) {
+      std::cerr << "Failed to open: " << filename << std::endl;
+      return;
+    }
+    MilkPowderHolder<MilkPowder_Midi_t> midi;
+    MilkPowder_Errno_t err = MilkPowder_Midi_Parse(&midi, &reader, InputReader::read);
+    if (err != MilkPowder_Errno_t::Nil) {
+      std::cerr << "Failed to parse midi: " << ErrMsg(err) << std::endl;
+    }
+    uint16_t d;
+    err = MilkPowder_Midi_GetDivision(midi, &d);
+    std::cerr << d << std::endl;
   }
 };
 
