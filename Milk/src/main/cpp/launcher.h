@@ -40,7 +40,7 @@ inline void LogPrint<MilkPowder_Log_Level_t::ERROR>(void *, const char *tag, con
   std::cerr << LogTime() << "/ERROR: " << tag << ": " << msg << std::endl;
 }
 
-inline void LogInit(MilkPowder_Log_Level_t level) {
+inline void LogInitLevel(MilkPowder_Log_Level_t level) {
   MilkPowder_Log_Config_t config = {
     .obj = nullptr,
     .debug = LogPrint<MilkPowder_Log_Level_t::DEBUG>,
@@ -72,7 +72,7 @@ class Launcher final {
       launch = LaunchPlay;
     }
     if (launch != nullptr) {
-      args_.pop_back();
+      args_.pop_front();
       launch(args_);
     } else {
       Usage();
@@ -81,16 +81,16 @@ class Launcher final {
  private:
   std::list<std::string_view> args_;
   static void Usage() {
-    std::cerr << kUsageCodec << std::endl;
-    std::cerr << kUsageProbe << std::endl;
-    std::cerr << kUsagePlay << std::endl;
+    std::cerr << UsageCodec() << std::endl;
+    std::cerr << UsageProbe() << std::endl;
+    std::cerr << UsagePlay() << std::endl;
   }
   static void LaunchCodec(std::list<std::string_view> &);
   static void LaunchProbe(std::list<std::string_view> &);
   static void LaunchPlay(std::list<std::string_view> &);
-  static std::string_view kUsageCodec;
-  static std::string_view kUsageProbe;
-  static std::string_view kUsagePlay;
+  static std::string_view UsageCodec();
+  static std::string_view UsageProbe();
+  static std::string_view UsagePlay();
 };
 
 } // namespace Milk
