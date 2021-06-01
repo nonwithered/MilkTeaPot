@@ -2,9 +2,11 @@
 
 #include "launcher.h"
 
-namespace {
+namespace Milk {
 
-constexpr char kUsage[] =
+class Probe final {
+ public:
+  static constexpr char kUsage[] =
 "Usage: milk probe [OPTIONS] [FILES]\n"
 "  -h, --help\n"
 "    print this help message\n"
@@ -17,9 +19,6 @@ constexpr char kUsage[] =
 "    detail level\n"
 "    only headers by default\n"
 ;
-
-class Probe final {
- public:
   Probe()
     : callbacks_(),
       help_(false),
@@ -123,20 +122,16 @@ class Probe final {
     return true;
   }
   void Preview(std::string_view file) {
-      std::cout << file << std::endl;
+    std::cout << file << std::endl;
   }
 };
-
-} // namespace
-
-namespace Milk {
 
 void Launcher::LaunchProbe(std::list<std::string_view> &args) {
   Probe().Launch(args);
 }
 
 std::string_view Launcher::UsageProbe() {
-  return kUsage;
+  return Probe::kUsage;
 }
 
 } // namespace Milk

@@ -75,16 +75,13 @@ class Launcher final {
       args_.pop_front();
       launch(args_);
     } else {
-      Usage();
+      std::cerr << UsageCodec() << std::endl;
+      std::cerr << UsageProbe() << std::endl;
+      std::cerr << UsagePlay() << std::endl;
     }
   }
  private:
   std::list<std::string_view> args_;
-  static void Usage() {
-    std::cerr << UsageCodec() << std::endl;
-    std::cerr << UsageProbe() << std::endl;
-    std::cerr << UsagePlay() << std::endl;
-  }
   static void LaunchCodec(std::list<std::string_view> &);
   static void LaunchProbe(std::list<std::string_view> &);
   static void LaunchPlay(std::list<std::string_view> &);
