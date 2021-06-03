@@ -11,6 +11,8 @@ class Probe final {
 "Usage: milk probe [OPTIONS] [FILES]\n"
 "  -h, --help\n"
 "    print this help message\n"
+"  -v, --version\n"
+"    print version code\n"
 "  --log {d, i, w, e, debug, info, warn, error}\n"
 "    init log level, or no log\n"
 "  -x\n"
@@ -30,6 +32,14 @@ class Probe final {
     };
     callbacks_["--help"] = [this](auto &itr, auto &args) -> bool {
       ShowHelp();
+      return true;
+    };
+    callbacks_["-v"] = [this](auto &itr, auto &args) -> bool {
+      ShowVersion();
+      return true;
+    };
+    callbacks_["--version"] = [this](auto &itr, auto &args) -> bool {
+      ShowVersion();
       return true;
     };
     callbacks_["--log"] = [this](auto &itr, auto &args) -> bool {
@@ -60,7 +70,7 @@ class Probe final {
       }
     }
     if (args.size() == 0) {
-      ShowHelp();
+      std::cerr << "milk probe: no input files" << std::endl;
       return;
     }
     for (auto it : args) {
@@ -79,6 +89,10 @@ class Probe final {
       help_ = true;
     }
     std::cerr << kUsage << std::endl;
+  }
+  void ShowVersion() {
+    help_ = true;
+    std::cout << "version: " << kVersion << std::endl;
   }
   bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     MilkPowder_Log_Level_t level = MilkPowder_Log_Level_t::ASSERT;
@@ -128,6 +142,99 @@ class Probe final {
       std::cerr << "Failed to open: " << filename << std::endl;
       return;
     }
+    switch (detail_) {
+      case 0:
+        PreviewHeader(reader);
+        break;
+      case 1:
+        PreviewEvents(reader);
+        break;
+      case 2:
+        PreviewVerbose(reader);
+        break;
+      default:
+        break;
+    }
+  }
+  void PreviewHeader(InputReader &reader) {
+    uint8_t buf[5];
+    size_t count;
+    // header type
+    count = reader.Read(buf, 4);
+    if (count < 4) {
+      std::cerr << "Failed to read header type 0x" << FromBytesToStringHex(buf, count) << std::endl;
+      return;
+    }
+    buf[5] = '\0';
+    std::string type(reinterpret_cast<char *>(buf));
+    if (type != "MThd") {
+      std::cerr << "Error header type " << FromStringToStr(type.data(), 4) << std::endl;
+      return;
+    }
+    // header length
+    count = reader.Read(buf, 4);
+    if (count < 4) {
+      std::cerr << "Failed to read header length 0x" << FromBytesToStringHex(buf, count) << std::endl;
+      return;
+    }
+    uint32_t length = FromBytesToU32(buf);
+    if (length != 6) {
+      std::cerr << "Error header length " << FromU32ToStr(length) << std::endl;
+      return;
+    }
+    // header format
+    count = reader.Read(buf, 2);
+    if (count < 2) {
+      std::cerr << "Failed to read header format 0x" << FromBytesToStringHex(buf, count) << std::endl;
+      return;
+    }
+    uint16_t format = FromBytesToU16(buf);
+    // header ntrks
+    count = reader.Read(buf, 2);
+    if (count < 2) {
+      std::cerr << "Failed to read header ntrks 0x" << FromBytesToStringHex(buf, count) << std::endl;
+      return;
+    }
+    uint16_t ntrks = FromBytesToU16(buf);
+    // header division
+    count = reader.Read(buf, 2);
+    if (count < 2) {
+      std::cerr << "Failed to read header division 0x" << FromBytesToStringHex(buf, count) << std::endl;
+      return;
+    }
+    uint16_t division = FromBytesToU16(buf);
+    // MThd chunk
+    std::cout << "[HEADER]" << std::endl;
+    std::cout << "type=" << FromStringToStr(type.data(), 4) << std::endl;
+    std::cout << "length=" << FromU32ToStr(length) << std::endl;
+    std::cout << "format=" << FromU16ToStr(format) << std::endl;
+    std::cout << "ntrks=" << FromU16ToStr(ntrks) << std::endl;
+    std::cout << "division=" << FromU16ToStr(division) << std::endl;
+    std::cout << "[/HEADER]" << std::endl;
+  }
+  void PreviewEvents(InputReader &reader) {
+  }
+  void PreviewVerbose(InputReader &reader) {
+  }
+  std::string FromStringToStr(const char *bytes, size_t length) {
+    return hex_
+    ? FromBytesToStringHex(reinterpret_cast<const uint8_t *>(bytes), length)
+    : FromBytesToString(reinterpret_cast<const uint8_t *>(bytes), length);
+  }
+  std::string FromU32ToStr(uint32_t n) {
+    return hex_
+    ? FromU32ToStringHex(n)
+    : FromU32ToString(n);
+  }
+  std::string FromU16ToStr(uint16_t n) {
+    return hex_
+    ? FromU16ToStringHex(n)
+    : FromU16ToString(n);
+  }
+  std::string FromU8ToStr(uint8_t n) {
+    return hex_
+    ? FromU8ToStringHex(n)
+    : FromU8ToString(n);
   }
 };
 
