@@ -203,7 +203,7 @@ class Probe final {
       return;
     }
     uint16_t division = FromBytesToU16(buf);
-    // MThd chunk
+    // header chunk
     std::cout << "[HEADER]" << std::endl;
     std::cout << "type=" << FromStringToStr(type.data(), 4) << std::endl;
     std::cout << "length=" << FromU32ToStr(length) << std::endl;
@@ -211,6 +211,35 @@ class Probe final {
     std::cout << "ntrks=" << FromU16ToStr(ntrks) << std::endl;
     std::cout << "division=" << FromU16ToStr(division) << std::endl;
     std::cout << "[/HEADER]" << std::endl;
+    // foreach chunk
+    for (uint16_t i = 0; i < ntrks; ++i) {
+      // chunk type
+      count = reader.Read(buf, 4);
+      if (count < 4) {
+        std::cerr << "Failed to read chunk type 0x" << FromBytesToStringHex(buf, count) << std::endl;
+        return;
+      }
+      buf[5] = '\0';
+      std::string type(reinterpret_cast<char *>(buf));
+      // chunk length
+      count = reader.Read(buf, 4);
+      if (count < 4) {
+        std::cerr << "Failed to read chunk length 0x" << FromBytesToStringHex(buf, count) << std::endl;
+        return;
+      }
+      uint32_t length = FromBytesToU32(buf);
+      // each chunk
+      std::cout << "[CHUNK]" << std::endl;
+      std::cout << "type=" << FromStringToStr(type.data(), 4) << std::endl;
+      std::cout << "length=" << FromU32ToStr(length) << std::endl;
+      std::cout << "[/CHUNK]" << std::endl;
+      // next chunk
+      count = reader.Read(nullptr, static_cast<size_t>(length));
+      if (count < static_cast<size_t>(length)) {
+        std::cerr << "Failed to read next chunk because of unexpected EOF" << std::endl;
+        return;
+      }
+    }
   }
   void PreviewEvents(InputReader &reader) {
   }
