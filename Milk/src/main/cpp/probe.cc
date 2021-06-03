@@ -1,5 +1,14 @@
+#define check_err(s) \
+do { \
+  if (err != MilkPowder_Errno_t::Nil) { \
+    std::cerr << "Failed to " s " because of " << ErrMsg(err) << std::endl; \
+    return; \
+  } \
+} while (false)
+
 #include <map>
 #include <memory>
+#include <functional>
 
 #include "launcher.h"
 
@@ -169,7 +178,7 @@ class Probe final {
     buf[5] = '\0';
     std::string type(reinterpret_cast<char *>(buf));
     if (type != "MThd") {
-      std::cerr << "Error header type " << FromStringToStr(type.data(), 4) << std::endl;
+      std::cerr << "Error header type " << FromBytesToStr(reinterpret_cast<const uint8_t *>(type.data()), 4) << std::endl;
       return;
     }
     // header length
@@ -206,7 +215,7 @@ class Probe final {
     uint16_t division = FromBytesToU16(buf);
     // header chunk
     std::cout << "[HEADER]" << std::endl;
-    std::cout << "type=" << FromStringToStr(type.data(), 4) << std::endl;
+    std::cout << "type=" << FromBytesToStr(reinterpret_cast<const uint8_t *>(type.data()), 4) << std::endl;
     std::cout << "length=" << FromU32ToStr(length) << std::endl;
     std::cout << "format=" << FromU16ToStr(format) << std::endl;
     std::cout << "ntrks=" << FromU16ToStr(ntrks) << std::endl;
@@ -231,18 +240,16 @@ class Probe final {
       uint32_t length = FromBytesToU32(buf);
       // each chunk
       std::cout << "[CHUNK]" << std::endl;
-      std::cout << "type=" << FromStringToStr(type.data(), 4) << std::endl;
+      std::cout << "type=" << FromBytesToStr(reinterpret_cast<const uint8_t *>(type.data()), 4) << std::endl;
       std::cout << "length=" << FromU32ToStr(length) << std::endl;
-      if (!PreviewData(reader, length)) {
+      if (!ShowData(reader, length)) {
         std::cerr << "Failed to read data of chunk because of unexpected EOF" << std::endl;
         return;
       }
       std::cout << "[/CHUNK]" << std::endl;
     }
   }
-  void PreviewBody(InputReader &reader) {
-  }
-  bool PreviewData(InputReader &reader, const uint32_t length) {
+  bool ShowData(InputReader &reader, const uint32_t length) {
     size_t count;
     if (detail_ != 1) {
       count = reader.Read(nullptr, static_cast<size_t>(length));
@@ -284,10 +291,157 @@ class Probe final {
     }
     return true;
   }
-  std::string FromStringToStr(const char *bytes, size_t length) {
+  void PreviewBody(InputReader &reader) {
+    MilkPowder_Errno_t err;
+    MilkPowderHolder<MilkPowder_Midi_t> midi;
+    err = MilkPowder_Midi_Parse(&midi, &reader, InputReader::Reader);
+    check_err("read midi file");
+    // header chunk
+    std::cout << "[HEADER]" << std::endl;
+    std::cout << "type=MThd" << std::endl;
+    std::cout << "length=" << FromU32ToStr(6) << std::endl;
+    // format
+    uint16_t format;
+    err = MilkPowder_Midi_GetFormat(midi, &format);
+    check_err("get format");
+    std::cout << "format=" << FromU16ToStr(format) << std::endl;
+    // ntrks
+    uint16_t ntrks;
+    err = MilkPowder_Midi_GetNtrks(midi, &ntrks);
+    check_err("get ntrks");
+    std::cout << "ntrks=" << FromU16ToStr(ntrks) << std::endl;
+    // division
+    uint16_t division;
+    err = MilkPowder_Midi_GetDivision(midi, &division);
+    check_err("get division");
+    std::cout << "division=" << FromU16ToStr(division) << std::endl;
+    std::cout << "[/HEADER]" << std::endl;
+    // foreach chunk
+    for (uint16_t i = 0; i != ntrks; ++i) {
+      const MilkPowder_Track_t *track;
+      MilkPowder_Midi_GetTrack(midi, i, &track);
+      // each chunk
+      std::cout << "[CHUNK]" << std::endl;
+      std::cout << "type=MTrk" << std::endl;
+      std::function<void(const MilkPowder_Message_t *)> callback;
+      if (detail_ == 2) {
+        callback = [this](const MilkPowder_Message_t *item) -> void {
+          ShowMessages(item);
+        };
+      } else {
+        callback = [this](const MilkPowder_Message_t *item) -> void {
+          ShowMessagesVerbose(item);
+        };
+      }
+      err = MilkPowder_Track_GetMessages(track, &callback, [](void *obj, const MilkPowder_Message_t *item) -> void {
+        std::function<void(const MilkPowder_Message_t *)> &callback = *reinterpret_cast<std::function<void(const MilkPowder_Message_t *)> *>(obj);
+        callback(item);
+      });
+      check_err("get messages");
+      std::cout << "[/CHUNK]" << std::endl;
+    }
+  }
+  void ShowMessages(const MilkPowder_Message_t *message) {
+    MilkPowder_Errno_t err;
+    std::cout << "[EVENT]" << std::endl;
+    // delta
+    uint32_t delta;
+    err = MilkPowder_Message_GetDelta(message, &delta);
+    check_err("get delta");
+    std::cout << "delta=" << FromUsizeToStr(delta) << std::endl;
+    // type
+    uint8_t type;
+    err = MilkPowder_Message_GetType(message, &type);
+    check_err("get type");
+    std::cout << "type=" << FromU8ToStringHex(type) << std::endl;
+    std::cout << "[/EVENT]" << std::endl;
+  }
+  void ShowMessagesVerbose(const MilkPowder_Message_t *message) {
+    MilkPowder_Errno_t err;
+    std::cout << "[EVENT]" << std::endl;
+    // delta
+    uint32_t delta;
+    err = MilkPowder_Message_GetDelta(message, &delta);
+    check_err("get delta");
+    std::cout << "delta=" << FromUsizeToStr(delta) << std::endl;
+    // type
+    uint8_t type;
+    err = MilkPowder_Message_GetType(message, &type);
+    check_err("get type");
+    std::cout << "type=" << FromU8ToStringHex(type);
+    do {
+      bool b;
+      // event
+      err = MilkPowder_Message_IsEvent(message, &b);
+      check_err("check event");
+      if (b) {
+        const MilkPowder_Event_t *event;
+        err = MilkPowder_Message_ToEvent(message, &event);
+        check_err("cast event");
+        std::cout << std::endl;
+        uint8_t args[2];
+        err = MilkPowder_Event_GetArgs(event, args);
+        check_err("get args");
+        std::cout << "args=" << FromU8ToStringHex(args[0]);
+        if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
+          std::cout << FromU8ToStringHex(args[1]);
+        }
+        std::cout << std::endl;
+        break;
+      }
+      // meta
+      err = MilkPowder_Message_IsMeta(message, &b);
+      check_err("check meta");
+      if (b) {
+        const MilkPowder_Meta_t *meta;
+        err = MilkPowder_Message_ToMeta(message, &meta);
+        check_err("cast meta");
+        err = MilkPowder_Meta_GetType(meta, &type);
+        check_err("get type");
+        std::cout << FromU8ToStringHex(type) << std::endl;
+        uint32_t len;
+        const uint8_t *args;
+        err = MilkPowder_Meta_GetArgs(meta, &args, &len);
+        check_err("get args");
+        std::cout << "args=" << FromBytesToStr(args, len) << std::endl;
+        break;
+      }
+      // sysex
+      err = MilkPowder_Message_IsSysex(message, &b);
+      check_err("check sysex");
+      if (b) {
+        const MilkPowder_Sysex_t *sysex;
+        err = MilkPowder_Message_ToSysex(message, &sysex);
+        check_err("cast sysex");
+        std::cout << std::endl;
+        uint32_t idx = 0;
+        std::function<void(uint32_t, const uint8_t *, uint32_t)> callback = [this, &idx](uint32_t delta, const uint8_t *args, uint32_t length) -> void {
+          if (idx == 0) {
+            std::cout << "args[" << idx++ << "]=" << FromBytesToStr(args, length) << std::endl;
+            return;
+          } else {
+            std::cout << "args[" << idx++ << "]=" << FromBytesToStr(args, length) << ", delta=" << FromUsizeToStringHex(delta) << std::endl;
+          }
+        };
+        err = MilkPowder_Sysex_GetArgs(sysex, &callback, [](void *obj, uint32_t delta, const uint8_t *args, uint32_t length) -> void {
+          std::function<void(uint32_t, const uint8_t *, uint32_t)> &callback = *reinterpret_cast<std::function<void(uint32_t, const uint8_t *, uint32_t)> *>(obj);
+          callback(delta, args, length);
+        });
+        check_err("get args");
+        break;
+      }
+    } while (false);
+    std::cout << "[/EVENT]" << std::endl;
+  }
+  std::string FromBytesToStr(const uint8_t *bytes, size_t length) {
     return hex_
-    ? FromBytesToStringHex(reinterpret_cast<const uint8_t *>(bytes), length)
-    : FromBytesToString(reinterpret_cast<const uint8_t *>(bytes), length);
+    ? FromBytesToStringHex(bytes, length)
+    : FromBytesToString(bytes, length);
+  }
+  std::string FromUsizeToStr(uint32_t n) {
+    return hex_
+    ? FromUsizeToStringHex(n)
+    : FromU32ToString(n);
   }
   std::string FromU32ToStr(uint32_t n) {
     return hex_

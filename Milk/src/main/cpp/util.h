@@ -131,6 +131,23 @@ inline std::string FromU8ToStringHex(uint8_t n) {
   return buf;
 }
 
+inline std::string FromUsizeToStringHex(uint32_t n) {
+  uint8_t bytes[4];
+  size_t size = 0;
+  bytes[size++] = static_cast<uint8_t>(n & 0x7f);
+  while (n > 0x7f) {
+    n >>= 07;
+    bytes[size++] = static_cast<uint8_t>((n & 0x7f) | 0x80);
+  }
+  std::stringstream ss;
+  for (size_t i = 0; i != size; ++i) {
+    ss << FromU8ToStringHex(bytes[size - 1 -i]);
+  }
+  std::string s;
+  ss >> s;
+  return std::move(s);
+}
+
 inline uint32_t FromBytesToU32(const uint8_t bytes[]) {
   return (bytes[0] << 030) | (bytes[1] << 020) | (bytes[2] << 010) | bytes[3];
 }

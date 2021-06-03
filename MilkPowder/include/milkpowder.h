@@ -126,6 +126,9 @@ MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_GetDelta(const MilkPowder_Message_t *self, uint32_t *delta);
 
 MilkPowder_API MilkPowder_Errno_t
+MilkPowder_Message_GetType(const MilkPowder_Message_t *self, uint8_t *type);
+
+MilkPowder_API MilkPowder_Errno_t
 MilkPowder_Message_FromEvent(MilkPowder_Message_t **self, MilkPowder_Event_t *item);
 
 MilkPowder_API MilkPowder_Errno_t

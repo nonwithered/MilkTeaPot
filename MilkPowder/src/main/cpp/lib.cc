@@ -300,6 +300,13 @@ API_IMPL(MilkPowder_Message_GetDelta, (const MilkPowder_Message_t *self, uint32_
   *delta = milkpowder_cast(self)->delta();
 })
 
+API_IMPL(MilkPowder_Message_GetType, (const MilkPowder_Message_t *self, uint8_t *type), {
+  if (self == nullptr || type == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  *type = milkpowder_cast(self)->type();
+})
+
 API_IMPL(MilkPowder_Message_FromEvent, (MilkPowder_Message_t **self, MilkPowder_Event_t *item), {
   MilkPowder_Message_From(self, item);
 })
