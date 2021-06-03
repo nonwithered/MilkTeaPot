@@ -17,8 +17,8 @@ class Probe final {
 "    init log level, or no log\n"
 "  -x\n"
 "    show all numbers in hex\n"
-"  -L {h, e, v, header, events, verbose}\n"
-"  --level {h, e, v, header, events, verbose}\n"
+"  -L {h, d, e, v, header, data, events, verbose}\n"
+"  --level {h, d, e, v, header, data, events, verbose}\n"
 "    detail level\n"
 "    only headers by default\n"
 ;
@@ -125,10 +125,12 @@ class Probe final {
       return false;
     } else if (*itr == "h" || *itr == "header") {
       detail_ = 0;
-    } else if (*itr == "e" || *itr == "events") {
+    } else if (*itr == "d" || *itr == "data") {
       detail_ = 1;
-    } else if (*itr == "v" || *itr == "verbose") {
+    } else if (*itr == "e" || *itr == "events") {
       detail_ = 2;
+    } else if (*itr == "v" || *itr == "verbose") {
+      detail_ = 3;
     } else {
       std::cerr << "milk probe --level: invalid detail level: " << *itr << std::endl;
       return false;
@@ -144,19 +146,18 @@ class Probe final {
     }
     switch (detail_) {
       case 0:
-        PreviewHeader(reader);
-        break;
       case 1:
-        PreviewEvents(reader);
+        PreviewHead(reader);
         break;
       case 2:
-        PreviewVerbose(reader);
+      case 3:
+        PreviewBody(reader);
         break;
       default:
         break;
     }
   }
-  void PreviewHeader(InputReader &reader) {
+  void PreviewHead(InputReader &reader) {
     uint8_t buf[5];
     size_t count;
     // header type
@@ -232,18 +233,56 @@ class Probe final {
       std::cout << "[CHUNK]" << std::endl;
       std::cout << "type=" << FromStringToStr(type.data(), 4) << std::endl;
       std::cout << "length=" << FromU32ToStr(length) << std::endl;
-      std::cout << "[/CHUNK]" << std::endl;
-      // next chunk
-      count = reader.Read(nullptr, static_cast<size_t>(length));
-      if (count < static_cast<size_t>(length)) {
-        std::cerr << "Failed to read next chunk because of unexpected EOF" << std::endl;
+      if (!PreviewData(reader, length)) {
+        std::cerr << "Failed to read data of chunk because of unexpected EOF" << std::endl;
         return;
       }
+      std::cout << "[/CHUNK]" << std::endl;
     }
   }
-  void PreviewEvents(InputReader &reader) {
+  void PreviewBody(InputReader &reader) {
   }
-  void PreviewVerbose(InputReader &reader) {
+  bool PreviewData(InputReader &reader, const uint32_t length) {
+    size_t count;
+    if (detail_ != 1) {
+      count = reader.Read(nullptr, static_cast<size_t>(length));
+      if (count < static_cast<size_t>(length)) {
+        return false;
+      }
+    } else {
+      count = 0;
+      std::cout << "  Offset: 0001 0203 0405 0607 0809 0A0B 0C0D 0E0F" << std::endl;
+      uint32_t line = 0;
+      while (count < static_cast<size_t>(length)) {
+        uint8_t buf[16];
+        size_t c = static_cast<size_t>(length) - count;
+        if (c >= 16) {
+          c = reader.Read(buf, 16);
+        } else {
+          c = reader.Read(buf, c);
+        }
+        if (c == 0) {
+          return false;
+        } else {
+          count += c;
+        }
+        std::cout << FromU32ToStringHex(line) << ":";
+        line += 16;
+        for (size_t i = 0; i < 8; ++i) {
+          std::cout << " ";
+          for (size_t j = 0; j < 2; ++j) {
+            size_t k = i * 2 + j;
+            if (k < c) {
+              std::cout << FromU8ToStringHex(buf[k]);
+            } else {
+              std::cout << "  ";
+            }
+          }
+        }
+        std::cout << "  " << FromBytesToStringDot(buf, c) << std::endl;
+      }
+    }
+    return true;
   }
   std::string FromStringToStr(const char *bytes, size_t length) {
     return hex_

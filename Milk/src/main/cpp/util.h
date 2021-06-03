@@ -75,11 +75,7 @@ class InputReader {
     return self.Read(byte, 1) != 0;
   }
   InputReader(std::string_view filename)
-    : ifs_(filename.data(), std::ios::binary),
-      count_(0) {
-  }
-  size_t Count() const {
-    return count_;
+    : ifs_(filename.data(), std::ios::binary) {
   }
   bool NonOpen() const {
     return !ifs_.is_open();
@@ -93,13 +89,10 @@ class InputReader {
     } else {
       ifs_.ignore(size);
     }
-    size_t count = ifs_.gcount();
-    count_ += count;
-    return count;
+    return ifs_.gcount();
   }
  private:
   std::ifstream ifs_;
-  size_t count_;
 };
 
 inline std::string FromU32ToString(uint32_t n) {
@@ -168,6 +161,21 @@ inline std::string FromBytesToString(const uint8_t bytes[], size_t length) {
       ss << static_cast<char>(byte);
     } else {
       ss << "\\" << std::oct << std::right << std::setw(3) << std::setfill('0') << static_cast<unsigned int>(byte);
+    }
+  }
+  std::string s;
+  ss >> s;
+  return std::move(s);
+}
+
+inline std::string FromBytesToStringDot(const uint8_t bytes[], size_t length) {
+  std::stringstream ss;
+  for (size_t i = 0; i != length; ++i) {
+    uint8_t byte = bytes[i];
+    if (isgraph(byte)) {
+      ss << static_cast<char>(byte);
+    } else {
+      ss << ".";
     }
   }
   std::string s;
