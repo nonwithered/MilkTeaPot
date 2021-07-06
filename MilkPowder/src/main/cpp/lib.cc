@@ -95,6 +95,16 @@ void MilkPowder_Parse(T **self, void *obj, bool (*callback)(void *obj, uint8_t *
 }
 
 template<typename T>
+void MilkPowder_Dump(const T *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)) {
+  if (self == nullptr || callback == nullptr) {
+    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  }
+  std::vector<uint8_t> vec;
+  milkpowder_cast(self)->Dump(vec);
+  callback(obj, vec.data(), static_cast<size_t>(vec.size()));
+}
+
+template<typename T>
 void MilkPowder_Destroy(T *self) {
   if (self == nullptr) {
     throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
@@ -235,6 +245,10 @@ API_IMPL(MilkPowder_Midi_GetTrack, (const MilkPowder_Midi_t *self, uint16_t inde
   *item = milkpowder_cast(milkpowder_cast(self)->items()[index].get());
 })
 
+API_IMPL(MilkPowder_Midi_Dump, (const MilkPowder_Midi_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
+  MilkPowder_Dump(self, obj, callback);
+})
+
 // Track
 
 API_IMPL(MilkPowder_Track_Parse, (MilkPowder_Track_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
@@ -267,6 +281,10 @@ API_IMPL(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *ob
   for (const auto &it : milkpowder_cast(self)->items()) {
     callback(obj, milkpowder_cast(it.get()));
   }
+})
+
+API_IMPL(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
+  MilkPowder_Dump(self, obj, callback);
 })
 
 // Message
@@ -343,6 +361,10 @@ API_IMPL(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, const Mi
   MilkPowder_Message_To<&MilkPowder::Message::IsSysex>(self, item);
 })
 
+API_IMPL(MilkPowder_Message_Dump, (const MilkPowder_Message_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
+  MilkPowder_Dump(self, obj, callback);
+})
+
 // Event
 
 API_IMPL(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
@@ -390,6 +412,10 @@ API_IMPL(MilkPowder_Event_GetArgs, (const MilkPowder_Event_t *self, uint8_t *arg
   }
 })
 
+API_IMPL(MilkPowder_Event_Dump, (const MilkPowder_Event_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
+  MilkPowder_Dump(self, obj, callback);
+})
+
 // Meta
 
 API_IMPL(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
@@ -430,6 +456,10 @@ API_IMPL(MilkPowder_Meta_GetArgs, (const MilkPowder_Meta_t *self, const uint8_t 
   }
 })
 
+API_IMPL(MilkPowder_Meta_Dump, (const MilkPowder_Meta_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
+  MilkPowder_Dump(self, obj, callback);
+})
+
 // Sysex
 
 API_IMPL(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
@@ -465,6 +495,10 @@ API_IMPL(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *obj, v
   for (const auto &it : milkpowder_cast(self)->items()) {
     callback(obj, static_cast<uint32_t>(std::get<0>(it)), std::get<1>(it).data(), static_cast<uint32_t>(std::get<1>(it).size()));
   }
+})
+
+API_IMPL(MilkPowder_Sysex_Dump, (const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
+  MilkPowder_Dump(self, obj, callback);
 })
 
 } // extern "C"
