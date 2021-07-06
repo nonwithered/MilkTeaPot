@@ -6,7 +6,7 @@ void Launcher::LaunchPlay(std::list<std::string_view> &args) {
 }
 
 std::string_view Launcher::UsagePlay() {
-  return "";
+  return "Usage: milk play\n";
 }
 
 } // namespace Milk

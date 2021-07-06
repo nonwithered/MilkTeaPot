@@ -20,8 +20,6 @@ class Probe final {
 "Usage: milk probe [OPTIONS] [FILES]\n"
 "  -h, --help\n"
 "    print this help message\n"
-"  -v, --version\n"
-"    print version code\n"
 "  --log {d, i, w, e, debug, info, warn, error}\n"
 "    init log level, or no log\n"
 "  -x\n"
@@ -41,14 +39,6 @@ class Probe final {
     };
     callbacks_["--help"] = [this](auto &itr, auto &args) -> bool {
       ShowHelp();
-      return true;
-    };
-    callbacks_["-v"] = [this](auto &itr, auto &args) -> bool {
-      ShowVersion();
-      return true;
-    };
-    callbacks_["--version"] = [this](auto &itr, auto &args) -> bool {
-      ShowVersion();
       return true;
     };
     callbacks_["--log"] = [this](auto &itr, auto &args) -> bool {
@@ -98,10 +88,6 @@ class Probe final {
       help_ = true;
     }
     std::cerr << kUsage << std::endl;
-  }
-  void ShowVersion() {
-    help_ = true;
-    std::cout << "version: " << kVersion << std::endl;
   }
   bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     MilkPowder_Log_Level_t level = MilkPowder_Log_Level_t::ASSERT;
@@ -175,7 +161,7 @@ class Probe final {
       std::cerr << "Failed to read header type 0x" << FromBytesToStringHex(buf, count) << std::endl;
       return;
     }
-    buf[5] = '\0';
+    buf[4] = '\0';
     std::string type(reinterpret_cast<char *>(buf));
     if (type != "MThd") {
       std::cerr << "Error header type " << FromBytesToStr(reinterpret_cast<const uint8_t *>(type.data()), 4) << std::endl;
@@ -229,7 +215,7 @@ class Probe final {
         std::cerr << "Failed to read chunk type 0x" << FromBytesToStringHex(buf, count) << std::endl;
         return;
       }
-      buf[5] = '\0';
+      buf[4] = '\0';
       std::string type(reinterpret_cast<char *>(buf));
       // chunk length
       count = reader.Read(buf, 4);
