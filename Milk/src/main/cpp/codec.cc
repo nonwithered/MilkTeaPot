@@ -1,6 +1,7 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <vector>
 
 #include "launcher.h"
 
@@ -101,8 +102,8 @@ class Codec final {
     return true;
   }
   void TornApart(const std::list<std::string_view> &filenames) {
+    MilkPowder_Errno_t err;
     for (auto filename : filenames) {
-      MilkPowder_Errno_t err;
       MilkPowderHolder<MilkPowder_Midi_t> midi;
       {
         InputReader reader(filename);
@@ -138,7 +139,53 @@ class Codec final {
       }
     }
   }
-  void GenTarget(const std::list<std::string_view> &filenames, std::string_view target) {
+  void GenTarget(const std::list<std::string_view> &filenames, std::string_view name) {
+    MilkPowder_Errno_t err;
+    int32_t f = -1;
+    int32_t d = -1;
+    std::vector<MilkPowder_Track_t *> tracks;
+    for (auto filename : filenames) {
+      MilkPowderHolder<MilkPowder_Midi_t> midi;
+      {
+        InputReader reader(filename);
+        err = MilkPowder_Midi_Parse(&midi, &reader, InputReader::Reader);
+        check_err("read midi file");
+      }
+      uint16_t format;
+      err = MilkPowder_Midi_GetFormat(midi, &format);
+      check_err("get format");
+      uint16_t ntrks;
+      err = MilkPowder_Midi_GetNtrks(midi, &ntrks);
+      check_err("get ntrks");
+      uint16_t division;
+      err = MilkPowder_Midi_GetDivision(midi, &division);
+      check_err("get division");
+      if (f < 0) {
+        f = static_cast<int32_t>(format);
+      }
+      if (d < 0) {
+        d = static_cast<int32_t>(division);
+      }
+      for (uint16_t idx = 0; idx != ntrks; ++idx) {
+        const MilkPowder_Track_t *trk;
+        err = MilkPowder_Midi_GetTrack(midi, idx, &trk);
+        check_err("get track");
+        MilkPowderHolder<MilkPowder_Track_t> track;
+        err = MilkPowder_Track_Clone(trk, &track);
+        check_err("clone track");
+        tracks.push_back(track.release());
+      }
+    }
+    MilkPowderHolder<MilkPowder_Midi_t> target;
+    err = MilkPowder_Midi_Create(&target, f, static_cast<uint16_t>(tracks.size()), d, tracks.data());
+    check_err("create midi");
+    OutputWriter writer(name);
+    if (writer.NonOpen()) {
+      std::cerr << "Failed to open: " << name << std::endl;
+      return;
+    }
+    err = MilkPowder_Midi_Dump(target, &writer, OutputWriter::Writer);
+    check_err("dump midi");
   }
 };
 

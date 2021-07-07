@@ -50,7 +50,7 @@ uint32_t ParseUsize(std::function<std::tuple<uint8_t, bool>()> callback) {
 
 std::vector<uint8_t> ParseArgs(std::function<std::tuple<uint8_t, bool>()> callback) {
   uint32_t capacity = ParseUsize(callback);
-  std::vector<uint8_t> args(capacity);
+  std::vector<uint8_t> args;
   for (size_t i = 0; i != capacity; ++i) {
     args.emplace_back(ParseU8(callback));
   }
