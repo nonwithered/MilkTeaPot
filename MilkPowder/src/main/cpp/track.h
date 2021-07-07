@@ -23,7 +23,7 @@ class Track final {
  private:
   const std::vector<std::unique_ptr<Message>> items_;
   static std::vector<std::unique_ptr<Message>> Clone(const std::vector<std::unique_ptr<Message>> &another) {
-    std::vector<std::unique_ptr<Message>> items(another.size());
+    std::vector<std::unique_ptr<Message>> items;
     for (const auto &it : another) {
       items.emplace_back(it->Clone());
     }

@@ -11,6 +11,14 @@
 
 #include <milkpowder.h>
 
+#define check_err(s) \
+do { \
+  if (err != MilkPowder_Errno_t::Nil) { \
+    std::cerr << "Failed to " s " because of " << ErrMsg(err) << std::endl; \
+    return; \
+  } \
+} while (false)
+
 namespace Milk {
 
 constexpr char kVersion[] = "0.0.1-snapshot";
@@ -71,7 +79,7 @@ class MilkPowderHolder final {
 class InputReader {
  public:
   static bool Reader(void *obj, uint8_t *byte) {
-    InputReader &self= *reinterpret_cast<InputReader *>(obj);
+    InputReader &self = *reinterpret_cast<InputReader *>(obj);
     return self.Read(byte, 1) != 0;
   }
   InputReader(std::string_view filename)
@@ -93,6 +101,25 @@ class InputReader {
   }
  private:
   std::ifstream ifs_;
+};
+
+class OutputWriter {
+ public:
+  static void Writer(void *obj, const uint8_t *bytes, size_t len) {
+    OutputWriter &self = *reinterpret_cast<OutputWriter *>(obj);
+    self.Write(bytes, len);
+  }
+  OutputWriter(std::string_view filename)
+    : ofs_(filename.data(), std::ios::binary) {
+  }
+  void Write(const uint8_t *buf, size_t size) {
+    ofs_.write(reinterpret_cast<const char *>(buf), size);
+  }
+  bool NonOpen() const {
+    return !ofs_.is_open();
+  }
+ private:
+  std::ofstream ofs_;
 };
 
 inline std::string FromU32ToString(uint32_t n) {

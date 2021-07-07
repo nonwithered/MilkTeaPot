@@ -1,11 +1,3 @@
-#define check_err(s) \
-do { \
-  if (err != MilkPowder_Errno_t::Nil) { \
-    std::cerr << "Failed to " s " because of " << ErrMsg(err) << std::endl; \
-    return; \
-  } \
-} while (false)
-
 #include <map>
 #include <memory>
 #include <functional>

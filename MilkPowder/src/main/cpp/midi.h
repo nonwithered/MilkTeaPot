@@ -30,7 +30,7 @@ class Midi final {
   const uint16_t division_;
   const std::vector<std::unique_ptr<Track>> items_;
   static std::vector<std::unique_ptr<Track>> Clone(const std::vector<std::unique_ptr<Track>> &another) {
-    std::vector<std::unique_ptr<Track>> items(another.size());
+    std::vector<std::unique_ptr<Track>> items;
     for (const auto &it : another) {
       items.emplace_back(new Track(*it));
     }
