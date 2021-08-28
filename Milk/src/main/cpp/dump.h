@@ -1,15 +1,36 @@
+#ifndef MILK_DUMP_H_
+#define MILK_DUMP_H_
+
 #include <map>
 #include <memory>
 #include <functional>
 
-#include "launcher.h"
+#include "launch.h"
 
 namespace Milk {
 
-class Probe final {
+class Dump final : public Command {
  public:
-  static constexpr char kUsage[] =
-"Usage: milk probe [OPTIONS] [FILES]\n"
+  Dump() : Command(),
+      callbacks_(),
+      help_(false),
+      hex_(false) {
+    Callback("-h", &Dump::ShowHelp);
+    Callback("--help", &Dump::ShowHelp);
+    Callback("--log", &Dump::InitLog);
+    Callback("-x", &Dump::EnableHex);
+    Callback("-L", &Dump::DetailLevel);
+    Callback("--level", &Dump::DetailLevel);
+  }
+ protected:
+  void Launch(std::list<std::string_view> &args) final {
+    for (auto it : args) {
+      Preview(it);
+    }
+  }
+  std::string_view Usage() const final {
+    return
+"Usage: milk dump [OPTIONS] [FILES]\n"
 "  -h, --help\n"
 "    print this help message\n"
 "  --log {d, i, w, e, debug, info, warn, error}\n"
@@ -20,66 +41,24 @@ class Probe final {
 "  --level {h, d, e, v, header, data, events, verbose}\n"
 "    detail level\n"
 "    only headers by default\n"
-;
-  Probe()
-    : callbacks_(),
-      help_(false),
-      hex_(false) {
-    callbacks_["-h"] = [this](auto &itr, auto &args) -> bool {
-      ShowHelp();
-      return true;
-    };
-    callbacks_["--help"] = [this](auto &itr, auto &args) -> bool {
-      ShowHelp();
-      return true;
-    };
-    callbacks_["--log"] = [this](auto &itr, auto &args) -> bool {
-      return InitLog(itr, args);
-    };
-    callbacks_["-x"] = [this](auto &itr, auto &args) -> bool {
-      EnableHex();
-      return true;
-    };
-    callbacks_["-L"] = [this](auto &itr, auto &args) -> bool {
-      return DetailLevel(itr, args);
-    };
-    callbacks_["--level"] = [this](auto &itr, auto &args) -> bool {
-      return DetailLevel(itr, args);
-    };
+    ;
   }
-  void Launch(std::list<std::string_view> &args) {
-    for (auto itr = args.begin(); itr != args.end(); ) {
-      auto it = callbacks_.find(*itr);
-      if (it != callbacks_.end()) {
-        itr = args.erase(itr);
-        if (!it->second(itr, args)) {
-          ShowHelp();
-          return;
-        }
-      } else {
-        ++itr;
-      }
-    }
-    if (args.size() == 0) {
-      std::cerr << "milk probe: no input files" << std::endl;
-      return;
-    }
-    for (auto it : args) {
-      Preview(it);
-    }
+  std::string_view Name() const final {
+    return "dump";
   }
  private:
   std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   bool help_;
   bool hex_;
   uint8_t detail_ = 0;
-  void ShowHelp() {
+  bool ShowHelp(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     if (help_) {
-      return;
+      return true;
     } else {
       help_ = true;
     }
-    std::cerr << kUsage << std::endl;
+    std::cerr << Usage() << std::endl;
+    return true;
   }
   bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     MilkPowder_Log_Level_t level = MilkPowder_Log_Level_t::ASSERT;
@@ -103,8 +82,9 @@ class Probe final {
     itr = args.erase(itr);
     return true;
   }
-  void EnableHex() {
+  bool EnableHex(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     hex_ = true;
+    return true;
   }
   bool DetailLevel(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     if (itr == args.end()) {
@@ -438,12 +418,6 @@ class Probe final {
   }
 };
 
-void Launcher::LaunchProbe(std::list<std::string_view> &args) {
-  Probe().Launch(args);
-}
-
-std::string_view Launcher::UsageProbe() {
-  return Probe::kUsage;
-}
-
 } // namespace Milk
+
+#endif // ifndef  MILK_DUMP_H_

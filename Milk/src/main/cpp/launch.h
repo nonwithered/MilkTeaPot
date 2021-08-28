@@ -16,6 +16,8 @@
 
 #include "util.h"
 
+namespace Milk {
+
 inline std::string LogTime() {
   time_t t = time(nullptr);
   tm *p = localtime(&t);
@@ -76,45 +78,69 @@ inline void LogInitLevel(MilkPowder_Log_Level_t level) {
   MilkPowder_Log_Init(config);
 }
 
-namespace Milk {
-
-class Launcher final {
+class Command {
  public:
-  static void ShowHelp() {
-    std::cerr << UsageCodec() << std::endl;
-    std::cerr << UsageProbe() << std::endl;
-    std::cerr << UsagePlay() << std::endl;
+  static void LaunchMain(std::list<std::string_view> &args, const std::vector<std::unique_ptr<Milk::Command>> &arr) {
+    auto itr = arr.begin();
+    if (!args.empty()) {
+      while (itr != arr.end()) {
+        if ((*itr)->Name() == args.front()) {
+          break;
+        }
+        ++itr;
+      }
+      if (itr != arr.end()) {
+        args.pop_front();
+      } else {
+        itr = arr.begin();
+      }
+    }
+    (*itr)->show_help_ = [&arr]() -> void {
+      for (auto &it : arr) {
+        std::cerr << it->Usage() << std::endl;
+      }
+    };
+    (*itr)->LaunchInternal(args);
   }
+  virtual ~Command() = default;
+ protected:
   static void ShowVersion() {
     std::cout << "version: " << kVersion << "\n" << std::endl;
   }
-  Launcher(int argc, char *argv[])
-    : args_() {
-    for (int i = 1; i < argc; ++i) {
-      args_.emplace_back(argv[i]);
-    }
+  void ShowHelp() {
+    show_help_();
   }
-  void Launch() {
-    if (args_.front() == "probe") {
-      args_.pop_front();
-      LaunchProbe(args_);
-      return;
-    }
-    if (args_.front() == "play") {
-      args_.pop_front();
-      LaunchPlay(args_);
-      return;
-    }
-    LaunchCodec(args_);
+  virtual void Launch(std::list<std::string_view> &) = 0;
+  virtual std::string_view Usage() const = 0;
+  virtual std::string_view Name() const = 0;
+  template<typename CMD>
+  void Callback(std::string_view k, bool (CMD::* v)(std::list<std::string_view>::iterator &, std::list<std::string_view> &)) {
+    callbacks_[k] = [this, v](auto &itr, auto &args) -> bool {
+      return (dynamic_cast<CMD *>(this)->*v)(itr, args);
+    };
   }
  private:
-  std::list<std::string_view> args_;
-  static void LaunchCodec(std::list<std::string_view> &);
-  static void LaunchProbe(std::list<std::string_view> &);
-  static void LaunchPlay(std::list<std::string_view> &);
-  static std::string_view UsageCodec();
-  static std::string_view UsageProbe();
-  static std::string_view UsagePlay();
+  void LaunchInternal(std::list<std::string_view> &args) {
+    for (auto itr = args.begin(); itr != args.end(); ) {
+      auto it = callbacks_.find(*itr);
+      if (it != callbacks_.end()) {
+        itr = args.erase(itr);
+        if (!it->second(itr, args)) {
+          ShowHelp();
+          return;
+        }
+      } else {
+        ++itr;
+      }
+    }
+    if (args.size() == 0) {
+      std::cerr << "milk " << Name() << ": no input files" << std::endl;
+      return;
+    }
+    Launch(args);
+  }
+  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
+  std::function<void()> show_help_;
 };
 
 } // namespace Milk

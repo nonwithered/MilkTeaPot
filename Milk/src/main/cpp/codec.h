@@ -1,15 +1,38 @@
+#ifndef MILK_CODEC_H_
+#define MILK_CODEC_H_
+
 #include <map>
 #include <memory>
 #include <functional>
 #include <vector>
 
-#include "launcher.h"
+#include "launch.h"
 
 namespace Milk {
 
-class Codec final {
+class Codec final : public Command {
  public:
-  static constexpr char kUsage[] =
+  Codec() : Command(),
+      callbacks_(),
+      help_(false),
+      version_(false),
+      target_("") {
+    Callback("-h", &Codec::ShowHelp);
+    Callback("--help", &Codec::ShowHelp);
+    Callback("-v", &Codec::ShowVersion);
+    Callback("--version", &Codec::ShowVersion);
+    Callback("-o", &Codec::InitTarget);
+  }
+ protected:
+  void Launch(std::list<std::string_view> &args) final {
+    if (target_ == "") {
+      TornApart(args);
+    } else {
+      GenTarget(args, target_);
+    }
+  }
+  std::string_view Usage() const final {
+    return
 "Usage: milk [OPTIONS] [FILES]\n"
 "  -h, --help\n"
 "    print this help message\n"
@@ -18,75 +41,33 @@ class Codec final {
 "  -o\n"
 "    name of target file\n"
 "    or torn apart all files if this option is not set\n"
-;
-  Codec()
-    : callbacks_(),
-      help_(false),
-      version_(false),
-      target_("") {
-    callbacks_["-h"] = [this](auto &itr, auto &args) -> bool {
-      ShowHelp();
-      return true;
-    };
-    callbacks_["--help"] = [this](auto &itr, auto &args) -> bool {
-      ShowHelp();
-      return true;
-    };
-    callbacks_["-v"] = [this](auto &itr, auto &args) -> bool {
-      ShowVersion();
-      return true;
-    };
-    callbacks_["--version"] = [this](auto &itr, auto &args) -> bool {
-      ShowVersion();
-      return true;
-    };
-    callbacks_["-o"] = [this](auto &itr, auto &args) -> bool {
-      return InitTarget(itr, args);
-    };
+    ;
   }
-  void Launch(std::list<std::string_view> &args) {
-    for (auto itr = args.begin(); itr != args.end(); ) {
-      auto it = callbacks_.find(*itr);
-      if (it != callbacks_.end()) {
-        itr = args.erase(itr);
-        if (!it->second(itr, args)) {
-          ShowHelp();
-          return;
-        }
-      } else {
-        ++itr;
-      }
-    }
-    if (args.size() == 0) {
-      std::cerr << "milk: no input files" << std::endl;
-      return;
-    }
-    if (target_ == "") {
-      TornApart(args);
-    } else {
-      GenTarget(args, target_);
-    }
+  std::string_view Name() const final {
+    return "";
   }
  private:
   std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   bool help_;
   bool version_;
   std::string_view target_;
-  void ShowHelp() {
+  bool ShowHelp(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     if (help_) {
-      return;
+      return true;
     } else {
       help_ = true;
     }
-    Launcher::ShowHelp();
+    Command::ShowHelp();
+    return true;
   }
-  void ShowVersion() {
+  bool ShowVersion(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     if (version_) {
-      return;
+      return true;
     } else {
       version_ = true;
     }
-    Launcher::ShowVersion();
+    Command::ShowVersion();
+    return true;
   }
   bool InitTarget(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     if (itr == args.end()) {
@@ -189,12 +170,6 @@ class Codec final {
   }
 };
 
-void Launcher::LaunchCodec(std::list<std::string_view> &args) {
-  Codec().Launch(args);
-}
-
-std::string_view Launcher::UsageCodec() {
-  return Codec::kUsage;
-}
-
 } // namespace Milk
+
+#endif // ifndef MILK_CODEC_H_
