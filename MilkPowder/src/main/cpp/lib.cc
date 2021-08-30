@@ -51,16 +51,7 @@ struct milkpowder_cast_map<const MilkPowder_##T##_t> { \
 template<> \
 struct milkpowder_cast_map<MilkPowder_##T##_t> { \
   using Type = MilkPowder::T; \
-};
-milkpowder_cast_map_(Midi)
-milkpowder_cast_map_(Track)
-milkpowder_cast_map_(Message)
-milkpowder_cast_map_(Event)
-milkpowder_cast_map_(Meta)
-milkpowder_cast_map_(Sysex)
-#undef milkpowder_cast_map_
-
-#define milkpowder_cast_map_(T) \
+}; \
 template<> \
 struct milkpowder_cast_map<const MilkPowder::T> { \
   using Type = const MilkPowder_##T##_t; \
