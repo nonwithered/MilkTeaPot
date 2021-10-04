@@ -1,6 +1,11 @@
 #ifndef MILKPOWDER_LOG_H_
 #define MILKPOWDER_LOG_H_
 
+#ifdef NDEBUG
+#define LOG_PRINT(L, TAG, ...) \
+do { \
+} while (false)
+#else // ifdef NDEBUG
 #define LOG_PRINT(L, TAG, ...) \
 do { \
   MilkPowder::Log log = MilkPowder::Log::Instance(); \
@@ -10,6 +15,7 @@ do { \
     log(MilkPowder::Log::Level::L, TAG, buf); \
   } \
 } while (false)
+#endif // ifdef NDEBUG
 
 #include <cstdio>
 #include <cstdint>
