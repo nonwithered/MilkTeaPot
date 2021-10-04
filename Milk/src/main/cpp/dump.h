@@ -63,7 +63,7 @@ class Dump final : public Command {
   bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     MilkPowder_Log_Level_t level = MilkPowder_Log_Level_t::ASSERT;
     if (itr == args.end()) {
-      std::cerr << "milk probe --log: need log level" << std::endl;
+      std::cerr << "milk dump --log: need log level" << std::endl;
       return false;
     } else if (*itr == "d" || *itr == "debug") {
       level = MilkPowder_Log_Level_t::DEBUG;
@@ -75,7 +75,7 @@ class Dump final : public Command {
       level = MilkPowder_Log_Level_t::ERROR;
     }
     if (level == MilkPowder_Log_Level_t::ASSERT) {
-      std::cerr << "milk probe --log: invalid log level: " << *itr << std::endl;
+      std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
       return false;
     }
     LogInitLevel(level);
@@ -88,7 +88,7 @@ class Dump final : public Command {
   }
   bool DetailLevel(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     if (itr == args.end()) {
-      std::cerr << "milk probe --level: need detail level" << std::endl;
+      std::cerr << "milk dump --level: need detail level" << std::endl;
       return false;
     } else if (*itr == "h" || *itr == "header") {
       detail_ = 0;
@@ -99,7 +99,7 @@ class Dump final : public Command {
     } else if (*itr == "v" || *itr == "verbose") {
       detail_ = 3;
     } else {
-      std::cerr << "milk probe --level: invalid detail level: " << *itr << std::endl;
+      std::cerr << "milk dump --level: invalid detail level: " << *itr << std::endl;
       return false;
     }
     itr = args.erase(itr);
