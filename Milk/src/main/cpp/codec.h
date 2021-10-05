@@ -16,12 +16,15 @@ class Codec final : public Command {
       callbacks_(),
       help_(false),
       version_(false),
-      target_("") {
+      target_(""),
+      format_(-1) {
     Callback("-h", &Codec::ShowHelp);
     Callback("--help", &Codec::ShowHelp);
     Callback("-v", &Codec::ShowVersion);
     Callback("--version", &Codec::ShowVersion);
     Callback("-o", &Codec::InitTarget);
+    Callback("-fmt", &Codec::SetFormat);
+    Callback("--format", &Codec::SetFormat);
   }
  protected:
   void Launch(std::list<std::string_view> &args) final {
@@ -41,6 +44,9 @@ class Codec final : public Command {
 "  -o\n"
 "    name of target file\n"
 "    or torn apart all files if this option is not set\n"
+"  -fmt {0, 1, 2}\n"
+"  --format {0, 1, 2}\n"
+"    header format of output files\n"
     ;
   }
   std::string_view Name() const final {
@@ -51,6 +57,7 @@ class Codec final : public Command {
   bool help_;
   bool version_;
   std::string_view target_;
+  int32_t format_;
   bool ShowHelp(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     if (help_) {
       return true;
@@ -67,6 +74,23 @@ class Codec final : public Command {
       version_ = true;
     }
     Command::ShowVersion();
+    return true;
+  }
+  bool SetFormat(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
+    if (itr == args.end()) {
+      std::cerr << "milk --format: need format value" << std::endl;
+      return false;
+    } else if (*itr == "0") {
+      format_ = 0;
+    } else if (*itr == "1") {
+      format_ = 1;
+    } else if (*itr == "2") {
+      format_ = 2;
+    } else {
+      std::cerr << "milk --format: invalid format value: " << *itr << std::endl;
+      return false;
+    }
+    itr = args.erase(itr);
     return true;
   }
   bool InitTarget(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
@@ -100,6 +124,9 @@ class Codec final : public Command {
       uint16_t division;
       err = MilkPowder_Midi_GetDivision(midi, &division);
       check_err("get division");
+      if (format_ != -1) {
+        format = static_cast<uint16_t>(format_);
+      }
       for (uint16_t idx = 0; idx != ntrks; ++idx) {
         MilkPowder_Track_t *tracks[1];
         const MilkPowder_Track_t *trk;
@@ -125,6 +152,9 @@ class Codec final : public Command {
     int32_t f = -1;
     int32_t d = -1;
     std::vector<MilkPowder_Track_t *> tracks;
+    if (format_ != -1) {
+      f = format_;
+    }
     for (auto filename : filenames) {
       MilkPowderHolder<MilkPowder_Midi_t> midi;
       {
@@ -141,10 +171,10 @@ class Codec final : public Command {
       uint16_t division;
       err = MilkPowder_Midi_GetDivision(midi, &division);
       check_err("get division");
-      if (f < 0) {
+      if (f == -1) {
         f = static_cast<int32_t>(format);
       }
-      if (d < 0) {
+      if (d == -1) {
         d = static_cast<int32_t>(division);
       }
       for (uint16_t idx = 0; idx != ntrks; ++idx) {
@@ -158,7 +188,7 @@ class Codec final : public Command {
       }
     }
     MilkPowderHolder<MilkPowder_Midi_t> target;
-    err = MilkPowder_Midi_Create(&target, f, static_cast<uint16_t>(tracks.size()), d, tracks.data());
+    err = MilkPowder_Midi_Create(&target, static_cast<uint16_t>(f), static_cast<uint16_t>(tracks.size()), static_cast<uint16_t>(d), tracks.data());
     check_err("create midi");
     OutputWriter writer(name);
     if (writer.NonOpen()) {
