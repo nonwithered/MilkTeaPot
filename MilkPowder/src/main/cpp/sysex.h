@@ -18,20 +18,18 @@ class Sysex final : public Message {
   }
   Sysex(std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items) : Message(std::get<0>(items.front()), 0xf0), items_(std::move(items)) {
     if (items_.size() == 0) {
-      LOG_PRINT(ERROR, TAG, "ctor size %" PRIu32, static_cast<uint32_t>(items_.size()));
-      throw Except(Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ctor: size: 0");
+      THROW(InvalidParam, "size: 0");
     }
     for (size_t i = 0; i < items_.size() - 1; ++i) {
       const std::vector<uint8_t> &vec = std::get<1>(items_[i]);
       if (vec.size() != 0 && vec.back() == static_cast<uint8_t>(0xf7)) {
-        LOG_PRINT(WARN, TAG, "ctor invalid 0xf7 %s", std::string(reinterpret_cast<const char *>(vec.data()), vec.size()).data());
+        LOG_PRINT(WARN, TAG, "ctor: invalid 0xf7");
       }
     }
     const std::vector<uint8_t> & vec = std::get<1>(items_.back());
-    if (vec.size() == 0) {
-      LOG_PRINT(WARN, TAG, "ctor need 0xf7");
-    } else if (vec.back() != static_cast<uint8_t>(0xf7)) {
-      LOG_PRINT(WARN, TAG, "ctor need 0xf7 %s", std::string(reinterpret_cast<const char *>(vec.data()), vec.size()).data());
+    if (vec.size() == 0 || vec.back() != static_cast<uint8_t>(0xf7)) {
+      LOG_PRINT(WARN, TAG, "ctor: need 0xf7");
     }
   }
   const std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> &items() const { return items_; }

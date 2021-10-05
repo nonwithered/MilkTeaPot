@@ -13,6 +13,8 @@
 
 namespace {
 
+constexpr char TAG[] = "api";
+
 inline MilkPowder_Errno_t milkpowder_errno_map(MilkPowder::Except::Type type) {
   switch (type) {
     case MilkPowder::Except::Type::Assertion: return MilkPowder_Errno_t::Assertion;
@@ -30,11 +32,16 @@ MilkPowder_API MilkPowder_Errno_t \
 section list { \
   LOG_PRINT(INFO, "api_begin", #section); \
   MilkPowder::Defer defer([]() -> void { LOG_PRINT(INFO, "api_end", #section); }); \
-  try \
+  try { \
     block \
-  catch (MilkPowder::Except &e) { \
+  } catch (MilkPowder::Except &e) { \
+    /* todo */ \
     return milkpowder_errno_map(e.type()); \
+  } catch (std::exception &e) { \
+    /* todo */ \
+    return MilkPowder_Errno_t::Unknown; \
   } \
+  /* todo */ \
   return MilkPowder_Errno_t::Nil; \
 }
 
@@ -75,9 +82,8 @@ constexpr To *milkpowder_cast(From *it) {
 
 template<typename T>
 void MilkPowder_Parse(T **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)) {
-  if (self == nullptr || callback == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(callback);
   *self = milkpowder_cast(milkpowder_cast_map<T>::Type::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
     bool ret = callback(obj, &byte);
@@ -87,9 +93,8 @@ void MilkPowder_Parse(T **self, void *obj, bool (*callback)(void *obj, uint8_t *
 
 template<typename T>
 void MilkPowder_Dump(const T *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)) {
-  if (self == nullptr || callback == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(callback);
   std::vector<uint8_t> vec;
   milkpowder_cast(self)->Dump(vec);
   callback(obj, vec.data(), static_cast<size_t>(vec.size()));
@@ -97,44 +102,38 @@ void MilkPowder_Dump(const T *self, void *obj, void (*callback)(void *obj, const
 
 template<typename T>
 void MilkPowder_Destroy(T *self) {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
   delete milkpowder_cast(self);
 }
 
 template<typename T>
 void MilkPowder_Message_From(MilkPowder_Message_t **self, T *item) {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(item);
   *self = milkpowder_cast(dynamic_cast<MilkPowder::Message *>(milkpowder_cast(item)));
 }
 
 template<bool (MilkPowder::Message::* Is)() const>
 void MilkPowder_Message_Is(const MilkPowder_Message_t *self, bool *item) {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(item);
   *item = (milkpowder_cast(self)->*Is)();
 }
 
 template<bool (MilkPowder::Message::* Is)() const, typename T>
 void MilkPowder_Message_To(const MilkPowder_Message_t *self, T **item) {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(item);
   if (!(milkpowder_cast(self)->*Is)()) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::LogicError);
+    THROW(LogicError, "must ensure the type is matched");
   }
   *item = milkpowder_cast(dynamic_cast<typename milkpowder_cast_map<T>::Type *>(milkpowder_cast(self)));
 }
 
 template<typename T>
 void MilkPowder_Clone(const T *self, T **another) {
-  if (self == nullptr || another == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(another);
   *another = milkpowder_cast(new typename milkpowder_cast_map<T>::Type(*milkpowder_cast(self)));
 }
 
@@ -187,8 +186,11 @@ API_IMPL(MilkPowder_Midi_Parse, (MilkPowder_Midi_t **self, void *obj, bool (*cal
 })
 
 API_IMPL(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t format, uint16_t ntrks, uint16_t division, MilkPowder_Track_t *items[]), {
-  if (self == nullptr || items == nullptr && ntrks != 0) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  THROW_IF_NULL(self);
+  if (ntrks != 0) {
+    THROW_IF_NULL(items);
+  } else {
+    LOG_PRINT(WARN, TAG, "MilkPowder_Midi_Create: ntrks equals 0");
   }
   std::vector<std::unique_ptr<MilkPowder::Track>> vec;
   for (uint16_t i = 0; i < ntrks; ++i) {
@@ -206,32 +208,28 @@ API_IMPL(MilkPowder_Midi_Destroy, (MilkPowder_Midi_t *self), {
 })
 
 API_IMPL(MilkPowder_Midi_GetFormat, (const MilkPowder_Midi_t *self, uint16_t *format), {
-  if (self == nullptr || format == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(format);
   *format = milkpowder_cast(self)->format();
 })
 
 API_IMPL(MilkPowder_Midi_GetNtrks, (const MilkPowder_Midi_t *self, uint16_t *ntrks), {
-  if (self == nullptr || ntrks == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(ntrks);
   *ntrks = static_cast<uint16_t>(milkpowder_cast(self)->items().size());
 })
 
 API_IMPL(MilkPowder_Midi_GetDivision, (const MilkPowder_Midi_t *self, uint16_t *division), {
-  if (self == nullptr || division == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(division);
   *division = milkpowder_cast(self)->division();
 })
 
 API_IMPL(MilkPowder_Midi_GetTrack, (const MilkPowder_Midi_t *self, uint16_t index, const MilkPowder_Track_t **item), {
-  if (self == nullptr || item == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(item);
   if (index >= static_cast<uint16_t>(milkpowder_cast(self)->items().size())) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+    THROW_FORMAT(InvalidParam, "index: %" PRIu16 ", size: %" PRIu16, index, static_cast<uint16_t>(milkpowder_cast(self)->items().size()));
   }
   *item = milkpowder_cast(milkpowder_cast(self)->items()[index].get());
 })
@@ -247,8 +245,11 @@ API_IMPL(MilkPowder_Track_Parse, (MilkPowder_Track_t **self, void *obj, bool (*c
 })
 
 API_IMPL(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_Message_t *items[], uint32_t length), {
-  if (self == nullptr || (length != 0 && items == nullptr)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  THROW_IF_NULL(self);
+  if (length != 0) {
+    THROW_IF_NULL(items);
+  } else {
+    LOG_PRINT(WARN, TAG, "MilkPowder_Track_Create: length equals 0");
   }
   std::vector<std::unique_ptr<MilkPowder::Message>> vec;
   for (uint16_t i = 0; i < length; ++i) {
@@ -266,9 +267,8 @@ API_IMPL(MilkPowder_Track_Destroy, (MilkPowder_Track_t *self), {
 })
 
 API_IMPL(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *obj, void (*callback)(void *obj, const MilkPowder_Message_t *item)), {
-  if (self == nullptr || callback == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(callback);
   for (const auto &it : milkpowder_cast(self)->items()) {
     callback(obj, milkpowder_cast(it.get()));
   }
@@ -281,9 +281,8 @@ API_IMPL(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, void *obj, void
 // Message
 
 API_IMPL(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
-  if (self == nullptr || callback == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(callback);
   *self = milkpowder_cast(MilkPowder::Message::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
     bool ret = callback(obj, &byte);
@@ -292,9 +291,8 @@ API_IMPL(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, void *obj, bool
 })
 
 API_IMPL(MilkPowder_Message_Clone, (const MilkPowder_Message_t *self, MilkPowder_Message_t **another), {
-  if (self == nullptr || another == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(another);
   *another = milkpowder_cast(milkpowder_cast(self)->Clone().release());
 })
 
@@ -303,16 +301,14 @@ API_IMPL(MilkPowder_Message_Destroy, (MilkPowder_Message_t *self), {
 })
 
 API_IMPL(MilkPowder_Message_GetDelta, (const MilkPowder_Message_t *self, uint32_t *delta), {
-  if (self == nullptr || delta == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(delta);
   *delta = milkpowder_cast(self)->delta();
 })
 
 API_IMPL(MilkPowder_Message_GetType, (const MilkPowder_Message_t *self, uint8_t *type), {
-  if (self == nullptr || type == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(type);
   *type = milkpowder_cast(self)->type();
 })
 
@@ -359,9 +355,8 @@ API_IMPL(MilkPowder_Message_Dump, (const MilkPowder_Message_t *self, void *obj, 
 // Event
 
 API_IMPL(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
-  if (self == nullptr || callback == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(callback);
   *self = milkpowder_cast(MilkPowder::Event::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
     bool ret = callback(obj, &byte);
@@ -370,9 +365,7 @@ API_IMPL(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, void *obj, bool (*c
 })
 
 API_IMPL(MilkPowder_Event_Create, (MilkPowder_Event_t **self, uint32_t delta, uint8_t type, uint8_t arg0, uint8_t arg1), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
   *self = milkpowder_cast(new MilkPowder::Event(delta, type, std::make_tuple(arg0, arg1)));
 })
 
@@ -385,16 +378,14 @@ API_IMPL(MilkPowder_Event_Destroy, (MilkPowder_Event_t *self), {
 })
 
 API_IMPL(MilkPowder_Event_GetType, (const MilkPowder_Event_t *self, uint8_t *type), {
-  if (self == nullptr || type == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(type);
   *type = milkpowder_cast(self)->type();
 })
 
 API_IMPL(MilkPowder_Event_GetArgs, (const MilkPowder_Event_t *self, uint8_t *args), {
-  if (self == nullptr || args == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(args);
   uint8_t type = milkpowder_cast(self)->type() & 0xf0;
   if (type != 0xc0 && type != 0xd0) {
     std::tie(args[0], args[1]) = milkpowder_cast(self)->args();
@@ -414,8 +405,11 @@ API_IMPL(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, void *obj, bool (*cal
 })
 
 API_IMPL(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t *args, uint32_t length), {
-  if (self == nullptr || (length != 0 && args == nullptr)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  THROW_IF_NULL(self);
+  if (length != 0) {
+    THROW_IF_NULL(args);
+  } else {
+    LOG_PRINT(WARN, TAG, "MilkPowder_Meta_Create: length equals 0");
   }
   *self = milkpowder_cast(new MilkPowder::Meta(delta, type, std::vector<uint8_t>(args, args + length)));
 })
@@ -429,16 +423,15 @@ API_IMPL(MilkPowder_Meta_Destroy, (MilkPowder_Meta_t *self), {
 })
 
 API_IMPL(MilkPowder_Meta_GetType, (const MilkPowder_Meta_t *self, uint8_t *type), {
-  if (self == nullptr || type == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(type);
   *type = milkpowder_cast(self)->type();
 })
 
 API_IMPL(MilkPowder_Meta_GetArgs, (const MilkPowder_Meta_t *self, const uint8_t **args, uint32_t *length), {
-  if (self == nullptr || args == nullptr || length == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
+  THROW_IF_NULL(args);
+  THROW_IF_NULL(length);
   *length = static_cast<uint32_t>(milkpowder_cast(self)->args().size());
   if (*length != 0) {
     *args = milkpowder_cast(self)->args().data();
@@ -461,8 +454,13 @@ API_IMPL(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, void *obj, bool (*c
 using Vec = std::vector<std::tuple<uint32_t, std::vector<uint8_t>>>;
 
 API_IMPL(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *args[], uint32_t length[], uint32_t size), {
-  if (self == nullptr || (size != 0 && (delta == nullptr || args == nullptr || length == nullptr))) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
+  THROW_IF_NULL(self);
+  if (size != 0) {
+    THROW_IF_NULL(delta);
+    THROW_IF_NULL(args);
+    THROW_IF_NULL(length);
+  } else {
+    LOG_PRINT(WARN, TAG, "MilkPowder_Sysex_Create: size equals 0");
   }
   Vec vec;
   for (uint32_t i = 0; i < size; ++i) {
@@ -480,9 +478,7 @@ API_IMPL(MilkPowder_Sysex_Destroy, (MilkPowder_Sysex_t *self), {
 })
 
 API_IMPL(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, uint32_t delta, const uint8_t *args, uint32_t length)), {
-  if (self == nullptr) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::NullPointer);
-  }
+  THROW_IF_NULL(self);
   for (const auto &it : milkpowder_cast(self)->items()) {
     callback(obj, static_cast<uint32_t>(std::get<0>(it)), std::get<1>(it).data(), static_cast<uint32_t>(std::get<1>(it).size()));
   }

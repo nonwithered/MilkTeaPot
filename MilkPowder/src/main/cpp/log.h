@@ -1,6 +1,8 @@
 #ifndef MILKPOWDER_LOG_H_
 #define MILKPOWDER_LOG_H_
 
+#define LOG_BUFFER_SIZE 128
+
 #ifdef NDEBUG
 #define LOG_PRINT(L, TAG, ...) \
 do { \
@@ -10,8 +12,8 @@ do { \
 do { \
   MilkPowder::Log log = MilkPowder::Log::Instance(); \
   if (log.level() <= MilkPowder::Log::Level::L) { \
-    char buf[128]; \
-    sprintf(buf, ##__VA_ARGS__); \
+    char buf[LOG_BUFFER_SIZE]; \
+    snprintf(buf, LOG_BUFFER_SIZE, ##__VA_ARGS__); \
     log(MilkPowder::Log::Level::L, TAG, buf); \
   } \
 } while (false)

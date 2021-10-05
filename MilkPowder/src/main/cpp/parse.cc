@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "log.h"
 
 #include "midi.h"
@@ -13,7 +15,7 @@ constexpr char TAG[] = "parse";
 inline uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
   auto ret = callback();
   if (!std::get<1>(ret)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::EndOfFile);
+    THROW(EndOfFile, "");
   }
   return std::get<0>(ret);
 }
@@ -37,8 +39,8 @@ uint32_t ParseUsize(std::function<std::tuple<uint8_t, bool>()> callback) {
     arr[len++] = last = ParseU8(callback);
   }
   if (len == 4 && last >= 0x80) {
-    LOG_PRINT(ERROR, TAG, "ParseUsize len [%" PRIx8 ", %" PRIx8 ", %" PRIx8 ", %" PRIx8 "]", arr[0], arr[1], arr[2], arr[3]);
-    throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+    LOG_PRINT(ERROR, TAG, "ParseUsize len [ %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 " ]", arr[0], arr[1], arr[2], arr[3]);
+    THROW_FORMAT(InvalidParam, "len [ %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 " ]", arr[0], arr[1], arr[2], arr[3]);
   }
   uint32_t ret = arr[0] & 0x7f;
   for (size_t i = 1; i != len; ++i) {
@@ -48,13 +50,17 @@ uint32_t ParseUsize(std::function<std::tuple<uint8_t, bool>()> callback) {
   return ret;
 }
 
+std::vector<uint8_t> ParseVecN(std::function<std::tuple<uint8_t, bool>()> callback, size_t n) {
+  std::vector<uint8_t> vec;
+  for (size_t i = 0; i != n; ++i) {
+    vec.emplace_back(ParseU8(callback));
+  }
+  return vec;
+}
+
 std::vector<uint8_t> ParseArgs(std::function<std::tuple<uint8_t, bool>()> callback) {
   uint32_t capacity = ParseUsize(callback);
-  std::vector<uint8_t> args;
-  for (size_t i = 0; i != capacity; ++i) {
-    args.emplace_back(ParseU8(callback));
-  }
-  return args;
+  return ParseVecN(callback, static_cast<size_t>(capacity));
 }
 
 std::unique_ptr<MilkPowder::Event> ParseEvent(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
@@ -62,8 +68,8 @@ std::unique_ptr<MilkPowder::Event> ParseEvent(std::function<std::tuple<uint8_t, 
   if (type < 0x80 || type >= 0xf0) {
     type = ParseU8(callback);
     if (type < 0x80 || type >= 0xf0) {
-    LOG_PRINT(ERROR, TAG, "ParseEvent type %" PRIu8, type);
-      throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+    LOG_PRINT(ERROR, TAG, "ParseEvent type %02" PRIx8, type);
+      THROW_FORMAT(InvalidParam, "type %02" PRIx8, type);
     }
   }
   std::tuple<uint8_t, uint8_t> args = std::make_tuple(ParseU8(callback), 0);
@@ -78,13 +84,14 @@ std::unique_ptr<MilkPowder::Meta> ParseMeta(std::function<std::tuple<uint8_t, bo
   if (type != 0xff) {
     type = ParseU8(callback);
     if (type != 0xff) {
-      LOG_PRINT(ERROR, TAG, "ParseMeta 0xff %" PRIu8, type);
-      throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ParseMeta 0xff %02" PRIx8, type);
+      THROW_FORMAT(InvalidParam, "0xff %02" PRIx8, type);
     }
   }
   type = ParseU8(callback);
   if (type >= 0x80) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ParseMeta type %02" PRIx8, type);
+      THROW_FORMAT(InvalidParam, "type %02" PRIx8, type);
   }
   std::vector<uint8_t> args = ParseArgs(callback);
   return std::unique_ptr<MilkPowder::Meta>(new MilkPowder::Meta(delta, type, std::move(args)));
@@ -95,8 +102,8 @@ std::unique_ptr<MilkPowder::Sysex> ParseSysex(std::function<std::tuple<uint8_t, 
   if (type != 0xf0) {
     type = ParseU8(callback);
     if (type != 0xf0) {
-      LOG_PRINT(ERROR, TAG, "ParseSysex 0xf0 %" PRIu8, type);
-      throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ParseSysex 0xf0 %02" PRIx8, type);
+      THROW_FORMAT(InvalidParam, "0xf0 %02" PRIx8, type);
     }
   }
   std::vector<uint8_t> args = ParseArgs(callback);
@@ -107,8 +114,8 @@ std::unique_ptr<MilkPowder::Sysex> ParseSysex(std::function<std::tuple<uint8_t, 
     delta = ParseUsize(callback);
     type = ParseU8(callback);
     if (type != 0xf7) {
-      LOG_PRINT(ERROR, TAG, "ParseSysex 0xf7 %" PRIu8, type);
-      throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ParseSysex 0xf7 %02" PRIx8, type);
+      THROW_FORMAT(InvalidParam, "0xf7 %02" PRIx8, type);
     }
     args = ParseArgs(callback);
     last = args.back();
@@ -123,22 +130,15 @@ namespace MilkPowder {
 
 std::unique_ptr<Midi> Midi::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
   LOG_PRINT(DEBUG, TAG, "Midi::Parse");
-  if (static_cast<uint8_t>('M') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
-  }
-  if (static_cast<uint8_t>('T') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
-  }
-  if (static_cast<uint8_t>('h') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
-  }
-  if (static_cast<uint8_t>('d') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
+  std::vector<uint8_t> head = ParseVecN(callback, 4);
+  if (memcmp(head.data(), "MThd", 4) != 0) {
+    head.push_back(0);
+    THROW_FORMAT(Unsupported, "MThd: %s", reinterpret_cast<char *>(head.data()));
   }
   uint32_t len = ParseU32(callback);
   if (static_cast<uint32_t>(6) != len) {
     LOG_PRINT(ERROR, TAG, "Midi::Parse 0x00000006 %" PRIu32, len);
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
+    THROW_FORMAT(Unsupported, "0x00000006 %" PRIu32, len);
   }
   uint16_t format = ParseU16(callback);
   uint16_t ntrks = ParseU16(callback);
@@ -152,17 +152,10 @@ std::unique_ptr<Midi> Midi::Parse(std::function<std::tuple<uint8_t, bool>()> cal
   
 std::unique_ptr<Track> Track::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
   LOG_PRINT(DEBUG, TAG, "Track::Parse");
-  if (static_cast<uint8_t>('M') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
-  }
-  if (static_cast<uint8_t>('T') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
-  }
-  if (static_cast<uint8_t>('r') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
-  }
-  if (static_cast<uint8_t>('k') != ParseU8(callback)) {
-    throw MilkPowder::Except(MilkPowder::Except::Type::Unsupported);
+  std::vector<uint8_t> head = ParseVecN(callback, 4);
+  if (memcmp(head.data(), "MTrk", 4) != 0) {
+    head.push_back(0);
+    THROW_FORMAT(Unsupported, "MTrk: %s", reinterpret_cast<char *>(head.data()));
   }
   const uint32_t capacity = ParseU32(callback);
   uint32_t len = capacity;
@@ -195,8 +188,8 @@ std::unique_ptr<Message> Message::Parse(std::function<std::tuple<uint8_t, bool>(
     return ParseSysex(callback, delta, 0xf0);
   } else if (type < 0x80) {
     if (last < 0x80 || last >= 0xf0) {
-      LOG_PRINT(ERROR, TAG, "Message::Parse last event %" PRIu8, last);
-      throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "Message::Parse last event %02" PRIx8, last);
+      THROW_FORMAT(InvalidParam, "last event %02" PRIx8, last);
     }
     std::tuple<uint8_t, uint8_t> args = std::make_tuple(type, 0);
     type = last;
@@ -205,8 +198,8 @@ std::unique_ptr<Message> Message::Parse(std::function<std::tuple<uint8_t, bool>(
     }
     return std::unique_ptr<MilkPowder::Event>(new MilkPowder::Event(delta, type, args));
   } else {
-    LOG_PRINT(ERROR, TAG, "Message::Parse type %" PRIu8, last);
-    throw MilkPowder::Except(MilkPowder::Except::Type::InvalidParam);
+    LOG_PRINT(ERROR, TAG, "Message::Parse type %02" PRIx8, last);
+      THROW_FORMAT(InvalidParam, "type %02" PRIx8, last);
   }
 }
   

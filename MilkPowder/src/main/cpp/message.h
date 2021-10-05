@@ -19,12 +19,12 @@ class Message {
   virtual ~Message() = default;
   Message(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
     if (delta > 0x0fff'ffff) {
-      LOG_PRINT(ERROR, TAG, "ctor type %" PRIu32, delta);
-      throw Except(Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ctor: delta: %08" PRIx32, delta);
+      THROW_FORMAT(InvalidParam, "delta: %08" PRIx32, delta);
     }
     if (type < 0x80 || (type > 0xf0 && type < 0xff)) {
-      LOG_PRINT(ERROR, TAG, "ctor type %" PRIu8, type);
-      throw Except(Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ctor type %02" PRIx8, type);
+      THROW_FORMAT(InvalidParam, "type: %02" PRIx8, type);
     }
   }
   bool IsEvent() const {
@@ -41,7 +41,7 @@ class Message {
  private:
   const uint32_t delta_;
   const uint8_t type_;
-  static constexpr char TAG[] = "meta";
+  static constexpr char TAG[] = "message";
 };
 
 } // namespace MilkPowder

@@ -15,8 +15,8 @@ class Meta final : public Message {
   }
   Meta(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : Message(delta, 0xff), type_(type), args_(std::move(args)) {
     if (type >= 0x80) {
-      LOG_PRINT(ERROR, TAG, "ctor type %" PRIu32, delta);
-      throw Except(Except::Type::InvalidParam);
+      LOG_PRINT(ERROR, TAG, "ctor: type: %02" PRIx8, type);
+      THROW_FORMAT(InvalidParam, "type: %02" PRIx8, type);
     }
   }
   uint8_t type() const { return type_; }

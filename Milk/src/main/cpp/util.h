@@ -14,7 +14,7 @@
 #define check_err(s) \
 do { \
   if (err != MilkPowder_Errno_t::Nil) { \
-    std::cerr << "Failed to " s " because of " << ErrMsg(err) << std::endl; \
+    std::cerr << "Failed to " s " because of " << ErrName(err) << std::endl; \
     return; \
   } \
 } while (false)
@@ -172,7 +172,7 @@ inline std::string FromUsizeToStringHex(uint32_t n) {
   }
   std::string s;
   ss >> s;
-  return std::move(s);
+  return s;
 }
 
 inline uint32_t FromBytesToU32(const uint8_t bytes[]) {
@@ -194,7 +194,7 @@ inline std::string FromBytesToStringHex(const uint8_t bytes[], size_t length) {
   }
   std::string s;
   ss >> s;
-  return std::move(s);
+  return s;
 }
 
 inline std::string FromBytesToString(const uint8_t bytes[], size_t length) {
@@ -209,7 +209,7 @@ inline std::string FromBytesToString(const uint8_t bytes[], size_t length) {
   }
   std::string s;
   ss >> s;
-  return std::move(s);
+  return s;
 }
 
 inline std::string FromBytesToStringDot(const uint8_t bytes[], size_t length) {
@@ -224,7 +224,7 @@ inline std::string FromBytesToStringDot(const uint8_t bytes[], size_t length) {
   }
   std::string s;
   ss >> s;
-  return std::move(s);
+  return s;
 }
 
 } // namespace Milk

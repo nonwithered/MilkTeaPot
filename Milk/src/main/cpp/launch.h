@@ -30,7 +30,7 @@ inline std::string LogTime() {
   return s[0] + " " + s[1];
 }
 
-inline const char *ErrMsg(MilkPowder_Errno_t type) {
+inline const char *ErrName(MilkPowder_Errno_t type) {
   switch (type) {
     case MilkPowder_Errno_t::Nil: return "Nil";
     case MilkPowder_Errno_t::Assertion: return "Assertion";
