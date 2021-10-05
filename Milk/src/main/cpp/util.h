@@ -15,13 +15,46 @@
 do { \
   if (err != MilkPowder_Err_t::Nil) { \
     std::cerr << "Failed to " s " because of " << ErrName(err) << ": " << MilkPowder_Err_What() << std::endl; \
-    return; \
+    exit(0); \
   } \
 } while (false)
 
 namespace Milk {
 
 constexpr char kVersion[] = "0.0.1-snapshot";
+
+inline std::string LogTime() {
+  time_t t = time(nullptr);
+  tm *p = localtime(&t);
+  std::stringstream ss[2];
+  std::string s[2];
+  ss[0] << (p->tm_year + 1900) << "-" << (p->tm_mon + 1) << "-" << p->tm_mday;
+  ss[0] >> s[0];
+  ss[1] << p->tm_hour << ":" << p->tm_min << ":" << p->tm_sec;
+  ss[1] >> s[1];
+  return s[0] + " " + s[1];
+}
+
+inline const char *ErrName(MilkPowder_Err_t type) {
+  switch (type) {
+    case MilkPowder_Err_t::Nil: return "Nil";
+    case MilkPowder_Err_t::Assertion: return "Assertion";
+    case MilkPowder_Err_t::NullPointer: return "NullPointer";
+    case MilkPowder_Err_t::Unsupported: return "Unsupported";
+    case MilkPowder_Err_t::EndOfFile: return "EndOfFile";
+    case MilkPowder_Err_t::InvalidParam: return "InvalidParam";
+    case MilkPowder_Err_t::LogicError: return "LogicError";
+    default: return "Unknown";
+  }
+}
+
+template<typename Res, typename... Args>
+Res (*MilkPowderCallback(const std::function<Res(Args...)> &))(void *, Args...) {
+  return [](void *obj, Args... args) -> Res {
+    std::function<Res(Args...)> &callback = *reinterpret_cast<std::function<Res(Args...)> *>(obj);
+    return callback(args...);
+  };
+}
 
 template<typename T>
 struct MilkPowderDeletor final {

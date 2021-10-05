@@ -18,10 +18,7 @@ class Message {
   virtual std::unique_ptr<Message> Clone() const = 0;
   virtual ~Message() = default;
   Message(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
-    if (delta > 0x0fff'ffff) {
-      LOG_PRINT(ERROR, TAG, "ctor: delta: %08" PRIx32, delta);
-      THROW_FORMAT(InvalidParam, "delta: %08" PRIx32, delta);
-    }
+    CheckDelta(delta);
     if (type < 0x80 || (type > 0xf0 && type < 0xff)) {
       LOG_PRINT(ERROR, TAG, "ctor type %02" PRIx8, type);
       THROW_FORMAT(InvalidParam, "type: %02" PRIx8, type);
@@ -36,12 +33,22 @@ class Message {
   bool IsSysex() const {
     return type_ == 0xf0;
   }
+  void delta(uint32_t delta) {
+    CheckDelta(delta);
+    delta_ = delta;
+  }
   uint32_t delta() const { return delta_; }
   uint8_t type() const { return type_; }
  private:
-  const uint32_t delta_;
+  uint32_t delta_;
   const uint8_t type_;
   static constexpr char TAG[] = "message";
+  static void CheckDelta(uint32_t delta) {
+    if (delta > 0x0fff'ffff) {
+      LOG_PRINT(ERROR, TAG, "ctor: delta: %08" PRIx32, delta);
+      THROW_FORMAT(InvalidParam, "delta: %08" PRIx32, delta);
+    }
+  }
 };
 
 } // namespace MilkPowder

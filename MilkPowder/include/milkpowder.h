@@ -134,6 +134,9 @@ MilkPowder_API MilkPowder_Err_t
 MilkPowder_Message_Destroy(MilkPowder_Message_t *self);
 
 MilkPowder_API MilkPowder_Err_t
+MilkPowder_Message_SetDelta(MilkPowder_Message_t *self, uint32_t delta);
+
+MilkPowder_API MilkPowder_Err_t
 MilkPowder_Message_GetDelta(const MilkPowder_Message_t *self, uint32_t *delta);
 
 MilkPowder_API MilkPowder_Err_t

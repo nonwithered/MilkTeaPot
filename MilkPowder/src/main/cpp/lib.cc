@@ -313,6 +313,11 @@ API_IMPL(MilkPowder_Message_Destroy, (MilkPowder_Message_t *self), {
   MilkPowder_Destroy(self);
 })
 
+API_IMPL(MilkPowder_Message_SetDelta, (MilkPowder_Message_t *self, uint32_t delta), {
+  THROW_IF_NULL(self);
+  milkpowder_cast(self)->delta(delta);
+})
+
 API_IMPL(MilkPowder_Message_GetDelta, (const MilkPowder_Message_t *self, uint32_t *delta), {
   THROW_IF_NULL(self);
   THROW_IF_NULL(delta);
