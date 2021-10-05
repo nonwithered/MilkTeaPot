@@ -1,18 +1,18 @@
 project(milk)
 
-set(SOURCE_NAMES
+set(src_files
     "main.cc"
 )
 
-set(SOURCE_DIR
+set(src_dir
     "src/main/cpp"
 )
 
-foreach(it ${SOURCE_NAMES})
-    list(APPEND SOURCE_FILES "${SOURCE_DIR}/${it}")
+foreach(it ${src_files})
+    list(APPEND src_paths "${src_dir}/${it}")
 endforeach(it)
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+add_executable(${PROJECT_NAME} ${src_paths})
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE milkpowder_static

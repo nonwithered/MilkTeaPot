@@ -1,26 +1,26 @@
 project(milkpowder)
 
-set(SOURCE_NAMES
+set(src_files
     "lib.cc"
     "parse.cc"
     "dump.cc"
 )
 
-set(SOURCE_DIR
-    "src/main/cpp"
+set(src_dir
+    "src/main/cpp/"
 )
 
-foreach(it ${SOURCE_NAMES})
-    list(APPEND SOURCE_FILES "${SOURCE_DIR}/${it}")
+foreach(it ${src_files})
+    list(APPEND src_paths "${src_dir}${it}")
 endforeach(it)
 
-add_library(${PROJECT_NAME}_static STATIC ${SOURCE_FILES})
+add_library(${PROJECT_NAME}_static STATIC ${src_paths})
 
 target_include_directories(${PROJECT_NAME}_static
     PUBLIC "include"
 )
 
-# add_library(${PROJECT_NAME}_shared SHARED ${SOURCE_FILES})
+# add_library(${PROJECT_NAME}_shared SHARED ${src_paths})
 
 # target_include_directories(${PROJECT_NAME}_shared
 #     PUBLIC "include"
