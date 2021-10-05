@@ -83,7 +83,7 @@ class Codec final : public Command {
     return true;
   }
   void TornApart(const std::list<std::string_view> &filenames) {
-    MilkPowder_Errno_t err;
+    MilkPowder_Err_t err;
     for (auto filename : filenames) {
       MilkPowderHolder<MilkPowder_Midi_t> midi;
       {
@@ -121,7 +121,7 @@ class Codec final : public Command {
     }
   }
   void GenTarget(const std::list<std::string_view> &filenames, std::string_view name) {
-    MilkPowder_Errno_t err;
+    MilkPowder_Err_t err;
     int32_t f = -1;
     int32_t d = -1;
     std::vector<MilkPowder_Track_t *> tracks;

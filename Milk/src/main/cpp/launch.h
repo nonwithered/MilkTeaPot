@@ -30,15 +30,15 @@ inline std::string LogTime() {
   return s[0] + " " + s[1];
 }
 
-inline const char *ErrName(MilkPowder_Errno_t type) {
+inline const char *ErrName(MilkPowder_Err_t type) {
   switch (type) {
-    case MilkPowder_Errno_t::Nil: return "Nil";
-    case MilkPowder_Errno_t::Assertion: return "Assertion";
-    case MilkPowder_Errno_t::NullPointer: return "NullPointer";
-    case MilkPowder_Errno_t::Unsupported: return "Unsupported";
-    case MilkPowder_Errno_t::EndOfFile: return "EndOfFile";
-    case MilkPowder_Errno_t::InvalidParam: return "InvalidParam";
-    case MilkPowder_Errno_t::LogicError: return "LogicError";
+    case MilkPowder_Err_t::Nil: return "Nil";
+    case MilkPowder_Err_t::Assertion: return "Assertion";
+    case MilkPowder_Err_t::NullPointer: return "NullPointer";
+    case MilkPowder_Err_t::Unsupported: return "Unsupported";
+    case MilkPowder_Err_t::EndOfFile: return "EndOfFile";
+    case MilkPowder_Err_t::InvalidParam: return "InvalidParam";
+    case MilkPowder_Err_t::LogicError: return "LogicError";
     default: return "Unknown";
   }
 }

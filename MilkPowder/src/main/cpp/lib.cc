@@ -15,34 +15,42 @@ namespace {
 
 constexpr char TAG[] = "api";
 
-inline MilkPowder_Errno_t milkpowder_errno_map(MilkPowder::Except::Type type) {
+const char *ExceptWhat(const char *what = nullptr) {
+  thread_local static std::string what_;
+  if (what != nullptr) {
+    what_ = what;
+  }
+  return what_.data();
+}
+
+inline MilkPowder_Err_t milkpowder_errno_map(MilkPowder::Except::Type type) {
   switch (type) {
-    case MilkPowder::Except::Type::Assertion: return MilkPowder_Errno_t::Assertion;
-    case MilkPowder::Except::Type::NullPointer: return MilkPowder_Errno_t::NullPointer;
-    case MilkPowder::Except::Type::Unsupported: return MilkPowder_Errno_t::Unsupported;
-    case MilkPowder::Except::Type::EndOfFile: return MilkPowder_Errno_t::EndOfFile;
-    case MilkPowder::Except::Type::InvalidParam: return MilkPowder_Errno_t::InvalidParam;
-    case MilkPowder::Except::Type::LogicError: return MilkPowder_Errno_t::LogicError;
-    default: return MilkPowder_Errno_t::Unknown;
+    case MilkPowder::Except::Type::Assertion: return MilkPowder_Err_t::Assertion;
+    case MilkPowder::Except::Type::NullPointer: return MilkPowder_Err_t::NullPointer;
+    case MilkPowder::Except::Type::Unsupported: return MilkPowder_Err_t::Unsupported;
+    case MilkPowder::Except::Type::EndOfFile: return MilkPowder_Err_t::EndOfFile;
+    case MilkPowder::Except::Type::InvalidParam: return MilkPowder_Err_t::InvalidParam;
+    case MilkPowder::Except::Type::LogicError: return MilkPowder_Err_t::LogicError;
+    default: return MilkPowder_Err_t::Unknown;
   }
 }
 
 #define API_IMPL(section, list, block) \
-MilkPowder_API MilkPowder_Errno_t \
+MilkPowder_API MilkPowder_Err_t \
 section list { \
   LOG_PRINT(INFO, "api_begin", #section); \
   MilkPowder::Defer defer([]() -> void { LOG_PRINT(INFO, "api_end", #section); }); \
   try { \
     block \
   } catch (MilkPowder::Except &e) { \
-    /* todo */ \
+    ExceptWhat(e.what()); \
     return milkpowder_errno_map(e.type()); \
   } catch (std::exception &e) { \
-    /* todo */ \
-    return MilkPowder_Errno_t::Unknown; \
+    ExceptWhat(e.what()); \
+    return MilkPowder_Err_t::Unknown; \
   } \
-  /* todo */ \
-  return MilkPowder_Errno_t::Nil; \
+  ExceptWhat(""); \
+  return MilkPowder_Err_t::Nil; \
 }
 
 template<typename T>
@@ -177,6 +185,11 @@ MilkPowder_Log_Init(MilkPowder_Log_Config_t config) {
     LogCallback(config.obj, config.error),
     milkpowder_log_map(config.level));
   MilkPowder::Log::Instance(&logger);
+}
+
+MilkPowder_API const char *
+MilkPowder_Err_What() {
+  return ExceptWhat();
 }
 
 // Midi

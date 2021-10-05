@@ -13,8 +13,8 @@
 
 #define check_err(s) \
 do { \
-  if (err != MilkPowder_Errno_t::Nil) { \
-    std::cerr << "Failed to " s " because of " << ErrName(err) << std::endl; \
+  if (err != MilkPowder_Err_t::Nil) { \
+    std::cerr << "Failed to " s " because of " << ErrName(err) << ": " << MilkPowder_Err_What() << std::endl; \
     return; \
   } \
 } while (false)
@@ -25,14 +25,14 @@ constexpr char kVersion[] = "0.0.1-snapshot";
 
 template<typename T>
 struct MilkPowderDeletor final {
-  using Deletor = MilkPowder_Errno_t (*)(T *);
+  using Deletor = MilkPowder_Err_t (*)(T *);
   static constexpr Deletor deletor = nullptr;
 };
 
 #define milkpowder_deletor_map_(T) \
 template<> \
 struct MilkPowderDeletor<MilkPowder_##T##_t> final { \
-  using Deletor = MilkPowder_Errno_t (*)(MilkPowder_##T##_t *); \
+  using Deletor = MilkPowder_Err_t (*)(MilkPowder_##T##_t *); \
   static constexpr Deletor deletor = MilkPowder_##T##_Destroy; \
 };
 milkpowder_deletor_map_(Midi)
