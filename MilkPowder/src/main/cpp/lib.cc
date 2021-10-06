@@ -1,4 +1,4 @@
-#include "milkpowder.h"
+#include <milkpowder.h>
 
 #include "except.h"
 #include "log.h"
@@ -38,8 +38,8 @@ inline MilkPowder_Err_t milkpowder_errno_map(MilkPowder::Except::Type type) {
 #define API_IMPL(section, list, block) \
 MilkPowder_API MilkPowder_Err_t \
 section list { \
-  LOG_PRINT(INFO, "api_begin", #section); \
-  MilkPowder::Defer defer([]() -> void { LOG_PRINT(INFO, "api_end", #section); }); \
+  LOG_PRINT(DEBUG, "api_begin", #section); \
+  MilkPowder::Defer defer([]() -> void { LOG_PRINT(DEBUG, "api_end", #section); }); \
   try { \
     block \
   } catch (MilkPowder::Except &e) { \
@@ -154,12 +154,12 @@ std::function<void(const char *, const char *)> LogCallback(void *obj, void (*ca
   };
 }
 
-inline MilkPowder::Log::Level milkpowder_log_map(MilkPowder_Log_Level_t level) {
+inline MilkPowder::Log::Level milkpowder_log_map(MilkPowder_LogLevel_t level) {
   switch (level) {
-      case MilkPowder_Log_Level_t::DEBUG: return MilkPowder::Log::Level::DEBUG;
-      case MilkPowder_Log_Level_t::INFO: return MilkPowder::Log::Level::INFO;
-      case MilkPowder_Log_Level_t::WARN: return MilkPowder::Log::Level::WARN;
-      case MilkPowder_Log_Level_t::ERROR: return MilkPowder::Log::Level::ERROR;
+      case MilkPowder_LogLevel_t::DEBUG: return MilkPowder::Log::Level::DEBUG;
+      case MilkPowder_LogLevel_t::INFO: return MilkPowder::Log::Level::INFO;
+      case MilkPowder_LogLevel_t::WARN: return MilkPowder::Log::Level::WARN;
+      case MilkPowder_LogLevel_t::ERROR: return MilkPowder::Log::Level::ERROR;
       default: return MilkPowder::Log::Level::ASSERT;
   }
 }
@@ -177,7 +177,7 @@ MilkPowder::Log &MilkPowder::Log::Instance(MilkPowder::Log *logger) {
 extern "C" {
 
 MilkPowder_API void
-MilkPowder_Log_Init(MilkPowder_Log_Config_t config) {
+MilkPowder_Log_Init(MilkPowder_Logger_t config) {
   MilkPowder::Log logger(
     LogCallback(config.obj, config.debug),
     LogCallback(config.obj, config.info),

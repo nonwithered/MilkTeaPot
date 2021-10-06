@@ -18,36 +18,36 @@
 
 namespace Milk {
 
-template<MilkPowder_Log_Level_t level>
+template<MilkPowder_LogLevel_t level>
 inline void LogPrint(void *, const char *tag, const char *msg);
 
 template<>
-inline void LogPrint<MilkPowder_Log_Level_t::DEBUG>(void *, const char *tag, const char *msg) {
+inline void LogPrint<MilkPowder_LogLevel_t::DEBUG>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/DEBUG: " << tag << ": " << msg << std::endl;
 }
 
 template<>
-inline void LogPrint<MilkPowder_Log_Level_t::INFO>(void *, const char *tag, const char *msg) {
+inline void LogPrint<MilkPowder_LogLevel_t::INFO>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/INFO: " << tag << ": " << msg << std::endl;
 }
 
 template<>
-inline void LogPrint<MilkPowder_Log_Level_t::WARN>(void *, const char *tag, const char *msg) {
+inline void LogPrint<MilkPowder_LogLevel_t::WARN>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/WARN: " << tag << ": " << msg << std::endl;
 }
 
 template<>
-inline void LogPrint<MilkPowder_Log_Level_t::ERROR>(void *, const char *tag, const char *msg) {
+inline void LogPrint<MilkPowder_LogLevel_t::ERROR>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/ERROR: " << tag << ": " << msg << std::endl;
 }
 
-inline void LogInitLevel(MilkPowder_Log_Level_t level) {
-  MilkPowder_Log_Config_t config = {
+inline void LogInitLevel(MilkPowder_LogLevel_t level) {
+  MilkPowder_Logger_t config = {
     .obj = nullptr,
-    .debug = LogPrint<MilkPowder_Log_Level_t::DEBUG>,
-    .info = LogPrint<MilkPowder_Log_Level_t::INFO>,
-    .warn = LogPrint<MilkPowder_Log_Level_t::WARN>,
-    .error = LogPrint<MilkPowder_Log_Level_t::ERROR>,
+    .debug = LogPrint<MilkPowder_LogLevel_t::DEBUG>,
+    .info = LogPrint<MilkPowder_LogLevel_t::INFO>,
+    .warn = LogPrint<MilkPowder_LogLevel_t::WARN>,
+    .error = LogPrint<MilkPowder_LogLevel_t::ERROR>,
     .level = level
   };
   MilkPowder_Log_Init(config);
