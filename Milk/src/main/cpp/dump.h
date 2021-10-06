@@ -145,7 +145,7 @@ class Dump final : public Command {
       std::cerr << "Failed to read header length 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
       return;
     }
-    uint32_t length = FromBytesToU32(buf);
+    uint32_t length = InternalFromBytesToU32(buf);
     if (length != 6) {
       std::cerr << "Error header length " << InternalToStringFromU32(length) << std::endl;
       return;
@@ -156,21 +156,21 @@ class Dump final : public Command {
       std::cerr << "Failed to read header format 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
       return;
     }
-    uint16_t format = FromBytesToU16(buf);
+    uint16_t format = InternalFromBytesToU16(buf);
     // header ntrks
     count = reader.Read(buf, 2);
     if (count < 2) {
       std::cerr << "Failed to read header ntrks 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
       return;
     }
-    uint16_t ntrks = FromBytesToU16(buf);
+    uint16_t ntrks = InternalFromBytesToU16(buf);
     // header division
     count = reader.Read(buf, 2);
     if (count < 2) {
       std::cerr << "Failed to read header division 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
       return;
     }
-    uint16_t division = FromBytesToU16(buf);
+    uint16_t division = InternalFromBytesToU16(buf);
     // header chunk
     std::cout << "[HEADER]" << std::endl;
     std::cout << "type=" << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << std::endl;
@@ -195,7 +195,7 @@ class Dump final : public Command {
         std::cerr << "Failed to read chunk length 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
         return;
       }
-      uint32_t length = FromBytesToU32(buf);
+      uint32_t length = InternalFromBytesToU32(buf);
       // each chunk
       std::cout << "[CHUNK]" << std::endl;
       std::cout << "type=" << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << std::endl;
@@ -415,6 +415,12 @@ class Dump final : public Command {
     return hex_
     ? MilkTea::ToStringHexFromU8(n)
     : MilkTea::ToStringFromU8(n);
+  }
+  uint32_t InternalFromBytesToU32(const uint8_t bytes[]) {
+    return (bytes[0] << 030) | (bytes[1] << 020) | (bytes[2] << 010) | bytes[3];
+  }
+  uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
+    return (bytes[0] << 010) | bytes[1];
   }
 };
 

@@ -1,13 +1,7 @@
 #ifndef MILK_UTIL_H_
 #define MILK_UTIL_H_
 
-#include <functional>
-#include <fstream>
-#include <string_view>
 #include <string>
-#include <cctype>
-#include <cstdio>
-#include <cinttypes>
 
 #include <milkpowder.h>
 
@@ -33,18 +27,6 @@ inline std::string LogTime() {
   ss[1] << p->tm_hour << ":" << p->tm_min << ":" << p->tm_sec;
   ss[1] >> s[1];
   return s[0] + " " + s[1];
-}
-
-inline uint32_t FromBytesToU32(const uint8_t bytes[]) {
-  return (bytes[0] << 030) | (bytes[1] << 020) | (bytes[2] << 010) | bytes[3];
-}
-
-inline uint16_t FromBytesToU16(const uint8_t bytes[]) {
-  return (bytes[0] << 010) | bytes[1];
-}
-
-inline uint8_t FromBytesToU8(const uint8_t bytes[]) {
-  return bytes[0];
 }
 
 } // namespace Milk

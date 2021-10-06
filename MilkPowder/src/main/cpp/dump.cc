@@ -6,16 +6,16 @@
 
 namespace {
 
-inline void DumpU8(uint8_t n, std::vector<uint8_t> &vec) {
+void DumpU8(uint8_t n, std::vector<uint8_t> &vec) {
   vec.push_back(n);
 }
 
-inline void DumpU16(uint16_t n, std::vector<uint8_t> &vec) {
+void DumpU16(uint16_t n, std::vector<uint8_t> &vec) {
   DumpU8(static_cast<uint8_t>(n >> 010), vec);
   DumpU8(static_cast<uint8_t>(n & 0xff), vec);
 }
 
-inline void DumpU32(uint32_t n, std::vector<uint8_t> &vec) {
+void DumpU32(uint32_t n, std::vector<uint8_t> &vec) {
   DumpU16(static_cast<uint16_t>(n >> 020), vec);
   DumpU16(static_cast<uint16_t>(n & 0xffff), vec);
 }

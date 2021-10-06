@@ -12,7 +12,7 @@ namespace {
 
 constexpr char TAG[] = "parse";
 
-inline uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
+uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
   auto ret = callback();
   if (!std::get<1>(ret)) {
     THROW(EndOfFile, "");
@@ -20,13 +20,13 @@ inline uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
   return std::get<0>(ret);
 }
 
-inline uint16_t ParseU16(std::function<std::tuple<uint8_t, bool>()> callback) {
+uint16_t ParseU16(std::function<std::tuple<uint8_t, bool>()> callback) {
   uint16_t h = ParseU8(callback);
   uint16_t l = ParseU8(callback);
   return static_cast<uint16_t>((h << 010) | l);
 }
 
-inline uint32_t ParseU32(std::function<std::tuple<uint8_t, bool>()> callback) {
+uint32_t ParseU32(std::function<std::tuple<uint8_t, bool>()> callback) {
   uint32_t h = ParseU16(callback);
   uint32_t l = ParseU16(callback);
   return static_cast<uint32_t>((h << 020) | l);

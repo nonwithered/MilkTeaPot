@@ -23,7 +23,7 @@ const char *ExceptWhat(const char *what = nullptr) {
   return what_.data();
 }
 
-inline MilkPowder_Err_t milkpowder_errno_map(MilkPowder::Except::Type type) {
+MilkPowder_Err_t milkpowder_errno_map(MilkPowder::Except::Type type) {
   switch (type) {
     case MilkPowder::Except::Type::Assertion: return MilkPowder_Err_t::Assertion;
     case MilkPowder::Except::Type::NullPointer: return MilkPowder_Err_t::NullPointer;
@@ -154,7 +154,7 @@ std::function<void(const char *, const char *)> LogCallback(void *obj, void (*ca
   };
 }
 
-inline MilkPowder::Log::Level milkpowder_log_map(MilkPowder_LogLevel_t level) {
+MilkPowder::Log::Level milkpowder_log_map(MilkPowder_LogLevel_t level) {
   switch (level) {
       case MilkPowder_LogLevel_t::DEBUG: return MilkPowder::Log::Level::DEBUG;
       case MilkPowder_LogLevel_t::INFO: return MilkPowder::Log::Level::INFO;
