@@ -416,10 +416,10 @@ class Dump final : public Command {
     ? MilkTea::ToStringHexFromU8(n)
     : MilkTea::ToStringFromU8(n);
   }
-  uint32_t InternalFromBytesToU32(const uint8_t bytes[]) {
+  static uint32_t InternalFromBytesToU32(const uint8_t bytes[]) {
     return (bytes[0] << 030) | (bytes[1] << 020) | (bytes[2] << 010) | bytes[3];
   }
-  uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
+  static uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
     return (bytes[0] << 010) | bytes[1];
   }
 };

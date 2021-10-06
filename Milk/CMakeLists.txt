@@ -16,4 +16,5 @@ add_executable(${PROJECT_NAME} ${src_paths})
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE milkpowder_static
+    PRIVATE soymilk_static
 )

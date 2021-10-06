@@ -11,4 +11,5 @@ project(MilkTeaPot)
 
 add_subdirectory(MilkTea)
 add_subdirectory(MilkPowder)
+add_subdirectory(SoyMilk)
 add_subdirectory(Milk)

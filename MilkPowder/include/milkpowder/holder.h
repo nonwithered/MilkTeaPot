@@ -2,7 +2,7 @@
 #define LIB_MILKPOWDER_HOLDER_H_
 
 #ifdef __cplusplus
-#include "core.h"
+#include <milkpowder/core.h>
 namespace MilkPowder {
 
 template<typename T>

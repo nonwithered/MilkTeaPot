@@ -2,7 +2,7 @@
 #define LIB_MILKTEA_TOSTRING_H_
 
 #ifdef __cplusplus
-#include "util.h"
+#include <milktea/util.h>
 #include <string>
 #include <sstream>
 #include <iomanip>

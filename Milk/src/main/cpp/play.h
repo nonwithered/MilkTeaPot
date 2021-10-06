@@ -1,6 +1,8 @@
 #ifndef MILK_PLAY_H_
 #define MILK_PLAY_H_
 
+#include <soymilk.h>
+
 #include "launch.h"
 
 namespace Milk {

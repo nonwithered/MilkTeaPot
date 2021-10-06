@@ -1,4 +1,4 @@
-project(milktea)
+project(soymilk)
 
 set(src_files
     "lib.cc"
