@@ -2,7 +2,6 @@
 
 #include "except.h"
 #include "log.h"
-#include "defer.h"
 
 #include "midi.h"
 #include "track.h"
@@ -35,11 +34,8 @@ MilkPowder_Err_t milkpowder_errno_map(MilkPowder::Except::Type type) {
   }
 }
 
-#define API_IMPL(section, list, block) \
-MilkPowder_API MilkPowder_Err_t \
-section list { \
-  LOG_PRINT(DEBUG, "api_begin", #section); \
-  MilkPowder::Defer defer([]() -> void { LOG_PRINT(DEBUG, "api_end", #section); }); \
+#define with_except(block) \
+do { \
   try { \
     block \
   } catch (MilkPowder::Except &e) { \
@@ -51,6 +47,14 @@ section list { \
   } \
   ExceptWhat(""); \
   return MilkPowder_Err_t::MilkPowder_Err_Nil; \
+} while (false)
+
+#define API_IMPL(section, list, block) \
+MilkPowder_API MilkPowder_Err_t \
+section list { \
+  LOG_PRINT(DEBUG, "api_begin", #section); \
+  MilkTea::Defer defer([]() -> void { LOG_PRINT(DEBUG, "api_end", #section); }); \
+  with_except(block); \
 }
 
 template<typename T>
@@ -145,46 +149,22 @@ void MilkPowder_Clone(const T *self, T **another) {
   *another = milkpowder_cast(new typename milkpowder_cast_map<T>::Type(*milkpowder_cast(self)));
 }
 
-void LogDefault(const char *, const char *) {
-}
-
-std::function<void(const char *, const char *)> LogCallback(void *obj, void (*callback)(void *obj, const char *tag, const char *msg)) {
-  return [obj, callback](const char *tag, const char *msg) -> void {
-    callback(obj, tag, msg);
-  };
-}
-
-MilkPowder::Log::Level milkpowder_log_map(MilkPowder_LogLevel_t level) {
-  switch (level) {
-      case MilkPowder_LogLevel_t::DEBUG: return MilkPowder::Log::Level::DEBUG;
-      case MilkPowder_LogLevel_t::INFO: return MilkPowder::Log::Level::INFO;
-      case MilkPowder_LogLevel_t::WARN: return MilkPowder::Log::Level::WARN;
-      case MilkPowder_LogLevel_t::ERROR: return MilkPowder::Log::Level::ERROR;
-      default: return MilkPowder::Log::Level::ASSERT;
-  }
-}
-
 } // namespace
 
-MilkPowder::Log &MilkPowder::Log::Instance(MilkPowder::Log *logger) {
-  static MilkPowder::Log sLogger_(LogDefault, LogDefault, LogDefault, LogDefault, MilkPowder::Log::Level::ASSERT);
+MilkTea::Logger &MilkPowder::Log(MilkTea::Logger *logger) {
+  static MilkTea::Logger logger_;
   if (logger != nullptr) {
-    sLogger_ = *logger;
+    logger_ = *logger;
   }
-  return sLogger_;
+  return logger_;
 }
 
 extern "C" {
 
 MilkPowder_API void
 MilkPowder_Log_Init(MilkPowder_Logger_t config) {
-  MilkPowder::Log logger(
-    LogCallback(config.obj, config.debug),
-    LogCallback(config.obj, config.info),
-    LogCallback(config.obj, config.warn),
-    LogCallback(config.obj, config.error),
-    milkpowder_log_map(config.level));
-  MilkPowder::Log::Instance(&logger);
+  MilkTea::Logger logger(config);
+  MilkPowder::Log(&logger);
 }
 
 MilkPowder_API const char *

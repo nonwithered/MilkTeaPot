@@ -23,7 +23,7 @@ target_include_directories(${PROJECT_NAME}_static
 )
 
 target_link_libraries(${PROJECT_NAME}_static
-    PUBLIC milktea_static
+    PUBLIC soybean_static
 )
 
 add_library(${PROJECT_NAME}_shared SHARED ${src_paths})
@@ -33,5 +33,5 @@ target_include_directories(${PROJECT_NAME}_shared
 )
 
 target_link_libraries(${PROJECT_NAME}_shared
-    PUBLIC milktea_shared
+    PUBLIC soybean_shared
 )

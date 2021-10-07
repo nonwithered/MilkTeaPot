@@ -43,17 +43,24 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(MilkTea)
 add_subdirectory(MilkPowder)
+add_subdirectory(SoyBean)
 add_subdirectory(SoyMilk)
 add_subdirectory(Milk)
 
 message("${PROJECT_NAME}: MilkTeaPot_system_flag_linux = ${MilkTeaPot_system_flag_linux}")
-add_subdirectory(Soybean_linux)
+if (MilkTeaPot_system_flag_linux MATCHES "ON")
+    add_subdirectory(SoyBean_linux)
+endif()
 
 message("${PROJECT_NAME}: MilkTeaPot_system_flag_windows = ${MilkTeaPot_system_flag_windows}")
-add_subdirectory(Soybean_windows)
+if (MilkTeaPot_system_flag_windows MATCHES "ON")
+    add_subdirectory(SoyBean_windows)
+endif()
 
 message("${PROJECT_NAME}: MilkTeaPot_system_flag_mac = ${MilkTeaPot_system_flag_mac}")
-add_subdirectory(Soybean_mac)
+if (MilkTeaPot_system_flag_mac MATCHES "ON")
+    add_subdirectory(SoyBean_mac)
+endif()
 
 message("${PROJECT_NAME}: MilkTeaPot_system_flag_android = ${MilkTeaPot_system_flag_android}")
 

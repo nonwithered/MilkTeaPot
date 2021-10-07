@@ -1,7 +1,6 @@
 #ifndef LIB_MILKTEA_CALLBACK_H_
 #define LIB_MILKTEA_CALLBACK_H_
 
-
 #ifdef __cplusplus
 #include <functional>
 namespace MilkTea {
