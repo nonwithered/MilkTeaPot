@@ -28,7 +28,7 @@ struct MilkTea_Logger_t {
 
 #ifndef __cplusplus
 typedef enum MilkTea_LogLevel_t MilkTea_LogLevel_t;
-typedef enum MilkTea_Logger_t MilkTea_Logger_t;
+typedef struct MilkTea_Logger_t MilkTea_Logger_t;
 #endif // ifndef __cplusplus
 
 

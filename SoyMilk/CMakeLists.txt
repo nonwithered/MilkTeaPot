@@ -22,8 +22,16 @@ target_include_directories(${PROJECT_NAME}_static
     PUBLIC ${api_dir}
 )
 
+target_link_libraries(${PROJECT_NAME}_static
+    PUBLIC milktea_static
+)
+
 add_library(${PROJECT_NAME}_shared SHARED ${src_paths})
 
 target_include_directories(${PROJECT_NAME}_shared
     PUBLIC ${api_dir}
+)
+
+target_link_libraries(${PROJECT_NAME}_shared
+    PUBLIC milktea_shared
 )

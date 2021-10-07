@@ -25,13 +25,13 @@ const char *ExceptWhat(const char *what = nullptr) {
 
 MilkPowder_Err_t milkpowder_errno_map(MilkPowder::Except::Type type) {
   switch (type) {
-    case MilkPowder::Except::Type::Assertion: return MilkPowder_Err_t::Assertion;
-    case MilkPowder::Except::Type::NullPointer: return MilkPowder_Err_t::NullPointer;
-    case MilkPowder::Except::Type::Unsupported: return MilkPowder_Err_t::Unsupported;
-    case MilkPowder::Except::Type::EndOfFile: return MilkPowder_Err_t::EndOfFile;
-    case MilkPowder::Except::Type::InvalidParam: return MilkPowder_Err_t::InvalidParam;
-    case MilkPowder::Except::Type::LogicError: return MilkPowder_Err_t::LogicError;
-    default: return MilkPowder_Err_t::Unknown;
+    case MilkPowder::Except::Type::Assertion: return MilkPowder_Err_t::MilkPowder_Err_Assertion;
+    case MilkPowder::Except::Type::NullPointer: return MilkPowder_Err_t::MilkPowder_Err_NullPointer;
+    case MilkPowder::Except::Type::Unsupported: return MilkPowder_Err_t::MilkPowder_Err_Unsupported;
+    case MilkPowder::Except::Type::EndOfFile: return MilkPowder_Err_t::MilkPowder_Err_EndOfFile;
+    case MilkPowder::Except::Type::InvalidParam: return MilkPowder_Err_t::MilkPowder_Err_InvalidParam;
+    case MilkPowder::Except::Type::LogicError: return MilkPowder_Err_t::MilkPowder_Err_LogicError;
+    default: return MilkPowder_Err_t::MilkPowder_Err_Unknown;
   }
 }
 
@@ -47,10 +47,10 @@ section list { \
     return milkpowder_errno_map(e.type()); \
   } catch (std::exception &e) { \
     ExceptWhat(e.what()); \
-    return MilkPowder_Err_t::Unknown; \
+    return MilkPowder_Err_t::MilkPowder_Err_Unknown; \
   } \
   ExceptWhat(""); \
-  return MilkPowder_Err_t::Nil; \
+  return MilkPowder_Err_t::MilkPowder_Err_Nil; \
 }
 
 template<typename T>

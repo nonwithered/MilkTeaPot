@@ -21,14 +21,14 @@ MilkPowder_API void
 MilkPowder_Log_Init(MilkPowder_Logger_t config);
 
 enum MilkPowder_Err_t {
-  Nil,
-  Unknown,
-  Assertion,
-  NullPointer,
-  Unsupported,
-  EndOfFile,
-  InvalidParam,
-  LogicError
+  MilkPowder_Err_Nil,
+  MilkPowder_Err_Unknown,
+  MilkPowder_Err_Assertion,
+  MilkPowder_Err_NullPointer,
+  MilkPowder_Err_Unsupported,
+  MilkPowder_Err_EndOfFile,
+  MilkPowder_Err_InvalidParam,
+  MilkPowder_Err_LogicError
 };
 
 #ifndef __cplusplus
@@ -40,13 +40,13 @@ MilkPowder_Err_What();
 
 inline const char *MilkPowder_Err_Name(MilkPowder_Err_t type) {
   switch (type) {
-    case MilkPowder_Err_t::Nil: return "Nil";
-    case MilkPowder_Err_t::Assertion: return "Assertion";
-    case MilkPowder_Err_t::NullPointer: return "NullPointer";
-    case MilkPowder_Err_t::Unsupported: return "Unsupported";
-    case MilkPowder_Err_t::EndOfFile: return "EndOfFile";
-    case MilkPowder_Err_t::InvalidParam: return "InvalidParam";
-    case MilkPowder_Err_t::LogicError: return "LogicError";
+    case MilkPowder_Err_Nil: return "Nil";
+    case MilkPowder_Err_Assertion: return "Assertion";
+    case MilkPowder_Err_NullPointer: return "NullPointer";
+    case MilkPowder_Err_Unsupported: return "Unsupported";
+    case MilkPowder_Err_EndOfFile: return "EndOfFile";
+    case MilkPowder_Err_InvalidParam: return "InvalidParam";
+    case MilkPowder_Err_LogicError: return "LogicError";
     default: return "Unknown";
   }
 }
@@ -59,12 +59,12 @@ struct MilkPowder_Meta_t;
 struct MilkPowder_Sysex_t;
 
 #ifndef __cplusplus
-typedef enum MilkPowder_Midi_t MilkPowder_Midi_t;
-typedef enum MilkPowder_Track_t MilkPowder_Track_t;
-typedef enum MilkPowder_Message_t MilkPowder_Message_t;
-typedef enum MilkPowder_Event_t MilkPowder_Event_t;
-typedef enum MilkPowder_Meta_t MilkPowder_Meta_t;
-typedef enum MilkPowder_Sysex_t MilkPowder_Sysex_t;
+typedef struct MilkPowder_Midi_t MilkPowder_Midi_t;
+typedef struct MilkPowder_Track_t MilkPowder_Track_t;
+typedef struct MilkPowder_Message_t MilkPowder_Message_t;
+typedef struct MilkPowder_Event_t MilkPowder_Event_t;
+typedef struct MilkPowder_Meta_t MilkPowder_Meta_t;
+typedef struct MilkPowder_Sysex_t MilkPowder_Sysex_t;
 #endif
 
 // Midi
