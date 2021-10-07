@@ -20,6 +20,7 @@ class Codec final : public Command {
       format_(-1) {
     Callback("-h", &Codec::ShowHelp);
     Callback("--help", &Codec::ShowHelp);
+    Callback("--log", &Codec::InitLog);
     Callback("-v", &Codec::ShowVersion);
     Callback("--version", &Codec::ShowVersion);
     Callback("-o", &Codec::InitTarget);
@@ -39,6 +40,8 @@ class Codec final : public Command {
 "Usage: milk [OPTIONS] [FILES]\n"
 "  -h, --help\n"
 "    print this help message\n"
+"  --log {d, i, w, e, debug, info, warn, error}\n"
+"    init log level, or no log\n"
 "  -v, --version\n"
 "    print version code\n"
 "  -o\n"
@@ -112,6 +115,10 @@ class Codec final : public Command {
       MilkPowder_Holder(Midi) midi;
       {
         MilkPowder::FileReader reader(filename);
+        if (reader.NonOpen()) {
+          std::cerr << "Failed to open: " << filename << std::endl;
+          return;
+        }
         err = MilkPowder_Midi_Parse(&midi, &reader, MilkPowder::FileReader::Callback);
         check_err("read midi file");
       }
@@ -159,6 +166,10 @@ class Codec final : public Command {
       MilkPowder_Holder(Midi) midi;
       {
         MilkPowder::FileReader reader(filename);
+        if (reader.NonOpen()) {
+          std::cerr << "Failed to open: " << filename << std::endl;
+          return;
+        }
         err = MilkPowder_Midi_Parse(&midi, &reader, MilkPowder::FileReader::Callback);
         check_err("read midi file");
       }

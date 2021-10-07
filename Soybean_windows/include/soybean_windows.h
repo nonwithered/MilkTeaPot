@@ -1,0 +1,4 @@
+#ifndef LIB_SOYBEAN_WINDOWS_H_
+#define LIB_SOYBEAN_WINDOWS_H_
+
+#endif // ifndef LIB_SOYBEAN_WINDOWS_H_

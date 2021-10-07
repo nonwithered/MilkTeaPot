@@ -41,18 +41,6 @@ void LogPrint<MilkPowder_LogLevel_t::ERROR>(void *, const char *tag, const char 
   std::cerr << LogTime() << "/ERROR: " << tag << ": " << msg << std::endl;
 }
 
-inline void LogInitLevel(MilkPowder_LogLevel_t level) {
-  MilkPowder_Logger_t config = {
-    .obj = nullptr,
-    .debug = LogPrint<MilkPowder_LogLevel_t::DEBUG>,
-    .info = LogPrint<MilkPowder_LogLevel_t::INFO>,
-    .warn = LogPrint<MilkPowder_LogLevel_t::WARN>,
-    .error = LogPrint<MilkPowder_LogLevel_t::ERROR>,
-    .level = level
-  };
-  MilkPowder_Log_Init(config);
-}
-
 class Command {
  public:
   static void LaunchMain(std::list<std::string_view> &args, const std::vector<std::unique_ptr<Milk::Command>> &arr) {
@@ -85,6 +73,28 @@ class Command {
   void ShowHelp() {
     show_help_();
   }
+  bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
+    MilkPowder_LogLevel_t level = MilkPowder_LogLevel_t::ASSERT;
+    if (itr == args.end()) {
+      std::cerr << "milk dump --log: need log level" << std::endl;
+      return false;
+    } else if (*itr == "d" || *itr == "debug") {
+      level = MilkPowder_LogLevel_t::DEBUG;
+    } else if (*itr == "i" || *itr == "info") {
+      level = MilkPowder_LogLevel_t::INFO;
+    } else if (*itr == "w" || *itr == "warn") {
+      level = MilkPowder_LogLevel_t::WARN;
+    } else if (*itr == "e" || *itr == "error") {
+      level = MilkPowder_LogLevel_t::ERROR;
+    }
+    if (level == MilkPowder_LogLevel_t::ASSERT) {
+      std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
+      return false;
+    }
+    LogInitLevel(level);
+    itr = args.erase(itr);
+    return true;
+  }
   virtual void Launch(std::list<std::string_view> &) = 0;
   virtual std::string_view Usage() const = 0;
   virtual std::string_view Name() const = 0;
@@ -113,6 +123,17 @@ class Command {
       return;
     }
     Launch(args);
+  }
+  static void LogInitLevel(MilkPowder_LogLevel_t level) {
+    MilkPowder_Logger_t config = {
+      .obj = nullptr,
+      .debug = LogPrint<MilkPowder_LogLevel_t::DEBUG>,
+      .info = LogPrint<MilkPowder_LogLevel_t::INFO>,
+      .warn = LogPrint<MilkPowder_LogLevel_t::WARN>,
+      .error = LogPrint<MilkPowder_LogLevel_t::ERROR>,
+      .level = level
+    };
+    MilkPowder_Log_Init(config);
   }
   std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   std::function<void()> show_help_;

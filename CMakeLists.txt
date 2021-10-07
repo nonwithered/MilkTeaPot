@@ -1,5 +1,39 @@
 cmake_minimum_required(VERSION 3.6.4)
 
+project(MilkTeaPot)
+
+if(MilkTeaPot_system_flag_linux MATCHES "")
+    if (UNIX AND NOT APPLE)
+        set(MilkTeaPot_system_flag_linux "ON")
+    else()
+        set(MilkTeaPot_system_flag_linux "OFF")
+    endif()
+endif()
+
+if(MilkTeaPot_system_flag_windows MATCHES "")
+    if (WIN32)
+        set(MilkTeaPot_system_flag_windows "ON")
+    else()
+        set(MilkTeaPot_system_flag_windows "OFF")
+    endif()
+endif()
+
+if(MilkTeaPot_system_flag_mac MATCHES "")
+    if (APPLE)
+        set(MilkTeaPot_system_flag_mac "ON")
+    else()
+        set(MilkTeaPot_system_flag_mac "OFF")
+    endif()
+endif()
+
+if(MilkTeaPot_system_flag_android MATCHES "")
+    set(MilkTeaPot_system_flag_android "OFF")
+endif()
+
+if(MilkTeaPot_system_flag_ios MATCHES "")
+    set(MilkTeaPot_system_flag_ios "OFF")
+endif()
+
 # set(CMAKE_C_COMPILER clang)
 # set(CMAKE_CXX_COMPILER clang++)
 
@@ -7,9 +41,20 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(MilkTeaPot)
-
 add_subdirectory(MilkTea)
 add_subdirectory(MilkPowder)
 add_subdirectory(SoyMilk)
 add_subdirectory(Milk)
+
+message("${PROJECT_NAME}: MilkTeaPot_system_flag_linux = ${MilkTeaPot_system_flag_linux}")
+add_subdirectory(Soybean_linux)
+
+message("${PROJECT_NAME}: MilkTeaPot_system_flag_windows = ${MilkTeaPot_system_flag_windows}")
+add_subdirectory(Soybean_windows)
+
+message("${PROJECT_NAME}: MilkTeaPot_system_flag_mac = ${MilkTeaPot_system_flag_mac}")
+add_subdirectory(Soybean_mac)
+
+message("${PROJECT_NAME}: MilkTeaPot_system_flag_android = ${MilkTeaPot_system_flag_android}")
+
+message("${PROJECT_NAME}: MilkTeaPot_system_flag_ios = ${MilkTeaPot_system_flag_ios}")

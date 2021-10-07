@@ -60,28 +60,6 @@ class Dump final : public Command {
     std::cerr << Usage() << std::endl;
     return true;
   }
-  bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
-    MilkPowder_LogLevel_t level = MilkPowder_LogLevel_t::ASSERT;
-    if (itr == args.end()) {
-      std::cerr << "milk dump --log: need log level" << std::endl;
-      return false;
-    } else if (*itr == "d" || *itr == "debug") {
-      level = MilkPowder_LogLevel_t::DEBUG;
-    } else if (*itr == "i" || *itr == "info") {
-      level = MilkPowder_LogLevel_t::INFO;
-    } else if (*itr == "w" || *itr == "warn") {
-      level = MilkPowder_LogLevel_t::WARN;
-    } else if (*itr == "e" || *itr == "error") {
-      level = MilkPowder_LogLevel_t::ERROR;
-    }
-    if (level == MilkPowder_LogLevel_t::ASSERT) {
-      std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
-      return false;
-    }
-    LogInitLevel(level);
-    itr = args.erase(itr);
-    return true;
-  }
   bool EnableHex(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
     hex_ = true;
     return true;
