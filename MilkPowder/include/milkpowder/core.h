@@ -8,17 +8,20 @@
 #ifdef __cplusplus
 using MilkPowder_Logger_t = MilkTea_Logger_t;
 using MilkPowder_LogLevel_t = MilkTea_LogLevel_t;
+using MilkPowder_Exception_t = MilkTea_Exception_t;
 #else
 typedef MilkTea_Logger_t MilkPowder_Logger_t;
 typedef MilkTea_LogLevel_t MilkPowder_LogLevel_t;
+typedef MilkTea_Exception_t MilkPowder_Exception_t;
 #endif
+
+#define MilkPowder_Exception_Name MilkTea_Exception_Name
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-MilkPowder_API void
-MilkPowder_Log_Init(MilkPowder_Logger_t config);
+MilkTea_Log_Decl(MilkPowder);
 
 enum MilkPowder_Err_t {
   MilkPowder_Err_Nil,

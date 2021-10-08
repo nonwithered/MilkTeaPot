@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#ifdef __cplusplus
 namespace MilkTea {
 
 class Defer final {
@@ -17,5 +18,6 @@ class Defer final {
 };
 
 } // namespace MilkTea
+#endif // ifdef __cplusplus
 
 #endif // ifndef LIB_MILKTEA_DEFER_H_

@@ -10,6 +10,10 @@
 #include "meta.h"
 #include "sysex.h"
 
+MilkTea_Logger_Log_Impl(MilkPowder)
+
+MilkTea_Log_Impl(MilkPowder)
+
 namespace {
 
 constexpr char TAG[] = "api";
@@ -151,21 +155,7 @@ void MilkPowder_Clone(const T *self, T **another) {
 
 } // namespace
 
-MilkTea::Logger &MilkPowder::Log(MilkTea::Logger *logger) {
-  static MilkTea::Logger logger_;
-  if (logger != nullptr) {
-    logger_ = *logger;
-  }
-  return logger_;
-}
-
 extern "C" {
-
-MilkPowder_API void
-MilkPowder_Log_Init(MilkPowder_Logger_t config) {
-  MilkTea::Logger logger(config);
-  MilkPowder::Log(&logger);
-}
 
 MilkPowder_API const char *
 MilkPowder_Err_What() {

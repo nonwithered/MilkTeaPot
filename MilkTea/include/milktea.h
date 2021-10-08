@@ -3,6 +3,7 @@
 
 #include <milktea/util.h>
 #include <milktea/logger.h>
+#include <milktea/exception.h>
 #include <milktea/callback.h>
 #include <milktea/tostring.h>
 #include <milktea/defer.h>

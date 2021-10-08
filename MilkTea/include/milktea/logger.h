@@ -22,6 +22,10 @@ struct MilkTea_Logger_t {
   enum MilkTea_LogLevel_t level;
 };
 
+#define MilkTea_Log_Decl(P) \
+MilkTea_API void \
+P##_Log_Init(MilkTea_Logger_t log)
+
 #ifdef __cplusplus
 }
 #endif
@@ -33,7 +37,48 @@ typedef struct MilkTea_Logger_t MilkTea_Logger_t;
 
 #ifdef __cplusplus
 #include <functional>
+#include <cstdio>
 namespace MilkTea {
+
+#define MilkTea_Log_Impl(P) \
+extern "C" { \
+MilkTea_Log_Decl(P) { \
+  MilkTea::Logger log_(log); \
+  P::Log(&log_); \
+} \
+} /* extern "C" */
+
+constexpr size_t kLogMaxSize = 128;
+
+#define MilkTea_Logger_Log_Decl(P) \
+namespace P { \
+MilkTea::Logger &Log(MilkTea::Logger *logger = nullptr); \
+} /* namespace */
+
+#define MilkTea_Logger_Log_Impl(P) \
+MilkTea::Logger &P::Log(MilkTea::Logger *logger) { \
+  static MilkTea::Logger logger_; \
+  if (logger != nullptr) { \
+    logger_ = *logger; \
+  } \
+  return logger_; \
+}
+
+#ifdef NDEBUG
+#define MilkTea_Logger_LogPrint(P, L, TAG, ...) \
+do { \
+} while (false)
+#else // ifdef NDEBUG
+#define MilkTea_Logger_LogPrint(P, L, TAG, ...) \
+do { \
+  MilkTea::Logger logger = P::Log(); \
+  if (logger.level() <= MilkTea::Logger::Level::L) { \
+    char msg[MilkTea::kLogMaxSize]; \
+    snprintf(msg, MilkTea::kLogMaxSize, ##__VA_ARGS__); \
+    logger(MilkTea::Logger::Level::L, TAG, msg); \
+  } \
+} while (false)
+#endif // ifdef NDEBUG
 
 class Logger final {
  public:
