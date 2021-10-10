@@ -12,6 +12,9 @@
 extern "C" {
 #endif
 
+MilkTea_API const char *
+MilkTea_Exception_What();
+
 MilkTea_API void
 MilkTea_Log_Init(MilkTea_Logger_t log);
 

@@ -8,7 +8,7 @@ namespace SoyBean {
 
 class BaseHandle {
  public:
-  SoyBean_API void ToRawHandle(SoyBean_Handle_t &handle);
+  MilkTea_API void ToRawHandle(SoyBean_Handle_t &handle);
   virtual ~BaseHandle() = default;
   virtual void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
   virtual void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
@@ -57,7 +57,7 @@ class HandleWrapper final : public BaseHandle {
 
 class BaseFactory {
  public:
-  SoyBean_API static MilkTea_Exception_t (*Callback())(void *factory, SoyBean_Handle_t *handle);
+  MilkTea_API static MilkTea_Exception_t (*Callback())(void *factory, SoyBean_Handle_t *handle);
   virtual BaseHandle *Create() = 0;
 };
 

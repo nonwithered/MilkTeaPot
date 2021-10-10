@@ -2,19 +2,11 @@
 
 #include "util.h"
 
-MilkTea_Exception_What_IMPL(SoyBean_Windows)
-
-extern "C"
-SoyBean_Windows_API const char *
-SoyBean_Windows_Exception_What() {
-  return SoyBean_Windows::MilkTea_Exception_What();
-}
-
 #include "factory_impl.h"
 
 namespace {
 
-constexpr char TAG[] = "SoyBean_Windows_API";
+constexpr char TAG[] = "MilkTea_API";
 
 } // namespace
 
@@ -25,12 +17,12 @@ SoyBean::BaseFactory &SoyBean_Windows::FactoryImpl::Instance() {
 
 extern "C" {
 
-SoyBean_Windows_API SoyBean_Windows_Factory_t *
+MilkTea_API SoyBean_Windows_Factory_t *
 SoyBean_Windows_Factory_Instance() {
   return reinterpret_cast<SoyBean_Windows_Factory_t *>(&SoyBean_Windows::FactoryImpl::Instance());
 }
 
-SoyBean_Windows_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t
 (*SoyBean_Windows_Factory_Callback())(void *factory, SoyBean_Handle_t *handle) {
   return SoyBean::BaseFactory::Callback();
 }

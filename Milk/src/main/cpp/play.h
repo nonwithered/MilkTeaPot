@@ -22,7 +22,7 @@ class Play final : public Command {
     std::cerr << e << std::endl;
     e = SoyBean_Handle_NoteOn(h, 0, 0x45, 0x7f);
     std::cerr << e << std::endl;
-    std::cerr << SoyBean_Windows_Exception_What() << std::endl;
+    std::cerr << MilkTea_Exception_What() << std::endl;
     while (true) ;
   }
   std::string_view Usage() const final {

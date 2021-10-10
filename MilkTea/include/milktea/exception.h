@@ -38,22 +38,6 @@ inline const char *MilkTea_Exception_Name(MilkTea_Exception_t type) {
 #include <cstdio>
 namespace MilkTea {
 
-#define MilkTea_Exception_What_DECL(P) \
-namespace P { \
-const char *MilkTea_Exception_What(const char *what = nullptr); \
-} /* namespace */
-
-#define MilkTea_Exception_What_IMPL(P) \
-const char *P::MilkTea_Exception_What(const char *what) { \
-  thread_local static std::string what_; \
-  if (what != nullptr) { \
-    what_ = what; \
-  } \
-  return what_.data(); \
-}
-
-constexpr size_t kWhatMaxSize = 128;
-
 #define MILKTEA_EXCEPTION_THROW(type, what) \
 do { \
   throw MilkTea::Exception(MilkTea::Exception::Type::type, what); \
@@ -61,8 +45,9 @@ do { \
 
 #define MILKTEA_EXCEPTION_THROW_FORMAT(type, ...) \
 do { \
-  char what[MilkTea::kWhatMaxSize]; \
-  snprintf(what, MilkTea::kWhatMaxSize, ##__VA_ARGS__); \
+  constexpr size_t kWhatMaxSize = 128; \
+  char what[kWhatMaxSize]; \
+  snprintf(what, kWhatMaxSize, ##__VA_ARGS__); \
   MILKTEA_EXCEPTION_THROW(type, what); \
 } while (false)
 
@@ -77,18 +62,19 @@ do { \
   try { \
     block \
   } catch (MilkTea::Exception &e) { \
-    P::MilkTea_Exception_What(e.what()); \
+    MilkTea::Exception::WhatMessage(e.what()); \
     return e.GetRawType(); \
   } catch (std::exception &e) { \
-    P::MilkTea_Exception_What(e.what()); \
+    MilkTea::Exception::WhatMessage(e.what()); \
     return MilkTea_Exception_t::MilkTea_Exception_Unknown; \
   } \
-  P::MilkTea_Exception_What(""); \
+  MilkTea::Exception::WhatMessage(""); \
   return MilkTea_Exception_t::MilkTea_Exception_Nil; \
 }
 
 class Exception final : public std::exception {
  public:
+   static MilkTea_API const char *WhatMessage(const char *what = nullptr);
   enum class Type {
     Unknown,
     Assertion,

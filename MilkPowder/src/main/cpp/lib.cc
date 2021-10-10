@@ -2,16 +2,8 @@
 
 #include "util.h"
 
-MilkTea_Exception_What_IMPL(MilkPowder)
-
-extern "C"
-MilkPowder_API const char *
-MilkPowder_Exception_What() {
-  return MilkPowder::MilkTea_Exception_What();
-}
-
 #define API_IMPL(section, list, block) \
-MilkPowder_API MilkTea_Exception_t \
+MilkTea_API MilkTea_Exception_t \
 section list { \
   LOG_PRINT(DEBUG, TAG, "begin " #section); \
   MilkTea::Defer defer([]() -> void { LOG_PRINT(DEBUG, TAG, "end " #section); }); \
@@ -27,7 +19,7 @@ section list { \
 
 namespace {
 
-constexpr char TAG[] = "MilkPowder_API";
+constexpr char TAG[] = "MilkTea_API";
 
 template<typename T>
 struct milkpowder_cast_map {

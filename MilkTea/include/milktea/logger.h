@@ -36,8 +36,6 @@ typedef struct MilkTea_Logger_t MilkTea_Logger_t;
 #include <cstdio>
 namespace MilkTea {
 
-constexpr size_t kLogMaxSize = 128;
-
 #ifdef NDEBUG
 #define MilkTea_Logger_LogPrint(L, TAG, ...) \
 do { \
@@ -45,10 +43,11 @@ do { \
 #else // ifdef NDEBUG
 #define MilkTea_Logger_LogPrint(L, TAG, ...) \
 do { \
+  constexpr size_t kLogMaxSize = 128; \
   MilkTea::Logger logger_ = MilkTea::Logger::Instance(); \
   if (logger_.level() <= MilkTea::Logger::Level::L) { \
-    char msg[MilkTea::kLogMaxSize]; \
-    snprintf(msg, MilkTea::kLogMaxSize, ##__VA_ARGS__); \
+    char msg[kLogMaxSize]; \
+    snprintf(msg, kLogMaxSize, ##__VA_ARGS__); \
     logger_(MilkTea::Logger::Level::L, TAG, msg); \
   } \
 } while (false)

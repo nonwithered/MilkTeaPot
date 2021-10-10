@@ -2,23 +2,15 @@
 
 #include "util.h"
 
-MilkTea_Exception_What_IMPL(SoyBean)
-
-extern "C"
-SoyBean_API const char *
-SoyBean_Exception_What() {
-  return SoyBean::MilkTea_Exception_What();
-}
-
 #define API_IMPL(section, list, block) \
-SoyBean_API MilkTea_Exception_t \
+MilkTea_API MilkTea_Exception_t \
 section list { \
   WITH_THROW(block) \
 }
 
 namespace {
 
-constexpr char TAG[] = "SoyBean_API";
+constexpr char TAG[] = "MilkTea_API";
 
 } // namespace
 
