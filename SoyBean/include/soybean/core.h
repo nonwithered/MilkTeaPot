@@ -28,9 +28,6 @@ extern "C" {
 SoyBean_API const char *
 SoyBean_Exception_What();
 
-SoyBean_API void
-SoyBean_Log_Init(SoyBean_Logger_t log);
-
 struct SoyBean_Interface_t {
   SoyBean_Exception_t (*deletor)(void *handle);
   SoyBean_Exception_t (*note_off)(void *handle, uint8_t channel, uint8_t note, uint8_t pressure);

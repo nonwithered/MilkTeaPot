@@ -35,9 +35,12 @@ void BaseHandle::ToRawHandle(SoyBean_Handle_t &handle) {
   handle.interface_ = &interface_;
 }
 
-decltype(BaseFactory::Callback) BaseFactory::Callback = [](void *factory, SoyBean_Handle_t *handle) -> SoyBean_Exception_t WITH_THROW({
-  THROW_NULL(factory);
-  reinterpret_cast<BaseFactory *>(factory)->Create()->ToRawHandle(*handle);
-});
+SoyBean_Exception_t (*BaseFactory::Callback())(void *factory, SoyBean_Handle_t *handle) {
+  static SoyBean_Exception_t (*callback_)(void *factory, SoyBean_Handle_t *handle) = [](void *factory, SoyBean_Handle_t *handle) -> SoyBean_Exception_t WITH_THROW({
+    THROW_NULL(factory);
+    reinterpret_cast<BaseFactory *>(factory)->Create()->ToRawHandle(*handle);
+  });
+  return callback_;
+}
 
 } // namespace SoyBean

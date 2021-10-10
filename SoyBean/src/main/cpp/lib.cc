@@ -10,20 +10,9 @@ SoyBean_Exception_What() {
   return SoyBean::MilkTea_Exception_What();
 }
 
-MilkTea_Logger_Log_IMPL(SoyBean)
-
-extern "C"
-SoyBean_API void
-SoyBean_Log_Init(SoyBean_Logger_t log) {
-  MilkTea::Logger log_(log);
-  SoyBean::Log(&log_);
-}
-
 #define API_IMPL(section, list, block) \
 SoyBean_API SoyBean_Exception_t \
 section list { \
-  LOG_PRINT(DEBUG, TAG, "begin " #section); \
-  MilkTea::Defer defer([]() -> void { LOG_PRINT(DEBUG, TAG, "end " #section); }); \
   WITH_THROW(block) \
 }
 

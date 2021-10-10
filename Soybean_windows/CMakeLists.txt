@@ -2,6 +2,7 @@ project(soybean_windows)
 
 set(src_files
     "lib.cc"
+    "wrapper.cc"
 )
 
 set(src_dir
@@ -16,14 +17,25 @@ foreach(it ${src_files})
     list(APPEND src_paths "${src_dir}${it}")
 endforeach(it)
 
+
 add_library(${PROJECT_NAME}_static STATIC ${src_paths})
 
 target_include_directories(${PROJECT_NAME}_static
     PUBLIC ${api_dir}
 )
 
+target_link_libraries(${PROJECT_NAME}_static
+    PUBLIC soybean_static
+    PRIVATE winmm
+)
+
 add_library(${PROJECT_NAME}_shared SHARED ${src_paths})
 
 target_include_directories(${PROJECT_NAME}_shared
     PUBLIC ${api_dir}
+)
+
+target_link_libraries(${PROJECT_NAME}_shared
+    PUBLIC soybean_shared
+    PRIVATE winmm
 )
