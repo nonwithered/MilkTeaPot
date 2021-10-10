@@ -3,6 +3,10 @@
 
 #include <milktea/util.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum MilkTea_Exception_t {
   MilkTea_Exception_Nil,
   MilkTea_Exception_Unknown,
@@ -30,6 +34,13 @@ inline const char *MilkTea_Exception_Name(MilkTea_Exception_t type) {
     default: return "Unknown";
   }
 }
+
+MilkTea_API const char * MilkTea_CALL
+MilkTea_Exception_What();
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #ifdef __cplusplus
 #include <milktea/util.h>

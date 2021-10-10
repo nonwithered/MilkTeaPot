@@ -88,18 +88,18 @@ class HandleImpl final : public SoyBean::BaseHandle {
     uint8_t msg[4] = {type, arg_0, arg_1, 0};
     return *reinterpret_cast<uint32_t *>(&msg);
   }
-  static void ThrowOrNot(Wrapper::Proxy_MMRESULT r) {
+  static void ThrowOrNot(Proxy_MMRESULT r) {
     if (r == 0) {
       return;
     }
-    const char *what = Wrapper::Proxy_MMRESULT_What(r);
+    const char *what = Proxy_MMRESULT_What(r);
     if (what != nullptr) {
       MilkTea_throw(Unknown, what);
     } else {
       MilkTea_throwf(Unknown, "MMRESULT %u", r);
     }
   }
-  Wrapper::Proxy_HMIDIOUT handle_;
+  Proxy_HMIDIOUT handle_;
   bool closed_;
   static constexpr char TAG[] = "handle";
 };

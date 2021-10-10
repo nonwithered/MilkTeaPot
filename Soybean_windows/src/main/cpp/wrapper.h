@@ -4,7 +4,6 @@
 #include <cstdint>
 
 namespace SoyBean_Windows {
-namespace Wrapper {
 
 struct Proxy_HMIDIOUT_t;
 using Proxy_HMIDIOUT = Proxy_HMIDIOUT_t *;
@@ -39,7 +38,6 @@ inline const char *Proxy_MMRESULT_What(Proxy_MMRESULT result) {
   }
 }
 
-} // namespace Wrapper
 } // namespace SoyBean_Windows
 
 #endif // ifndef SOYBEAN_WINDOWS_WRAPPER_H_

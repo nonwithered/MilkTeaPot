@@ -13,6 +13,10 @@ enum MilkTea_LogLevel_t {
   MilkTea_LogLevel_ASSERT
 };
 
+#ifndef __cplusplus
+typedef enum MilkTea_LogLevel_t MilkTea_LogLevel_t;
+#endif // ifndef __cplusplus
+
 struct MilkTea_Logger_t {
   void *obj;
   void (*debug)(void *obj, const char *tag, const char *msg);
@@ -22,14 +26,16 @@ struct MilkTea_Logger_t {
   enum MilkTea_LogLevel_t level;
 };
 
+#ifndef __cplusplus
+typedef struct MilkTea_Logger_t MilkTea_Logger_t;
+#endif // ifndef __cplusplus
+
+MilkTea_API void MilkTea_CALL
+MilkTea_Logger_Init(MilkTea_Logger_t log);
+
 #ifdef __cplusplus
 }
 #endif
-
-#ifndef __cplusplus
-typedef enum MilkTea_LogLevel_t MilkTea_LogLevel_t;
-typedef struct MilkTea_Logger_t MilkTea_Logger_t;
-#endif // ifndef __cplusplus
 
 #ifdef __cplusplus
 #include <functional>

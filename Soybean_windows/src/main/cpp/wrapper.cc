@@ -3,7 +3,6 @@
 #include <windows.h>
 
 namespace SoyBean_Windows {
-namespace Wrapper {
 
 struct Proxy_HMIDIOUT_t {
   HMIDIOUT handler_;
@@ -24,5 +23,4 @@ Proxy_MMRESULT Proxy_midiOutShortMsg(Proxy_HMIDIOUT p, uint32_t msg) {
   return midiOutShortMsg(p->handler_, msg);
 }
 
-} // namespace Wrapper
 } // namespace SoyBean_Windows

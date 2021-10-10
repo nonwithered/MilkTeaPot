@@ -12,6 +12,8 @@ namespace Milk {
 class Play final : public Command {
  public:
   Play() : Command() {
+    Callback("-h", &Play::ShowHelp);
+    Callback("--help", &Play::ShowHelp);
     Callback("--log", &Play::InitLog);
   }
  protected:
@@ -28,10 +30,25 @@ class Play final : public Command {
   std::string_view Usage() const final {
     return
 "Usage: milk play\n"
+"  -h, --help\n"
+"    print this help message\n"
+"  --log {d, i, w, e, debug, info, warn, error}\n"
+"    init log level, or no log\n"
     ;
   }
   std::string_view Name() const final {
     return "play";
+  }
+ private:
+  bool help_;
+  bool ShowHelp(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
+    if (help_) {
+      return true;
+    } else {
+      help_ = true;
+    }
+    std::cerr << Usage() << std::endl;
+    return true;
   }
 };
 
