@@ -36,7 +36,7 @@ section list { \
 
 namespace {
 
-constexpr char TAG[] = "milkpowder_api";
+constexpr char TAG[] = "MilkPowder_API";
 
 template<typename T>
 struct milkpowder_cast_map {
