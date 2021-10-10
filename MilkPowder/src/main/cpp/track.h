@@ -3,8 +3,7 @@
 
 #include <vector>
 
-#include "log.h"
-#include "except.h"
+#include "util.h"
 #include "message.h"
 
 namespace MilkPowder {

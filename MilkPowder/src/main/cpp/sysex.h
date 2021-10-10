@@ -4,7 +4,7 @@
 #include <tuple>
 #include <string>
 
-#include "except.h"
+#include "util.h"
 #include "message.h"
 
 namespace MilkPowder {

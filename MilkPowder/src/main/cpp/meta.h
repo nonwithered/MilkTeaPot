@@ -1,7 +1,7 @@
 #ifndef MILKPOWDER_META_H_
 #define MILKPOWDER_META_H_
 
-#include "except.h"
+#include "util.h"
 #include "message.h"
 
 namespace MilkPowder {

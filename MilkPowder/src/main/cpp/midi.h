@@ -3,8 +3,7 @@
 
 #include <vector>
 
-#include "log.h"
-#include "except.h"
+#include "util.h"
 #include "track.h"
 
 namespace MilkPowder {

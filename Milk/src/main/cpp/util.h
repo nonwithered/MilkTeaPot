@@ -7,8 +7,8 @@
 
 #define check_err(s) \
 do { \
-  if (err != MilkPowder_Err_t::MilkPowder_Err_Nil) { \
-    std::cerr << "Failed to " s " because of " << MilkPowder_Err_Name(err) << ": " << MilkPowder_Err_What() << std::endl; \
+  if (err != MilkPowder_Exception_t::MilkTea_Exception_Nil) { \
+    std::cerr << "Failed to " s " because of " << MilkPowder_Exception_Name(err) << ": " << MilkPowder_Exception_What() << std::endl; \
     exit(0); \
   } \
 } while (false)

@@ -22,22 +22,22 @@ template<MilkPowder_LogLevel_t level>
 void LogPrint(void *, const char *tag, const char *msg);
 
 template<>
-void LogPrint<MilkPowder_LogLevel_t::DEBUG>(void *, const char *tag, const char *msg) {
+void LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_DEBUG>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/DEBUG: " << tag << ": " << msg << std::endl;
 }
 
 template<>
-void LogPrint<MilkPowder_LogLevel_t::INFO>(void *, const char *tag, const char *msg) {
+void LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_INFO>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/INFO: " << tag << ": " << msg << std::endl;
 }
 
 template<>
-void LogPrint<MilkPowder_LogLevel_t::WARN>(void *, const char *tag, const char *msg) {
+void LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_WARN>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/WARN: " << tag << ": " << msg << std::endl;
 }
 
 template<>
-void LogPrint<MilkPowder_LogLevel_t::ERROR>(void *, const char *tag, const char *msg) {
+void LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_ERROR>(void *, const char *tag, const char *msg) {
   std::cerr << LogTime() << "/ERROR: " << tag << ": " << msg << std::endl;
 }
 
@@ -74,20 +74,20 @@ class Command {
     show_help_();
   }
   bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
-    MilkPowder_LogLevel_t level = MilkPowder_LogLevel_t::ASSERT;
+    MilkPowder_LogLevel_t level = MilkPowder_LogLevel_t::MilkTea_LogLevel_ASSERT;
     if (itr == args.end()) {
       std::cerr << "milk dump --log: need log level" << std::endl;
       return false;
     } else if (*itr == "d" || *itr == "debug") {
-      level = MilkPowder_LogLevel_t::DEBUG;
+      level = MilkPowder_LogLevel_t::MilkTea_LogLevel_DEBUG;
     } else if (*itr == "i" || *itr == "info") {
-      level = MilkPowder_LogLevel_t::INFO;
+      level = MilkPowder_LogLevel_t::MilkTea_LogLevel_INFO;
     } else if (*itr == "w" || *itr == "warn") {
-      level = MilkPowder_LogLevel_t::WARN;
+      level = MilkPowder_LogLevel_t::MilkTea_LogLevel_WARN;
     } else if (*itr == "e" || *itr == "error") {
-      level = MilkPowder_LogLevel_t::ERROR;
+      level = MilkPowder_LogLevel_t::MilkTea_LogLevel_ERROR;
     }
-    if (level == MilkPowder_LogLevel_t::ASSERT) {
+    if (level == MilkPowder_LogLevel_t::MilkTea_LogLevel_ASSERT) {
       std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
       return false;
     }
@@ -127,10 +127,10 @@ class Command {
   static void LogInitLevel(MilkPowder_LogLevel_t level) {
     MilkPowder_Logger_t config = {
       .obj = nullptr,
-      .debug = LogPrint<MilkPowder_LogLevel_t::DEBUG>,
-      .info = LogPrint<MilkPowder_LogLevel_t::INFO>,
-      .warn = LogPrint<MilkPowder_LogLevel_t::WARN>,
-      .error = LogPrint<MilkPowder_LogLevel_t::ERROR>,
+      .debug = LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_DEBUG>,
+      .info = LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_INFO>,
+      .warn = LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_WARN>,
+      .error = LogPrint<MilkPowder_LogLevel_t::MilkTea_LogLevel_ERROR>,
       .level = level
     };
     MilkPowder_Log_Init(config);

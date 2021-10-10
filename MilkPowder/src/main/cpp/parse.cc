@@ -1,7 +1,5 @@
 #include <cstring>
 
-#include "log.h"
-
 #include "midi.h"
 #include "track.h"
 #include "event.h"

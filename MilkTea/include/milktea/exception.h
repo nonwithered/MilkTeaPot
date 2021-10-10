@@ -31,13 +31,6 @@ inline const char *MilkTea_Exception_Name(MilkTea_Exception_t type) {
   }
 }
 
-#define MilkTea_Exception_What(P) \
-P##_Exception_What
-
-#define MilkTea_Exception_What_Decl(P) \
-MilkTea_API const char * \
-MilkTea_Exception_What(P)()
-
 #ifdef __cplusplus
 #include <milktea/util.h>
 #include <exception>
@@ -45,9 +38,10 @@ MilkTea_Exception_What(P)()
 #include <cstdio>
 namespace MilkTea {
 
-#define MilkTea_Exception_What_Impl(P) \
+#define MilkTea_Exception_What_IMPL(P) \
+namespace P { \
 namespace { \
-const char *MilkTea_##P##_Exception_What(const char *what = nullptr) { \
+const char *MilkTea_Exception_What(const char *what = nullptr) { \
   thread_local static std::string what_; \
   if (what != nullptr) { \
     what_ = what; \
@@ -55,11 +49,7 @@ const char *MilkTea_##P##_Exception_What(const char *what = nullptr) { \
   return what_.data(); \
 } \
 } /* namespace */ \
-extern "C" { \
-MilkTea_Exception_What_Decl(P)() { \
-  return MilkTea_##P##_Exception_What(); \
-} \
-} /* extern "C" */
+} /* namespace */
 
 constexpr size_t kWhatMaxSize = 128;
 
@@ -72,7 +62,7 @@ do { \
 do { \
   char what[MilkTea::kWhatMaxSize]; \
   snprintf(what, MilkTea::kWhatMaxSize, ##__VA_ARGS__); \
-  THROW(type, what); \
+  MILKTEA_EXCEPTION_THROW(type, what); \
 } while (false)
 
 #define MILKTEA_EXCEPTION_THROW_NULL(name) \
@@ -86,24 +76,16 @@ do { \
 do { \
   try { \
     block \
-  } catch (MilkTea::Except &e) { \
-    MilkTea_Exception_What(P)(e.what()); \
+  } catch (MilkTea::Exception &e) { \
+    P::MilkTea_Exception_What(e.what()); \
     return e.Raw(); \
   } catch (std::exception &e) { \
-    MilkTea_Exception_What(P)(e.what()); \
+    P::MilkTea_Exception_What(e.what()); \
     return MilkTea_Exception_t::MilkTea_Exception_Unknown; \
   } \
-  MilkTea_Exception_What(P)(""); \
+  P::MilkTea_Exception_What(""); \
   return MilkTea_Exception_t::MilkTea_Exception_Nil; \
 } while (false)
-
-#define MilkTea_API_Impl(P, section, list, block) \
-MilkTea_API MilkTea_Exception_t \
-section list { \
-  LOG_PRINT(DEBUG, "api_begin", #section); \
-  MilkTea::Defer defer([]() -> void { LOG_PRINT(DEBUG, "api_end", #section); }); \
-  MILKTEA_EXCEPTION_WITH(P, block); \
-}
 
 class Exception final : public std::exception {
  public:

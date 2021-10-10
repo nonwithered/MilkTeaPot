@@ -6,8 +6,7 @@
 #include <memory>
 #include <functional>
 
-#include "log.h"
-#include "except.h"
+#include "util.h"
 
 namespace MilkPowder {
 

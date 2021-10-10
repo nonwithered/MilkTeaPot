@@ -6,11 +6,11 @@ extern "C" {
 #endif
 
 enum MilkTea_LogLevel_t {
-  DEBUG,
-  INFO,
-  WARN,
-  ERROR,
-  ASSERT
+  MilkTea_LogLevel_DEBUG,
+  MilkTea_LogLevel_INFO,
+  MilkTea_LogLevel_WARN,
+  MilkTea_LogLevel_ERROR,
+  MilkTea_LogLevel_ASSERT
 };
 
 struct MilkTea_Logger_t {
@@ -38,12 +38,12 @@ namespace MilkTea {
 
 constexpr size_t kLogMaxSize = 128;
 
-#define MilkTea_Logger_Log_Decl(P) \
+#define MilkTea_Logger_Log_DECL(P) \
 namespace P { \
 MilkTea::Logger &Log(MilkTea::Logger *logger = nullptr); \
 } /* namespace */
 
-#define MilkTea_Logger_Log_Impl(P) \
+#define MilkTea_Logger_Log_IMPL(P) \
 MilkTea::Logger &P::Log(MilkTea::Logger *logger) { \
   static MilkTea::Logger logger_; \
   if (logger != nullptr) { \
@@ -123,10 +123,10 @@ class Logger final {
   }
   static Level LevelOf(MilkTea_LogLevel_t level) {
     switch (level) {
-        case MilkTea_LogLevel_t::DEBUG: return Level::DEBUG;
-        case MilkTea_LogLevel_t::INFO: return Level::INFO;
-        case MilkTea_LogLevel_t::WARN: return Level::WARN;
-        case MilkTea_LogLevel_t::ERROR: return Level::ERROR;
+        case MilkTea_LogLevel_t::MilkTea_LogLevel_DEBUG: return Level::DEBUG;
+        case MilkTea_LogLevel_t::MilkTea_LogLevel_INFO: return Level::INFO;
+        case MilkTea_LogLevel_t::MilkTea_LogLevel_WARN: return Level::WARN;
+        case MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR: return Level::ERROR;
         default: return Level::ASSERT;
     }
   }

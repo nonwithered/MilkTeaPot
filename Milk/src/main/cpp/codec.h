@@ -110,7 +110,7 @@ class Codec final : public Command {
     return true;
   }
   void TornApart(const std::list<std::string_view> &filenames) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     for (auto filename : filenames) {
       MilkPowder_Holder(Midi) midi;
       {
@@ -155,7 +155,7 @@ class Codec final : public Command {
     }
   }
   void GenTarget(const std::list<std::string_view> &filenames, std::string_view name) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     int32_t f = -1;
     int32_t d = -1;
     std::vector<MilkPowder_Track_t *> tracks;
@@ -213,7 +213,7 @@ class Codec final : public Command {
     check_err("dump midi");
   }
   static void MergeTracks(std::vector<MilkPowder_Track_t *> &tracks) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     std::vector<MilkPowder_Message_t *> messages = MergeMsgs(GetMsgs(tracks));
     for (auto track : tracks) {
       err = MilkPowder_Track_Destroy(track);
@@ -226,7 +226,7 @@ class Codec final : public Command {
     tracks.push_back(track.release());
   }
   static std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>> GetMsgs(const std::vector<MilkPowder_Track_t *> &tracks) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     const size_t size = tracks.size();
     std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>> message_vec(size);
     std::vector<uint64_t> delta_vec(size);
@@ -235,7 +235,7 @@ class Codec final : public Command {
       std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>> &messages = message_vec[i];
       std::function<void(const MilkPowder_Message_t *)> callback = [&delta, &messages](const MilkPowder_Message_t *item) -> void {
         uint32_t d = 0;
-        MilkPowder_Err_t err = MilkPowder_Message_GetDelta(item, &d);
+        MilkPowder_Exception_t err = MilkPowder_Message_GetDelta(item, &d);
         check_err("get delta");
         delta += d;
         messages.push_back(std::make_tuple(delta, item));
@@ -246,7 +246,7 @@ class Codec final : public Command {
     return message_vec;
   }
   static std::vector<MilkPowder_Message_t *> MergeMsgs(const std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>> &messages) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     const size_t size = messages.size();
     std::vector<MilkPowder_Message_t *> messages_vec;
     std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>::const_iterator> itrs_vec(size);

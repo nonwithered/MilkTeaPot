@@ -228,7 +228,7 @@ class Dump final : public Command {
     return true;
   }
   void PreviewBody(MilkPowder::FileReader &reader) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     MilkPowder_Holder(Midi) midi;
     err = MilkPowder_Midi_Parse(&midi, &reader, MilkPowder::FileReader::Callback);
     check_err("read midi file");
@@ -278,7 +278,7 @@ class Dump final : public Command {
     }
   }
   void ShowMessages(const MilkPowder_Message_t *message) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     std::cout << "[EVENT]" << std::endl;
     // delta
     uint32_t delta;
@@ -293,7 +293,7 @@ class Dump final : public Command {
     std::cout << "[/EVENT]" << std::endl;
   }
   void ShowMessagesVerbose(const MilkPowder_Message_t *message) {
-    MilkPowder_Err_t err;
+    MilkPowder_Exception_t err;
     std::cout << "[EVENT]" << std::endl;
     // delta
     uint32_t delta;
