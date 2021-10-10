@@ -66,10 +66,10 @@ do { \
   MILKTEA_EXCEPTION_THROW(type, what); \
 } while (false)
 
-#define MILKTEA_EXCEPTION_THROW_NULL(name) \
+#define MILKTEA_EXCEPTION_THROW_NULL(sym) \
 do { \
-  if (name == nullptr) { \
-    MILKTEA_EXCEPTION_THROW(NullPointer, #name); \
+  if (sym == nullptr) { \
+    MILKTEA_EXCEPTION_THROW(NullPointer, #sym); \
   } \
 } while (false)
 

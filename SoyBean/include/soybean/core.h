@@ -56,28 +56,28 @@ SoyBean_API SoyBean_Exception_t
 SoyBean_Handle_Create(SoyBean_Handle_t *self, void *factory, SoyBean_Exception_t (*callback)(void *factory, SoyBean_Handle_t *handle));
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_Destroy(SoyBean_Handle_t *self);
+SoyBean_Handle_Destroy(SoyBean_Handle_t self);
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_NoteOff(SoyBean_Handle_t *self, uint8_t channel, uint8_t note, uint8_t pressure);
+SoyBean_Handle_NoteOff(SoyBean_Handle_t self, uint8_t channel, uint8_t note, uint8_t pressure);
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_NoteOn(SoyBean_Handle_t *self, uint8_t channel, uint8_t note, uint8_t pressure);
+SoyBean_Handle_NoteOn(SoyBean_Handle_t self, uint8_t channel, uint8_t note, uint8_t pressure);
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_AfterTouch(SoyBean_Handle_t *self, uint8_t channel, uint8_t note, uint8_t pressure);
+SoyBean_Handle_AfterTouch(SoyBean_Handle_t self, uint8_t channel, uint8_t note, uint8_t pressure);
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_ControlChange(SoyBean_Handle_t *self, uint8_t channel, uint8_t control, uint8_t argument);
+SoyBean_Handle_ControlChange(SoyBean_Handle_t self, uint8_t channel, uint8_t control, uint8_t argument);
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_ProgramChange(SoyBean_Handle_t *self, uint8_t channel, uint8_t program);
+SoyBean_Handle_ProgramChange(SoyBean_Handle_t self, uint8_t channel, uint8_t program);
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_ChannelPressure(SoyBean_Handle_t *self, uint8_t channel, uint8_t pressure);
+SoyBean_Handle_ChannelPressure(SoyBean_Handle_t self, uint8_t channel, uint8_t pressure);
 
 SoyBean_API SoyBean_Exception_t
-SoyBean_Handle_PitchBend(SoyBean_Handle_t *self, uint8_t channel, uint8_t low, uint8_t height);
+SoyBean_Handle_PitchBend(SoyBean_Handle_t self, uint8_t channel, uint8_t low, uint8_t height);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -2,6 +2,14 @@
 
 #include "util.h"
 
+MilkTea_Exception_What_IMPL(SoyBean_Windows)
+
+extern "C"
+SoyBean_Windows_API const char *
+SoyBean_Windows_Exception_What() {
+  return SoyBean_Windows::MilkTea_Exception_What();
+}
+
 MilkTea_Logger_Log_IMPL(SoyBean_Windows)
 
 extern "C"

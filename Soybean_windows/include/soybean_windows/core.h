@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+SoyBean_Windows_API const char *
+SoyBean_Windows_Exception_What();
+
 SoyBean_Windows_API void
 SoyBean_Windows_Log_Init(SoyBean_Logger_t log);
 

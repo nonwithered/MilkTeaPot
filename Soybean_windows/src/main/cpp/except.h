@@ -3,7 +3,7 @@
 
 #include <milktea.h>
 
-MilkTea_Exception_What_DECL(SoyBean)
+MilkTea_Exception_What_DECL(SoyBean_Windows)
 
 #define THROW MILKTEA_EXCEPTION_THROW
 #define THROW_FORMAT MILKTEA_EXCEPTION_THROW_FORMAT
