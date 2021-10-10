@@ -22,10 +22,6 @@ struct MilkTea_Logger_t {
   enum MilkTea_LogLevel_t level;
 };
 
-#define MilkTea_Log_Decl(P) \
-MilkTea_API void \
-P##_Log_Init(MilkTea_Logger_t log)
-
 #ifdef __cplusplus
 }
 #endif
@@ -39,14 +35,6 @@ typedef struct MilkTea_Logger_t MilkTea_Logger_t;
 #include <functional>
 #include <cstdio>
 namespace MilkTea {
-
-#define MilkTea_Log_Impl(P) \
-extern "C" { \
-MilkTea_Log_Decl(P) { \
-  MilkTea::Logger log_(log); \
-  P::Log(&log_); \
-} \
-} /* extern "C" */
 
 constexpr size_t kLogMaxSize = 128;
 

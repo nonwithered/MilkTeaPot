@@ -12,7 +12,12 @@
 
 MilkTea_Logger_Log_Impl(MilkPowder)
 
-MilkTea_Log_Impl(MilkPowder)
+extern "C"
+MilkPowder_API void
+MilkPowder_Log_Init(MilkPowder_Logger_t log) {
+  MilkTea::Logger log_(log);
+  MilkPowder::Log(&log_);
+}
 
 namespace {
 

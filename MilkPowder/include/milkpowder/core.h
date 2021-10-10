@@ -15,13 +15,14 @@ typedef MilkTea_LogLevel_t MilkPowder_LogLevel_t;
 typedef MilkTea_Exception_t MilkPowder_Exception_t;
 #endif
 
-#define MilkPowder_Exception_Name MilkTea_Exception_Name
+#define MilkPowder_Exception_Name(type) MilkTea_Exception_Name(type)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-MilkTea_Log_Decl(MilkPowder);
+MilkPowder_API void
+MilkPowder_Log_Init(MilkPowder_Logger_t log);
 
 enum MilkPowder_Err_t {
   MilkPowder_Err_Nil,
