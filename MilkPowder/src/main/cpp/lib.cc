@@ -24,7 +24,7 @@ MilkPowder_API MilkPowder_Exception_t \
 section list { \
   LOG_PRINT(DEBUG, TAG, "begin " #section); \
   MilkTea::Defer defer([]() -> void { LOG_PRINT(DEBUG, TAG, "end " #section); }); \
-  MILKTEA_EXCEPTION_WITH(MilkPowder, block); \
+  WITH_THROW(block) \
 }
 
 #include "midi.h"

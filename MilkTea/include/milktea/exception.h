@@ -38,18 +38,19 @@ inline const char *MilkTea_Exception_Name(MilkTea_Exception_t type) {
 #include <cstdio>
 namespace MilkTea {
 
-#define MilkTea_Exception_What_IMPL(P) \
+#define MilkTea_Exception_What_DECL(P) \
 namespace P { \
-namespace { \
-const char *MilkTea_Exception_What(const char *what = nullptr) { \
+const char *MilkTea_Exception_What(const char *what = nullptr); \
+} /* namespace */
+
+#define MilkTea_Exception_What_IMPL(P) \
+const char *P::MilkTea_Exception_What(const char *what) { \
   thread_local static std::string what_; \
   if (what != nullptr) { \
     what_ = what; \
   } \
   return what_.data(); \
-} \
-} /* namespace */ \
-} /* namespace */
+}
 
 constexpr size_t kWhatMaxSize = 128;
 
@@ -72,24 +73,24 @@ do { \
   } \
 } while (false)
 
-#define MILKTEA_EXCEPTION_WITH(P, block) \
-do { \
+#define MILKTEA_EXCEPTION_WITH(P, block) { \
   try { \
     block \
   } catch (MilkTea::Exception &e) { \
     P::MilkTea_Exception_What(e.what()); \
-    return e.Raw(); \
+    return e.GetRawType(); \
   } catch (std::exception &e) { \
     P::MilkTea_Exception_What(e.what()); \
     return MilkTea_Exception_t::MilkTea_Exception_Unknown; \
   } \
   P::MilkTea_Exception_What(""); \
   return MilkTea_Exception_t::MilkTea_Exception_Nil; \
-} while (false)
+}
 
 class Exception final : public std::exception {
  public:
   enum class Type {
+    Unknown,
     Assertion,
     NullPointer,
     Unsupported,
@@ -97,25 +98,38 @@ class Exception final : public std::exception {
     LogicError,
     EndOfFile
   };
-  Exception(Type type, std::string what) : type_(type), what_(what) {}
+  Exception(Type type, std::string what) : Exception(type) {}
   const char* what() const noexcept final {
     return what_.data();
   }
   Type type() const {
     return type_;
   }
-  MilkTea_Exception_t Raw() const {
+  MilkTea_Exception_t GetRawType() const {
     switch (type_) {
-        case Type::Assertion: return MilkTea_Exception_t::MilkTea_Exception_Assertion;
-        case Type::NullPointer: return MilkTea_Exception_t::MilkTea_Exception_NullPointer;
-        case Type::Unsupported: return MilkTea_Exception_t::MilkTea_Exception_Unsupported;
-        case Type::EndOfFile: return MilkTea_Exception_t::MilkTea_Exception_EndOfFile;
-        case Type::InvalidParam: return MilkTea_Exception_t::MilkTea_Exception_InvalidParam;
-        case Type::LogicError: return MilkTea_Exception_t::MilkTea_Exception_LogicError;
-        default: return MilkTea_Exception_t::MilkTea_Exception_Unknown;
+      case Type::Assertion: return MilkTea_Exception_t::MilkTea_Exception_Assertion;
+      case Type::NullPointer: return MilkTea_Exception_t::MilkTea_Exception_NullPointer;
+      case Type::Unsupported: return MilkTea_Exception_t::MilkTea_Exception_Unsupported;
+      case Type::InvalidParam: return MilkTea_Exception_t::MilkTea_Exception_InvalidParam;
+      case Type::LogicError: return MilkTea_Exception_t::MilkTea_Exception_LogicError;
+      case Type::EndOfFile: return MilkTea_Exception_t::MilkTea_Exception_EndOfFile;
+      default: return MilkTea_Exception_t::MilkTea_Exception_Unknown;
+    }
+  }
+  static void ThrowFromRawType(MilkTea_Exception_t type) {
+    switch (type) {
+      case MilkTea_Exception_t::MilkTea_Exception_Nil: return;
+      case MilkTea_Exception_t::MilkTea_Exception_Assertion: throw Exception(Type::Assertion);
+      case MilkTea_Exception_t::MilkTea_Exception_NullPointer: throw Exception(Type::NullPointer);
+      case MilkTea_Exception_t::MilkTea_Exception_Unsupported: throw Exception(Type::Unsupported);
+      case MilkTea_Exception_t::MilkTea_Exception_InvalidParam: throw Exception(Type::InvalidParam);
+      case MilkTea_Exception_t::MilkTea_Exception_LogicError: throw Exception(Type::LogicError);
+      case MilkTea_Exception_t::MilkTea_Exception_EndOfFile: throw Exception(Type::EndOfFile);
+      default: throw Exception(Type::Unknown);
     }
   }
  private:
+  Exception(Type type) : type_(type), what_("") {}
   const Type type_;
   const std::string what_;
 };
