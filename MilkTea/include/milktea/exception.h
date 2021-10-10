@@ -38,27 +38,27 @@ inline const char *MilkTea_Exception_Name(MilkTea_Exception_t type) {
 #include <cstdio>
 namespace MilkTea {
 
-#define MILKTEA_EXCEPTION_THROW(type, what) \
+#define MilkTea_throw(type, what) \
 do { \
   throw MilkTea::Exception(MilkTea::Exception::Type::type, what); \
 } while (false)
 
-#define MILKTEA_EXCEPTION_THROW_FORMAT(type, ...) \
+#define MilkTea_throwf(type, ...) \
 do { \
   constexpr size_t kWhatMaxSize = 128; \
   char what[kWhatMaxSize]; \
   snprintf(what, kWhatMaxSize, ##__VA_ARGS__); \
-  MILKTEA_EXCEPTION_THROW(type, what); \
+  MilkTea_throw(type, what); \
 } while (false)
 
-#define MILKTEA_EXCEPTION_THROW_NULL(sym) \
+#define MilkTea_nonnull(sym) \
 do { \
   if (sym == nullptr) { \
-    MILKTEA_EXCEPTION_THROW(NullPointer, #sym); \
+    MilkTea_throw(NullPointer, #sym); \
   } \
 } while (false)
 
-#define MILKTEA_EXCEPTION_WITH(P, block) { \
+#define MilkTea_with_except(block) { \
   try { \
     block \
   } catch (MilkTea::Exception &e) { \
@@ -74,7 +74,7 @@ do { \
 
 class Exception final : public std::exception {
  public:
-   static MilkTea_API const char *WhatMessage(const char *what = nullptr);
+   static MilkTea_API const char * MilkTea_CALL WhatMessage(const char *what = nullptr);
   enum class Type {
     Unknown,
     Assertion,

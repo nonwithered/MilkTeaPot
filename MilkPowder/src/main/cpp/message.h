@@ -6,8 +6,6 @@
 #include <memory>
 #include <functional>
 
-#include "util.h"
-
 namespace MilkPowder {
 
 class Message {
@@ -19,8 +17,8 @@ class Message {
   Message(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
     CheckDelta(delta);
     if (type < 0x80 || (type > 0xf0 && type < 0xff)) {
-      LOG_PRINT(ERROR, TAG, "ctor type %02" PRIx8, type);
-      THROW_FORMAT(InvalidParam, "type: %02" PRIx8, type);
+      MilkTea_LogPrint(ERROR, TAG, "ctor type %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "type: %02" PRIx8, type);
     }
   }
   bool IsEvent() const {
@@ -44,8 +42,8 @@ class Message {
   static constexpr char TAG[] = "message";
   static void CheckDelta(uint32_t delta) {
     if (delta > 0x0fff'ffff) {
-      LOG_PRINT(ERROR, TAG, "ctor: delta: %08" PRIx32, delta);
-      THROW_FORMAT(InvalidParam, "delta: %08" PRIx32, delta);
+      MilkTea_LogPrint(ERROR, TAG, "ctor: delta: %08" PRIx32, delta);
+      MilkTea_throwf(InvalidParam, "delta: %08" PRIx32, delta);
     }
   }
 };

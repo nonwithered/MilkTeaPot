@@ -3,7 +3,6 @@
 
 #include <soybean.h>
 
-#include "util.h"
 #include "wrapper.h"
 
 namespace SoyBean_Windows {
@@ -69,20 +68,20 @@ class HandleImpl final : public SoyBean::BaseHandle {
  private:
   void CheckClosed() const {
     if (closed_) {
-      LOG_PRINT(ERROR, TAG, "handle is closed");
-      THROW(LogicError, "handle is closed");
+      MilkTea_LogPrint(ERROR, TAG, "handle is closed");
+      MilkTea_throw(LogicError, "handle is closed");
     }
   }
   static void CheckChannel(uint8_t channel) {
     if (channel > 0x0f) {
-      LOG_PRINT(ERROR, TAG, "channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
-      THROW_FORMAT(InvalidParam, "channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
+      MilkTea_LogPrint(ERROR, TAG, "channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
+      MilkTea_throwf(InvalidParam, "channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
     }
   }
   static void CheckArgs(uint8_t arg, const char *sym) {
     if (arg > 0x7f) {
-      LOG_PRINT(ERROR, TAG, "%s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
-      THROW_FORMAT(InvalidParam, "%s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
+      MilkTea_LogPrint(ERROR, TAG, "%s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
+      MilkTea_throwf(InvalidParam, "%s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
     }
   }
   static uint32_t Dword(uint8_t type, uint8_t arg_0, uint8_t arg_1) {
@@ -95,9 +94,9 @@ class HandleImpl final : public SoyBean::BaseHandle {
     }
     const char *what = Wrapper::Proxy_MMRESULT_What(r);
     if (what != nullptr) {
-      THROW(Unknown, what);
+      MilkTea_throw(Unknown, what);
     } else {
-      THROW_FORMAT(Unknown, "MMRESULT %u", r);
+      MilkTea_throwf(Unknown, "MMRESULT %u", r);
     }
   }
   Wrapper::Proxy_HMIDIOUT handle_;

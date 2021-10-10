@@ -3,7 +3,6 @@
 
 #include <soybean.h>
 
-#include "util.h"
 #include "handle_impl.h"
 
 namespace SoyBean_Windows {

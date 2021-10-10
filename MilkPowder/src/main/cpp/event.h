@@ -3,7 +3,6 @@
 
 #include <tuple>
 
-#include "util.h"
 #include "message.h"
 
 namespace MilkPowder {
@@ -17,12 +16,12 @@ class Event final : public Message {
   }
   Event(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : Message(delta, type), args_(args) {
     if (type >= 0xf0) {
-      LOG_PRINT(ERROR, TAG, "ctor: type: %02" PRIx8, type);
-      THROW_FORMAT(InvalidParam, "type: %02" PRIx8, type);
+      MilkTea_LogPrint(ERROR, TAG, "ctor: type: %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "type: %02" PRIx8, type);
     }
     if (std::get<0>(args) >= 0x80 || std::get<1>(args) >= 0x80) {
-      LOG_PRINT(ERROR, TAG, "ctor: args: [ %02" PRIx8 ", %02" PRIx8 " ]", std::get<0>(args), std::get<1>(args));
-      THROW_FORMAT(InvalidParam, "args: [ %02" PRIx8 ", %02" PRIx8 " ]", std::get<0>(args), std::get<1>(args));
+      MilkTea_LogPrint(ERROR, TAG, "ctor: args: [ %02" PRIx8 ", %02" PRIx8 " ]", std::get<0>(args), std::get<1>(args));
+      MilkTea_throwf(InvalidParam, "args: [ %02" PRIx8 ", %02" PRIx8 " ]", std::get<0>(args), std::get<1>(args));
     }
   }
   std::tuple<uint8_t, uint8_t> args() const { return args_; }

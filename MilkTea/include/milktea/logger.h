@@ -37,11 +37,11 @@ typedef struct MilkTea_Logger_t MilkTea_Logger_t;
 namespace MilkTea {
 
 #ifdef NDEBUG
-#define MilkTea_Logger_LogPrint(L, TAG, ...) \
+#define MilkTea_LogPrint(L, TAG, ...) \
 do { \
 } while (false)
 #else // ifdef NDEBUG
-#define MilkTea_Logger_LogPrint(L, TAG, ...) \
+#define MilkTea_LogPrint(L, TAG, ...) \
 do { \
   constexpr size_t kLogMaxSize = 128; \
   MilkTea::Logger logger_ = MilkTea::Logger::Instance(); \
@@ -62,7 +62,7 @@ class Logger final {
     ERROR,
     ASSERT
   };
-  MilkTea_API static Logger &Instance(Logger *logger = nullptr);
+  MilkTea_API static Logger & MilkTea_CALL Instance(Logger *logger = nullptr);
   Logger(
     std::function<void(const char *, const char *)> debug,
     std::function<void(const char *, const char *)> info,

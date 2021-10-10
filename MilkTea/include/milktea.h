@@ -12,11 +12,11 @@
 extern "C" {
 #endif
 
-MilkTea_API const char *
+MilkTea_API const char * MilkTea_CALL
 MilkTea_Exception_What();
 
-MilkTea_API void
-MilkTea_Log_Init(MilkTea_Logger_t log);
+MilkTea_API void MilkTea_CALL
+MilkTea_Logger_Init(MilkTea_Logger_t log);
 
 #ifdef __cplusplus
 } // extern "C"

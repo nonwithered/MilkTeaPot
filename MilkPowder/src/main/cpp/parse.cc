@@ -1,3 +1,5 @@
+#include <milktea.h>
+
 #include <cstring>
 
 #include "midi.h"
@@ -13,7 +15,7 @@ constexpr char TAG[] = "parse";
 uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
   auto ret = callback();
   if (!std::get<1>(ret)) {
-    THROW(EndOfFile, "");
+    MilkTea_throw(EndOfFile, "");
   }
   return std::get<0>(ret);
 }
@@ -37,8 +39,8 @@ uint32_t ParseUsize(std::function<std::tuple<uint8_t, bool>()> callback) {
     arr[len++] = last = ParseU8(callback);
   }
   if (len == 4 && last >= 0x80) {
-    LOG_PRINT(ERROR, TAG, "ParseUsize len [ %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 " ]", arr[0], arr[1], arr[2], arr[3]);
-    THROW_FORMAT(InvalidParam, "len [ %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 " ]", arr[0], arr[1], arr[2], arr[3]);
+    MilkTea_LogPrint(ERROR, TAG, "ParseUsize len [ %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 " ]", arr[0], arr[1], arr[2], arr[3]);
+    MilkTea_throwf(InvalidParam, "len [ %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 " ]", arr[0], arr[1], arr[2], arr[3]);
   }
   uint32_t ret = arr[0] & 0x7f;
   for (size_t i = 1; i != len; ++i) {
@@ -62,12 +64,12 @@ std::vector<uint8_t> ParseArgs(std::function<std::tuple<uint8_t, bool>()> callba
 }
 
 std::unique_ptr<MilkPowder::Event> ParseEvent(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
-  LOG_PRINT(DEBUG, TAG, "ParseEvent");
+  MilkTea_LogPrint(DEBUG, TAG, "ParseEvent");
   if (type < 0x80 || type >= 0xf0) {
     type = ParseU8(callback);
     if (type < 0x80 || type >= 0xf0) {
-    LOG_PRINT(ERROR, TAG, "ParseEvent type %02" PRIx8, type);
-      THROW_FORMAT(InvalidParam, "type %02" PRIx8, type);
+    MilkTea_LogPrint(ERROR, TAG, "ParseEvent type %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "type %02" PRIx8, type);
     }
   }
   std::tuple<uint8_t, uint8_t> args = std::make_tuple(ParseU8(callback), 0);
@@ -78,30 +80,30 @@ std::unique_ptr<MilkPowder::Event> ParseEvent(std::function<std::tuple<uint8_t, 
 }
 
 std::unique_ptr<MilkPowder::Meta> ParseMeta(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
-  LOG_PRINT(DEBUG, TAG, "ParseMeta");
+  MilkTea_LogPrint(DEBUG, TAG, "ParseMeta");
   if (type != 0xff) {
     type = ParseU8(callback);
     if (type != 0xff) {
-      LOG_PRINT(ERROR, TAG, "ParseMeta 0xff %02" PRIx8, type);
-      THROW_FORMAT(InvalidParam, "0xff %02" PRIx8, type);
+      MilkTea_LogPrint(ERROR, TAG, "ParseMeta 0xff %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "0xff %02" PRIx8, type);
     }
   }
   type = ParseU8(callback);
   if (type >= 0x80) {
-      LOG_PRINT(ERROR, TAG, "ParseMeta type %02" PRIx8, type);
-      THROW_FORMAT(InvalidParam, "type %02" PRIx8, type);
+      MilkTea_LogPrint(ERROR, TAG, "ParseMeta type %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "type %02" PRIx8, type);
   }
   std::vector<uint8_t> args = ParseArgs(callback);
   return std::unique_ptr<MilkPowder::Meta>(new MilkPowder::Meta(delta, type, std::move(args)));
 }
 
 std::unique_ptr<MilkPowder::Sysex> ParseSysex(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
-  LOG_PRINT(DEBUG, TAG, "ParseSysex");
+  MilkTea_LogPrint(DEBUG, TAG, "ParseSysex");
   if (type != 0xf0) {
     type = ParseU8(callback);
     if (type != 0xf0) {
-      LOG_PRINT(ERROR, TAG, "ParseSysex 0xf0 %02" PRIx8, type);
-      THROW_FORMAT(InvalidParam, "0xf0 %02" PRIx8, type);
+      MilkTea_LogPrint(ERROR, TAG, "ParseSysex 0xf0 %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "0xf0 %02" PRIx8, type);
     }
   }
   std::vector<uint8_t> args = ParseArgs(callback);
@@ -112,8 +114,8 @@ std::unique_ptr<MilkPowder::Sysex> ParseSysex(std::function<std::tuple<uint8_t, 
     delta = ParseUsize(callback);
     type = ParseU8(callback);
     if (type != 0xf7) {
-      LOG_PRINT(ERROR, TAG, "ParseSysex 0xf7 %02" PRIx8, type);
-      THROW_FORMAT(InvalidParam, "0xf7 %02" PRIx8, type);
+      MilkTea_LogPrint(ERROR, TAG, "ParseSysex 0xf7 %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "0xf7 %02" PRIx8, type);
     }
     args = ParseArgs(callback);
     last = args.back();
@@ -127,16 +129,16 @@ std::unique_ptr<MilkPowder::Sysex> ParseSysex(std::function<std::tuple<uint8_t, 
 namespace MilkPowder {
 
 std::unique_ptr<Midi> Midi::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  LOG_PRINT(DEBUG, TAG, "Midi::Parse");
+  MilkTea_LogPrint(DEBUG, TAG, "Midi::Parse");
   std::vector<uint8_t> head = ParseVecN(callback, 4);
   if (memcmp(head.data(), "MThd", 4) != 0) {
     head.push_back(0);
-    THROW_FORMAT(Unsupported, "MThd: %s", reinterpret_cast<char *>(head.data()));
+    MilkTea_throwf(Unsupported, "MThd: %s", reinterpret_cast<char *>(head.data()));
   }
   uint32_t len = ParseU32(callback);
   if (static_cast<uint32_t>(6) != len) {
-    LOG_PRINT(ERROR, TAG, "Midi::Parse 0x00000006 %" PRIu32, len);
-    THROW_FORMAT(Unsupported, "0x00000006 %" PRIu32, len);
+    MilkTea_LogPrint(ERROR, TAG, "Midi::Parse 0x00000006 %" PRIu32, len);
+    MilkTea_throwf(Unsupported, "0x00000006 %" PRIu32, len);
   }
   uint16_t format = ParseU16(callback);
   uint16_t ntrks = ParseU16(callback);
@@ -149,17 +151,17 @@ std::unique_ptr<Midi> Midi::Parse(std::function<std::tuple<uint8_t, bool>()> cal
 }
   
 std::unique_ptr<Track> Track::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  LOG_PRINT(DEBUG, TAG, "Track::Parse");
+  MilkTea_LogPrint(DEBUG, TAG, "Track::Parse");
   std::vector<uint8_t> head = ParseVecN(callback, 4);
   if (memcmp(head.data(), "MTrk", 4) != 0) {
     head.push_back(0);
-    THROW_FORMAT(Unsupported, "MTrk: %s", reinterpret_cast<char *>(head.data()));
+    MilkTea_throwf(Unsupported, "MTrk: %s", reinterpret_cast<char *>(head.data()));
   }
   const uint32_t capacity = ParseU32(callback);
   uint32_t len = capacity;
   std::function<std::tuple<uint8_t, bool>()> func = [callback, capacity, &len]() -> std::tuple<uint8_t, bool> {
     if (len-- == 0) {
-      LOG_PRINT(ERROR, TAG, "Track::Parse capacity eof %" PRIu32, capacity);
+      MilkTea_LogPrint(ERROR, TAG, "Track::Parse capacity eof %" PRIu32, capacity);
       return std::make_tuple(0, false);
     }
     return callback();
@@ -175,7 +177,7 @@ std::unique_ptr<Track> Track::Parse(std::function<std::tuple<uint8_t, bool>()> c
 }
 
 std::unique_ptr<Message> Message::Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last) {
-  LOG_PRINT(DEBUG, TAG, "Message::Parse");
+  MilkTea_LogPrint(DEBUG, TAG, "Message::Parse");
   uint32_t delta = ParseUsize(callback);
   uint8_t type = ParseU8(callback);
   if (type >= 0x80 && type < 0xf0) {
@@ -186,8 +188,8 @@ std::unique_ptr<Message> Message::Parse(std::function<std::tuple<uint8_t, bool>(
     return ParseSysex(callback, delta, 0xf0);
   } else if (type < 0x80) {
     if (last < 0x80 || last >= 0xf0) {
-      LOG_PRINT(ERROR, TAG, "Message::Parse last event %02" PRIx8, last);
-      THROW_FORMAT(InvalidParam, "last event %02" PRIx8, last);
+      MilkTea_LogPrint(ERROR, TAG, "Message::Parse last event %02" PRIx8, last);
+      MilkTea_throwf(InvalidParam, "last event %02" PRIx8, last);
     }
     std::tuple<uint8_t, uint8_t> args = std::make_tuple(type, 0);
     type = last;
@@ -196,25 +198,25 @@ std::unique_ptr<Message> Message::Parse(std::function<std::tuple<uint8_t, bool>(
     }
     return std::unique_ptr<MilkPowder::Event>(new MilkPowder::Event(delta, type, args));
   } else {
-    LOG_PRINT(ERROR, TAG, "Message::Parse type %02" PRIx8, last);
-      THROW_FORMAT(InvalidParam, "type %02" PRIx8, last);
+    MilkTea_LogPrint(ERROR, TAG, "Message::Parse type %02" PRIx8, last);
+      MilkTea_throwf(InvalidParam, "type %02" PRIx8, last);
   }
 }
   
 std::unique_ptr<Event> Event::Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last) {
-  LOG_PRINT(DEBUG, TAG, "Event::Parse");
+  MilkTea_LogPrint(DEBUG, TAG, "Event::Parse");
   uint32_t delta = ParseUsize(callback);
   return ParseEvent(callback, delta, last);
 }
   
 std::unique_ptr<Meta> Meta::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  LOG_PRINT(DEBUG, TAG, "Meta::Parse");
+  MilkTea_LogPrint(DEBUG, TAG, "Meta::Parse");
   uint32_t delta = ParseUsize(callback);
   return ParseMeta(callback, delta, 0);
 }
   
 std::unique_ptr<Sysex> Sysex::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  LOG_PRINT(DEBUG, TAG, "Sysex::Parse");
+  MilkTea_LogPrint(DEBUG, TAG, "Sysex::Parse");
   uint32_t delta = ParseUsize(callback);
   return ParseSysex(callback, delta, 0);
 }

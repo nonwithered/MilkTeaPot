@@ -2,13 +2,11 @@
 
 extern "C" {
 
-MilkTea_API const char *
-MilkTea_Exception_What() {
+const char *MilkTea_Exception_What() {
   return MilkTea::Exception::WhatMessage();
 }
 
-MilkTea_API void
-MilkTea_Log_Init(MilkTea_Logger_t log) {
+void MilkTea_Logger_Init(MilkTea_Logger_t log) {
   MilkTea::Logger log_(log);
   MilkTea::Logger::Instance(&log_);
 }

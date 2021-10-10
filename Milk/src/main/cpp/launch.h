@@ -134,7 +134,7 @@ class Command {
       .error = LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR>,
       .level = level
     };
-    MilkTea_Log_Init(log_);
+    MilkTea_Logger_Init(log_);
   }
   std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   std::function<void()> show_help_;

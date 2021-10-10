@@ -31,31 +31,31 @@ struct SoyBean_Handle_t {
 typedef struct SoyBean_Handle_t SoyBean_Handle_t;
 #endif
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_Create(SoyBean_Handle_t *self, void *factory, MilkTea_Exception_t (*callback)(void *factory, SoyBean_Handle_t *handle));
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_Destroy(SoyBean_Handle_t self);
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_NoteOff(SoyBean_Handle_t self, uint8_t channel, uint8_t note, uint8_t pressure);
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_NoteOn(SoyBean_Handle_t self, uint8_t channel, uint8_t note, uint8_t pressure);
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_AfterTouch(SoyBean_Handle_t self, uint8_t channel, uint8_t note, uint8_t pressure);
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_ControlChange(SoyBean_Handle_t self, uint8_t channel, uint8_t control, uint8_t argument);
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_ProgramChange(SoyBean_Handle_t self, uint8_t channel, uint8_t program);
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_ChannelPressure(SoyBean_Handle_t self, uint8_t channel, uint8_t pressure);
 
-MilkTea_API MilkTea_Exception_t
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyBean_Handle_PitchBend(SoyBean_Handle_t self, uint8_t channel, uint8_t low, uint8_t height);
 
 #ifdef __cplusplus
