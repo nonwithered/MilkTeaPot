@@ -11,7 +11,7 @@ struct DeletorMap final {};
 #define milkpowder_deletor_map_(T) \
 template<> \
 struct DeletorMap<MilkPowder_##T##_t> final { \
-  using Deletor = MilkPowder_Exception_t (*)(MilkPowder_##T##_t *); \
+  using Deletor = MilkTea_Exception_t (*)(MilkPowder_##T##_t *); \
   static constexpr Deletor deletor = MilkPowder_##T##_Destroy; \
 };
 milkpowder_deletor_map_(Midi)

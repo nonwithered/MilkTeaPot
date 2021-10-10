@@ -8,4 +8,15 @@
 #include <milktea/tostring.h>
 #include <milktea/defer.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+MilkTea_API void
+MilkTea_Log_Init(MilkTea_Logger_t log);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif // ifndef LIB_MILKTEA_H_

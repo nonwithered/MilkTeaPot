@@ -57,7 +57,7 @@ class HandleWrapper final : public BaseHandle {
 
 class BaseFactory {
  public:
-  SoyBean_API static SoyBean_Exception_t (*Callback())(void *factory, SoyBean_Handle_t *handle);
+  SoyBean_API static MilkTea_Exception_t (*Callback())(void *factory, SoyBean_Handle_t *handle);
   virtual BaseHandle *Create() = 0;
 };
 

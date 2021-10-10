@@ -10,17 +10,8 @@ MilkPowder_Exception_What() {
   return MilkPowder::MilkTea_Exception_What();
 }
 
-MilkTea_Logger_Log_IMPL(MilkPowder)
-
-extern "C"
-MilkPowder_API void
-MilkPowder_Log_Init(MilkPowder_Logger_t log) {
-  MilkTea::Logger log_(log);
-  MilkPowder::Log(&log_);
-}
-
 #define API_IMPL(section, list, block) \
-MilkPowder_API MilkPowder_Exception_t \
+MilkPowder_API MilkTea_Exception_t \
 section list { \
   LOG_PRINT(DEBUG, TAG, "begin " #section); \
   MilkTea::Defer defer([]() -> void { LOG_PRINT(DEBUG, TAG, "end " #section); }); \

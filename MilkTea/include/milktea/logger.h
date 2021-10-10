@@ -38,32 +38,18 @@ namespace MilkTea {
 
 constexpr size_t kLogMaxSize = 128;
 
-#define MilkTea_Logger_Log_DECL(P) \
-namespace P { \
-MilkTea::Logger &Log(MilkTea::Logger *logger = nullptr); \
-} /* namespace */
-
-#define MilkTea_Logger_Log_IMPL(P) \
-MilkTea::Logger &P::Log(MilkTea::Logger *logger) { \
-  static MilkTea::Logger logger_; \
-  if (logger != nullptr) { \
-    logger_ = *logger; \
-  } \
-  return logger_; \
-}
-
 #ifdef NDEBUG
-#define MilkTea_Logger_LogPrint(P, L, TAG, ...) \
+#define MilkTea_Logger_LogPrint(L, TAG, ...) \
 do { \
 } while (false)
 #else // ifdef NDEBUG
-#define MilkTea_Logger_LogPrint(P, L, TAG, ...) \
+#define MilkTea_Logger_LogPrint(L, TAG, ...) \
 do { \
-  MilkTea::Logger logger = P::Log(); \
-  if (logger.level() <= MilkTea::Logger::Level::L) { \
+  MilkTea::Logger logger_ = MilkTea::Logger::Instance(); \
+  if (logger_.level() <= MilkTea::Logger::Level::L) { \
     char msg[MilkTea::kLogMaxSize]; \
     snprintf(msg, MilkTea::kLogMaxSize, ##__VA_ARGS__); \
-    logger(MilkTea::Logger::Level::L, TAG, msg); \
+    logger_(MilkTea::Logger::Level::L, TAG, msg); \
   } \
 } while (false)
 #endif // ifdef NDEBUG
@@ -77,6 +63,7 @@ class Logger final {
     ERROR,
     ASSERT
   };
+  MilkTea_API static Logger &Instance(Logger *logger = nullptr);
   Logger(
     std::function<void(const char *, const char *)> debug,
     std::function<void(const char *, const char *)> info,

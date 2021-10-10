@@ -11,7 +11,7 @@ SoyBean_Exception_What() {
 }
 
 #define API_IMPL(section, list, block) \
-SoyBean_API SoyBean_Exception_t \
+SoyBean_API MilkTea_Exception_t \
 section list { \
   WITH_THROW(block) \
 }
@@ -24,7 +24,7 @@ constexpr char TAG[] = "SoyBean_API";
 
 extern "C" {
 
-API_IMPL(SoyBean_Handle_Create, (SoyBean_Handle_t *self, void *factory, SoyBean_Exception_t (*callback)(void *factory, SoyBean_Handle_t *handle)), {
+API_IMPL(SoyBean_Handle_Create, (SoyBean_Handle_t *self, void *factory, MilkTea_Exception_t (*callback)(void *factory, SoyBean_Handle_t *handle)), {
   THROW_NULL(self);
   THROW_NULL(callback);
   return callback(factory, self);
