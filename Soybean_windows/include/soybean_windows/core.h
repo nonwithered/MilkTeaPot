@@ -9,17 +9,8 @@
 extern "C" {
 #endif
 
-struct SoyBean_Windows_Factory_t;
-
-#ifndef __cplusplus
-typedef struct SoyBean_Windows_Factory_t SoyBean_Windows_Factory_t;
-#endif
-
-MilkTea_API SoyBean_Windows_Factory_t * MilkTea_CALL
-SoyBean_Windows_Factory_Instance();
-
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-SoyBean_Windows_Factory_Callback(void *factory, SoyBean_Handle_t *handle);
+SoyBean_Windows_Factory_Create(SoyBean_Factory_t *self, unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen);
 
 #ifdef __cplusplus
 } // extern "C"

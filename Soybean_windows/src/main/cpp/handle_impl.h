@@ -9,8 +9,8 @@ namespace SoyBean_Windows {
 
 class HandleImpl final : public SoyBean::BaseHandle {
  public:
-  HandleImpl() : handle_(nullptr), closed_(false) {
-    ThrowOrNot(Proxy_midiOutOpen(&handle_));
+  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : handle_(nullptr), closed_(false) {
+    ThrowOrNot(Proxy_midiOutOpen(&handle_, uDeviceID, dwCallback, dwInstance, fdwOpen));
   }
   ~HandleImpl() final {
     CheckClosed();
