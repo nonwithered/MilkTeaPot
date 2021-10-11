@@ -2,7 +2,7 @@
 
 namespace SoyBean {
 
-void BaseHandle::ToRawHandle(SoyBean_Handle_t &handle) {
+SoyBean_Handle_t BaseHandle::ToRawHandle() {
   static SoyBean_Interface_t interface_ = {
     .deletor = [](void *self) -> MilkTea_Exception_t MilkTea_with_except({
       delete reinterpret_cast<BaseHandle *>(self);
@@ -29,16 +29,10 @@ void BaseHandle::ToRawHandle(SoyBean_Handle_t &handle) {
       reinterpret_cast<BaseHandle *>(self)->PitchBend(channel, low, height);
     }),
   };
-  handle.handle_ = this;
-  handle.interface_ = &interface_;
-}
-
-MilkTea_Exception_t (*BaseFactory::Callback())(void *factory, SoyBean_Handle_t *handle) {
-  static MilkTea_Exception_t (*callback_)(void *factory, SoyBean_Handle_t *handle) = [](void *factory, SoyBean_Handle_t *handle) -> MilkTea_Exception_t MilkTea_with_except({
-    MilkTea_nonnull(factory);
-    reinterpret_cast<BaseFactory *>(factory)->Create()->ToRawHandle(*handle);
-  });
-  return callback_;
+  return SoyBean_Handle_t{
+    .handle_ = this,
+    .interface_ = &interface_,
+  };
 }
 
 } // namespace SoyBean

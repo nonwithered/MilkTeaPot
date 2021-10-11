@@ -18,8 +18,8 @@ typedef struct SoyBean_Windows_Factory_t SoyBean_Windows_Factory_t;
 MilkTea_API SoyBean_Windows_Factory_t * MilkTea_CALL
 SoyBean_Windows_Factory_Instance();
 
-MilkTea_API MilkTea_Exception_t
-(* MilkTea_CALL SoyBean_Windows_Factory_Callback())(void *factory, SoyBean_Handle_t *handle);
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+SoyBean_Windows_Factory_Callback(void *factory, SoyBean_Handle_t *handle);
 
 #ifdef __cplusplus
 } // extern "C"

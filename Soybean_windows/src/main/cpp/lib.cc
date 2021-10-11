@@ -20,9 +20,9 @@ SoyBean_Windows_Factory_Instance() {
   return reinterpret_cast<SoyBean_Windows_Factory_t *>(&SoyBean_Windows::FactoryImpl::Instance());
 }
 
-MilkTea_Exception_t
-(*SoyBean_Windows_Factory_Callback())(void *factory, SoyBean_Handle_t *handle) {
-  return SoyBean::BaseFactory::Callback();
-}
+MilkTea_IMPL(SoyBean_Windows_Factory_Callback, (void *factory, SoyBean_Handle_t *handle), {
+  MilkTea_nonnull(factory);
+  *handle = reinterpret_cast<SoyBean::BaseFactory *>(factory)->Create()->ToRawHandle();
+})
 
 } // extern "C"

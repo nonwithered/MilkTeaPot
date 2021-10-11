@@ -20,7 +20,7 @@ class Play final : public Command {
   void Launch(std::list<std::string_view> &) final {
     SoyBean_Handle_t h;
     MilkTea_Exception_t e;
-    e = SoyBean_Handle_Create(&h, SoyBean_Windows_Factory_Instance(), SoyBean_Windows_Factory_Callback());
+    e = SoyBean_Handle_Create(&h, SoyBean_Windows_Factory_Instance(), SoyBean_Windows_Factory_Callback);
     std::cerr << e << std::endl;
     e = SoyBean_Handle_NoteOn(h, 0, 0x45, 0x7f);
     std::cerr << e << std::endl;

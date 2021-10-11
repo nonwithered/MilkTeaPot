@@ -95,7 +95,7 @@ class Exception final : public std::exception {
     LogicError,
     EndOfFile
   };
-  Exception(Type type, std::string what) : Exception(type) {}
+  Exception(Type type, std::string what) : type_(type), what_(what) {}
   const char* what() const noexcept final {
     return what_.data();
   }
@@ -113,20 +113,24 @@ class Exception final : public std::exception {
       default: return MilkTea_Exception_t::MilkTea_Exception_Unknown;
     }
   }
-  static void ThrowFromRawType(MilkTea_Exception_t type) {
-    switch (type) {
-      case MilkTea_Exception_t::MilkTea_Exception_Nil: return;
-      case MilkTea_Exception_t::MilkTea_Exception_Assertion: throw Exception(Type::Assertion);
-      case MilkTea_Exception_t::MilkTea_Exception_NullPointer: throw Exception(Type::NullPointer);
-      case MilkTea_Exception_t::MilkTea_Exception_Unsupported: throw Exception(Type::Unsupported);
-      case MilkTea_Exception_t::MilkTea_Exception_InvalidParam: throw Exception(Type::InvalidParam);
-      case MilkTea_Exception_t::MilkTea_Exception_LogicError: throw Exception(Type::LogicError);
-      case MilkTea_Exception_t::MilkTea_Exception_EndOfFile: throw Exception(Type::EndOfFile);
-      default: throw Exception(Type::Unknown);
+  static void ThrowFromRawType(MilkTea_Exception_t type, const char *what = nullptr) {
+    if (type == MilkTea_Exception_Nil) {
+      return;
     }
+    throw Exception(FromRawType(type), WhatMessage(what));
   }
  private:
-  Exception(Type type) : type_(type), what_("") {}
+  static Type FromRawType(MilkTea_Exception_t type) {
+    switch (type) {
+      case MilkTea_Exception_t::MilkTea_Exception_Assertion: return Type::Assertion;
+      case MilkTea_Exception_t::MilkTea_Exception_NullPointer: return Type::NullPointer;
+      case MilkTea_Exception_t::MilkTea_Exception_Unsupported: return Type::Unsupported;
+      case MilkTea_Exception_t::MilkTea_Exception_InvalidParam: return Type::InvalidParam;
+      case MilkTea_Exception_t::MilkTea_Exception_LogicError: return Type::LogicError;
+      case MilkTea_Exception_t::MilkTea_Exception_EndOfFile: return Type::EndOfFile;
+      default: return Type::Unknown;
+    }
+  }
   const Type type_;
   const std::string what_;
 };
