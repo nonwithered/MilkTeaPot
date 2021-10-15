@@ -24,7 +24,7 @@ typedef struct SoyBean_Handle_Interface_t SoyBean_Handle_Interface_t;
 
 struct SoyBean_Handle_t {
   void *handle_;
-  SoyBean_Handle_Interface_t *interface_;
+  const SoyBean_Handle_Interface_t *interface_;
 };
 
 #ifndef __cplusplus
@@ -42,7 +42,7 @@ typedef struct SoyBean_Factory_Interface_t SoyBean_Factory_Interface_t;
 
 struct SoyBean_Factory_t {
   void *factory_;
-  SoyBean_Factory_Interface_t *interface_;
+  const SoyBean_Factory_Interface_t *interface_;
 };
 
 #ifndef __cplusplus

@@ -2,16 +2,24 @@
 #define LIB_MILKTEA_CALLBACK_H_
 
 #ifdef __cplusplus
+#include <milktea/util.h>
 #include <functional>
 namespace MilkTea {
 
 template<typename Res, typename... Args>
-Res (*CallbackOf(const std::function<Res(Args...)> &))(void *, Args...) {
-  return [](void *obj, Args... args) -> Res {
-    std::function<Res(Args...)> &callback = *reinterpret_cast<std::function<Res(Args...)> *>(obj);
-    return callback(args...);
-  };
-}
+struct CallbackOf {
+  CallbackOf(const std::function<Res(Args...)> *callback = nullptr) {}
+  static Res MilkTea_CALL Token(void *obj, Args... args) {
+    std::function<Res(Args...)> &callback_ = *reinterpret_cast<std::function<Res(Args...)> *>(obj);
+    return callback_(args...);
+  }
+};
+
+template<typename Res, typename... Args>
+struct CallbackOf<Res(Args...)> : public CallbackOf<Res, Args...> {};
+
+template<typename Res, typename... Args>
+struct CallbackOf<std::function<Res(Args...)>> : public CallbackOf<Res(Args...)> {};
 
 } // namespace MilkTea
 #endif // ifdef __cplusplus

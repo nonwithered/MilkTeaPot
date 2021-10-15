@@ -16,8 +16,8 @@ MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Create(void *self, So
   *handle = reinterpret_cast<SoyBean_Windows::FactoryImpl *>(self)->Create()->ToRawHandle();
 })
 
-SoyBean_Factory_Interface_t &SoyBean_Factory_Interface_Instance() {
-  static SoyBean_Factory_Interface_t interface_{
+const SoyBean_Factory_Interface_t &SoyBean_Factory_Interface_Instance() {
+  static const SoyBean_Factory_Interface_t interface_{
     .Deletor = SoyBean_Factory_Interface_Deletor,
     .Create = SoyBean_Factory_Interface_Create,
   };

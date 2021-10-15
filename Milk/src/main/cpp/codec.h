@@ -240,7 +240,7 @@ class Codec final : public Command {
         delta += d;
         messages.push_back(std::make_tuple(delta, item));
       };
-      err = MilkPowder_Track_GetMessages(tracks[i], &callback, MilkTea::CallbackOf(callback));
+      err = MilkPowder_Track_GetMessages(tracks[i], &callback, MilkTea::CallbackOf<decltype(callback)>::Token);
       check_err("get messages");
     }
     return message_vec;

@@ -42,8 +42,8 @@ MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_PitchBend(void *self, 
   reinterpret_cast<SoyBean::BaseHandle *>(self)->PitchBend(channel, low, height);
 })
 
-SoyBean_Handle_Interface_t &SoyBean_Handle_Interface_Instance() {
-  static SoyBean_Handle_Interface_t interface_{
+const SoyBean_Handle_Interface_t &SoyBean_Handle_Interface_Instance() {
+  static const SoyBean_Handle_Interface_t interface_{
     .Deletor = SoyBean_Handle_Interface_Deletor,
     .NoteOff = SoyBean_Handle_Interface_NoteOff,
     .NoteOn = SoyBean_Handle_Interface_NoteOn,
