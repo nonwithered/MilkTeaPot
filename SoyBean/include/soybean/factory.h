@@ -57,6 +57,8 @@ class HandleWrapper final : public BaseHandle {
 
 class BaseFactory {
  public:
+  MilkTea_API SoyBean_Factory_t MilkTea_CALL ToRawFactory();
+  virtual ~BaseFactory() = default;
   virtual BaseHandle *Create() = 0;
 };
 
