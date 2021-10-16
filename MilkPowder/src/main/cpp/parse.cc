@@ -170,8 +170,14 @@ std::unique_ptr<Track> Track::Parse(std::function<std::tuple<uint8_t, bool>()> c
   uint8_t last = 0;
   while (len != 0) {
     std::unique_ptr<Message> it = Message::Parse(func, last);
+    bool end = it->IsMeta() && dynamic_cast<Meta *>(it.get())->type() == 0x2f;
     last = it->type();
     items.emplace_back(std::move(it));
+    if (end) {
+      while (len != 0) {
+        ParseU8(func);
+      }
+    }
   }
   return std::unique_ptr<MilkPowder::Track>(new MilkPowder::Track(std::move(items)));
 }
