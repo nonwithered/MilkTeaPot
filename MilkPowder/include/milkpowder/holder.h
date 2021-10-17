@@ -27,7 +27,7 @@ milkpowder_deletor_map_(Sysex)
 template<typename T>
 class Holder final {
  public:
-  Holder(T *ptr = nullptr) : ptr_(ptr) {
+  explicit Holder(T *ptr = nullptr) : ptr_(ptr) {
   }
   Holder(Holder &&another) : ptr_(another.release()) {
   }
@@ -52,9 +52,8 @@ class Holder final {
   }
  private:
   T *ptr_;
-  Holder(const Holder &) = delete;
-  Holder &operator=(const Holder &) = delete;
-  Holder &operator=(Holder &&) = delete;
+  MilkTea_NonCopy(Holder)
+  void operator=(Holder &&) = delete;
 };
 
 } // namespace MilkPowder

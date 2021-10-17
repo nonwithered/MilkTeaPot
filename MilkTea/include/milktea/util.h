@@ -22,6 +22,15 @@ section list { \
 }
 
 #ifdef __cplusplus
+#define MilkTea_NonCopy(T) \
+  T(const T &) = delete; \
+  void operator=(const T &) = delete;
+#define MilkTea_NonMove(T) \
+  T(T &&) = delete; \
+  void operator=(T &&) = delete;
+#endif // ifdef __cplusplus
+
+#ifdef __cplusplus
 #include <cstdint>
 #include <cinttypes>
 #include <cctype>

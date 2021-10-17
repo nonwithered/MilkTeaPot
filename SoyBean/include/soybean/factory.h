@@ -51,8 +51,10 @@ class HandleWrapper final : public BaseHandle {
     MilkTea::Exception::ThrowFromRawType(SoyBean_Handle_PitchBend(handle_, channel, low, height));
   }
  private:
-  HandleWrapper(const SoyBean_Handle_t &handle) : handle_(handle) {}
+  explicit HandleWrapper(const SoyBean_Handle_t &handle) : handle_(handle) {}
   SoyBean_Handle_t handle_;
+  MilkTea_NonCopy(HandleWrapper)
+  MilkTea_NonMove(HandleWrapper)
 };
 
 class BaseFactory {

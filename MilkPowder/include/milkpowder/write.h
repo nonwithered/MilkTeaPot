@@ -13,7 +13,7 @@ class FileWriter final {
     FileWriter &self = *reinterpret_cast<FileWriter *>(obj);
     self.Write(bytes, len);
   }
-  FileWriter(std::string_view filename)
+  explicit FileWriter(std::string_view filename)
     : ofs_(filename.data(), std::ios::binary) {
   }
   void Write(const uint8_t *buf, size_t size) {
@@ -24,6 +24,8 @@ class FileWriter final {
   }
  private:
   std::ofstream ofs_;
+  MilkTea_NonCopy(FileWriter)
+  MilkTea_NonMove(FileWriter)
 };
 
 } // namespace MilkPowder

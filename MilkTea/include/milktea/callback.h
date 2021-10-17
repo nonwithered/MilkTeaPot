@@ -8,7 +8,7 @@ namespace MilkTea {
 
 template<typename Res, typename... Args>
 struct CallbackToken {
-  CallbackToken(const std::function<Res(Args...)> *callback = nullptr) {}
+  explicit CallbackToken(const std::function<Res(Args...)> *callback = nullptr) {}
   static Res MilkTea_CALL Invoke(void *obj, Args... args) {
     std::function<Res(Args...)> &callback_ = *reinterpret_cast<std::function<Res(Args...)> *>(obj);
     return callback_(args...);

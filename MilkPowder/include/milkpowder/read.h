@@ -13,7 +13,7 @@ class FileReader final {
     FileReader &self = *reinterpret_cast<FileReader *>(obj);
     return self.Read(byte, 1) != 0;
   }
-  FileReader(std::string_view filename)
+  explicit FileReader(std::string_view filename)
     : ifs_(filename.data(), std::ios::binary) {
   }
   bool NonOpen() const {
@@ -32,6 +32,8 @@ class FileReader final {
   }
  private:
   std::ifstream ifs_;
+  MilkTea_NonCopy(FileReader)
+  MilkTea_NonMove(FileReader)
 };
 
 } // namespace MilkPowder

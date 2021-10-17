@@ -76,7 +76,7 @@ class Logger final {
     std::function<void(const char *, const char *)> error,
     Level level
   ) : debug_(debug), info_(info), warn_(warn), error_(error), level_(level) {}
-  Logger(MilkTea_Logger_t logger) : Logger(
+  explicit Logger(MilkTea_Logger_t logger) : Logger(
     LogCallback(logger.obj, logger.debug),
     LogCallback(logger.obj, logger.info),
     LogCallback(logger.obj, logger.warn),

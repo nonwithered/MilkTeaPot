@@ -38,21 +38,21 @@ class Timer final {
     TIDYING,
     TERMINATED
   };
-  Timer(std::function<bool(std::exception *)> onTerminate = OnTerminateDefault)
+  explicit Timer(std::function<bool(std::exception *)> onTerminate = OnTerminateDefault)
   : onTerminate_(onTerminate),
     state_(State::INIT) {}
   State state() const {
     return state_;
   }
-  bool Start(std::function<void(action_type)> callback) {
+  bool Start(std::function<void(action_type)> worker) {
     if (!ChangeState(State::RUNNING, State::INIT)) {
       return false;
     }
-    callback(std::bind(Run, this));
+    worker(std::bind(Run, this));
     return true;
   }
-  bool AwaitTermination(duration_type duration) {
-    time_point_type target = CurrentTimePoint() + duration;
+  bool AwaitTermination(duration_type delay) {
+    time_point_type target = CurrentTimePoint() + delay;
     std::unique_lock guard(lock_);
     while (true) {
       if (state_ == State::TERMINATED) {
@@ -196,6 +196,8 @@ class Timer final {
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
   static constexpr char TAG[] = "timer";
+  MilkTea_NonCopy(Timer)
+  MilkTea_NonMove(Timer)
 };
 
 } // namespace MilkTea
