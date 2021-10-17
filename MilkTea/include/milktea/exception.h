@@ -83,6 +83,9 @@ do { \
   return MilkTea_Exception_t::MilkTea_Exception_Nil; \
 }
 
+#define MilkTea_panic(e) \
+MilkTea::Exception::ThrowFromRawType(e)
+
 class Exception final : public std::exception {
  public:
    static MilkTea_API const char * MilkTea_CALL WhatMessage(const char *what = nullptr);

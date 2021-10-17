@@ -5,5 +5,7 @@
 #include <milkpowder/holder.h>
 #include <milkpowder/read.h>
 #include <milkpowder/write.h>
+#include <milkpowder/sysex.h>
+#include <milkpowder/midi.h>
 
 #endif // ifndef LIB_MILKPOWDER_H_

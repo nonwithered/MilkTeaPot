@@ -28,6 +28,9 @@ section list { \
 #define MilkTea_NonMove(T) \
   T(T &&) = delete; \
   void operator=(T &&) = delete;
+#define MilkTea_NonAssign(T) \
+  void operator=(const T &) = delete; \
+  void operator=(T &&) = delete;
 #endif // ifdef __cplusplus
 
 #ifdef __cplusplus

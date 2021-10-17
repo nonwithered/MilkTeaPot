@@ -30,6 +30,11 @@ class FileReader final {
     }
     return ifs_.gcount();
   }
+  operator std::function<bool(uint8_t *)>() {
+    return [this](uint8_t *byte) -> bool {
+      return Read(byte, 1);
+    };
+  }
  private:
   std::ifstream ifs_;
   MilkTea_NonCopy(FileReader)

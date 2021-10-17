@@ -151,7 +151,7 @@ MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Meta_Parse(MilkPowder_Meta_t **self, void *obj, bool (MilkTea_CALL *callback)(void *obj, uint8_t *byte));
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkPowder_Meta_Create(MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t *args, uint32_t length);
+MilkPowder_Meta_Create(MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t args[], uint32_t length);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Meta_Clone(const MilkPowder_Meta_t *self, MilkPowder_Meta_t **another);
@@ -174,7 +174,7 @@ MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Sysex_Parse(MilkPowder_Sysex_t **self, void *obj, bool (MilkTea_CALL *callback)(void *obj, uint8_t *byte));
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkPowder_Sysex_Create(MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *args[], uint32_t length[], uint32_t size);
+MilkPowder_Sysex_Create(MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *const args[], const uint32_t length[], uint32_t size);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Sysex_Clone(const MilkPowder_Sysex_t *self, MilkPowder_Sysex_t **another);

@@ -340,7 +340,7 @@ MilkTea_IMPL(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, void *obj, bool (
   MilkPowder_Parse(self, obj, callback);
 })
 
-MilkTea_IMPL(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t *args, uint32_t length), {
+MilkTea_IMPL(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t args[], uint32_t length), {
   MilkTea_nonnull(self);
   if (length != 0) {
     MilkTea_nonnull(args);
@@ -388,7 +388,7 @@ MilkTea_IMPL(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, void *obj, bool
 
 using Vec = std::vector<std::tuple<uint32_t, std::vector<uint8_t>>>;
 
-MilkTea_IMPL(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *args[], uint32_t length[], uint32_t size), {
+MilkTea_IMPL(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *const args[], const uint32_t length[], uint32_t size), {
   MilkTea_nonnull(self);
   if (size != 0) {
     MilkTea_nonnull(delta);

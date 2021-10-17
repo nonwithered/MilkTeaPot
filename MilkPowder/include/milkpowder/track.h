@@ -1,0 +1,40 @@
+#ifndef LIB_MILKPOWDER_TRACK_H_
+#define LIB_MILKPOWDER_TRACK_H_
+
+#ifdef __cplusplus
+#include <milkpowder/message.h>
+#include <vector>
+namespace MilkPowder {
+class TrackRef final : public MilkPowder_HolderRef(Track) {
+ public:
+  explicit TrackRef(const MilkPowder_Track_t *ref) : MilkPowder_HolderRef(Track)(ref) {}
+  void GetMessages(std::function<void(MessageRef)> callback) const {
+    std::function<void(const MilkPowder_Message_t *)> callback_ = [callback](const MilkPowder_Message_t *obj) -> void {
+      callback(MessageRef(obj));
+    };
+    MilkTea_panic(MilkPowder_Track_GetMessages(*this, &callback_, MilkTea::CallbackToken<decltype(callback_)>::Invoke));
+  }
+};
+class Track final : public MilkPowder_Holder(Track) {
+ public:
+  Track() {}
+  explicit Track(const TrackRef &ref) : MilkPowder_Holder(Track)(ref) {}
+  explicit Track(std::function<bool(uint8_t *)> callback) {
+    MilkTea_panic(MilkPowder_Track_Parse(&*this, &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
+  }
+  Track(Message items[], uint32_t length) {
+    auto size = static_cast<size_t>(length);
+    std::vector<MilkPowder_Message_t *> vec(size);
+    for (auto i = 0; i != size; ++i) {
+      vec[i] = items[i].release();
+    }
+    MilkTea_panic(MilkPowder_Track_Create(&*this, vec.data(), length));
+  }
+  void GetMessages(std::function<void(MessageRef)> callback) const {
+    TrackRef(*this).GetMessages(callback);
+  }
+};
+} // namespace MilkPowder
+#endif // ifdef __cplusplus
+
+#endif // ifndef LIB_MILKPOWDER_TRACK_H_

@@ -186,16 +186,15 @@ class Dump final : public Command {
     }
   }
   bool ShowData(MilkPowder::FileReader &reader, const uint32_t length) {
-    size_t count;
     if (detail_ != 1) {
-      count = reader.Read(nullptr, static_cast<size_t>(length));
+      size_t count = reader.Read(nullptr, static_cast<size_t>(length));
       if (count < static_cast<size_t>(length)) {
         return false;
       }
     } else {
-      count = 0;
       std::cout << "  Offset: 0001 0203 0405 0607 0809 0A0B 0C0D 0E0F" << std::endl;
       uint32_t line = 0;
+      size_t count = 0;
       while (count < static_cast<size_t>(length)) {
         uint8_t buf[16];
         size_t c = static_cast<size_t>(length) - count;
@@ -228,128 +227,86 @@ class Dump final : public Command {
     return true;
   }
   void PreviewBody(MilkPowder::FileReader &reader) {
-    MilkTea_Exception_t err;
-    MilkPowder_Holder(Midi) midi;
-    err = MilkPowder_Midi_Parse(&midi, &reader, MilkPowder::FileReader::Callback);
-    check_err("read midi file");
+    MilkPowder::Midi midi(reader);
     // header chunk
     std::cout << "[HEADER]" << std::endl;
     std::cout << "type=MThd" << std::endl;
     std::cout << "length=" << InternalToStringFromU32(6) << std::endl;
     // format
-    uint16_t format;
-    err = MilkPowder_Midi_GetFormat(midi, &format);
-    check_err("get format");
+    uint16_t format = midi.GetFormat();
     std::cout << "format=" << InternalToStringFromU16(format) << std::endl;
     // ntrks
-    uint16_t ntrks;
-    err = MilkPowder_Midi_GetNtrks(midi, &ntrks);
-    check_err("get ntrks");
+    uint16_t ntrks = midi.GetNtrks();
     std::cout << "ntrks=" << InternalToStringFromU16(ntrks) << std::endl;
     // division
-    uint16_t division;
-    err = MilkPowder_Midi_GetDivision(midi, &division);
-    check_err("get division");
+    uint16_t division = midi.GetDivision();
     std::cout << "division=" << InternalToStringFromU16(division) << std::endl;
     std::cout << "[/HEADER]" << std::endl;
     // foreach chunk
     for (uint16_t i = 0; i != ntrks; ++i) {
-      const MilkPowder_Track_t *track;
-      MilkPowder_Midi_GetTrack(midi, i, &track);
+      MilkPowder::TrackRef track = midi.GetTrack(i);
       // each chunk
       std::cout << "[CHUNK]" << std::endl;
       std::cout << "type=MTrk" << std::endl;
-      std::function<void(const MilkPowder_Message_t *)> callback;
+      std::function<void(MilkPowder::MessageRef)> callback;
       if (detail_ == 2) {
-        callback = [this](const MilkPowder_Message_t *item) -> void {
+        callback = [this](MilkPowder::MessageRef item) -> void {
           ShowMessages(item);
         };
       } else {
-        callback = [this](const MilkPowder_Message_t *item) -> void {
+        callback = [this](MilkPowder::MessageRef item) -> void {
           ShowMessagesVerbose(item);
         };
       }
-      err = MilkPowder_Track_GetMessages(track, &callback, [](void *obj, const MilkPowder_Message_t *item) -> void {
-        std::function<void(const MilkPowder_Message_t *)> &callback = *reinterpret_cast<std::function<void(const MilkPowder_Message_t *)> *>(obj);
-        callback(item);
-      });
-      check_err("get messages");
+      track.GetMessages(callback);
       std::cout << "[/CHUNK]" << std::endl;
     }
   }
-  void ShowMessages(const MilkPowder_Message_t *message) {
-    MilkTea_Exception_t err;
+  void ShowMessages(MilkPowder::MessageRef message) {
     std::cout << "[EVENT]" << std::endl;
     // delta
-    uint32_t delta;
-    err = MilkPowder_Message_GetDelta(message, &delta);
-    check_err("get delta");
+    uint32_t delta = message.GetDelta();
     std::cout << "delta=" << InternalToStringFromVarLen(delta) << std::endl;
     // type
-    uint8_t type;
-    err = MilkPowder_Message_GetType(message, &type);
-    check_err("get type");
+    uint32_t type = message.GetType();
     std::cout << "type=" << MilkTea::ToStringHexFromU8(type) << std::endl;
     std::cout << "[/EVENT]" << std::endl;
   }
-  void ShowMessagesVerbose(const MilkPowder_Message_t *message) {
-    MilkTea_Exception_t err;
+  void ShowMessagesVerbose(MilkPowder::MessageRef message) {
     std::cout << "[EVENT]" << std::endl;
     // delta
-    uint32_t delta;
-    err = MilkPowder_Message_GetDelta(message, &delta);
-    check_err("get delta");
+    uint32_t delta = message.GetDelta();
     std::cout << "delta=" << InternalToStringFromVarLen(delta) << std::endl;
     // type
-    uint8_t type;
-    err = MilkPowder_Message_GetType(message, &type);
-    check_err("get type");
+    uint32_t type = message.GetType();
     std::cout << "type=" << MilkTea::ToStringHexFromU8(type);
     do {
-      bool b;
       // event
-      err = MilkPowder_Message_IsEvent(message, &b);
-      check_err("check event");
-      if (b) {
-        const MilkPowder_Event_t *event;
-        err = MilkPowder_Message_ToEvent(message, &event);
-        check_err("cast event");
+      if (message.IsEvent()) {
         std::cout << std::endl;
-        uint8_t args[2];
-        err = MilkPowder_Event_GetArgs(event, args);
-        check_err("get args");
-        std::cout << "args=" << MilkTea::ToStringHexFromU8(args[0]);
+        MilkPowder::EventRef event = message.ToEvent();
+        auto [arg0, arg1] = event.GetArgs();
+        std::cout << "args=" << MilkTea::ToStringHexFromU8(arg0);
         if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
-          std::cout << MilkTea::ToStringHexFromU8(args[1]);
+          std::cout << MilkTea::ToStringHexFromU8(arg1);
         }
         std::cout << std::endl;
         break;
       }
       // meta
-      err = MilkPowder_Message_IsMeta(message, &b);
-      check_err("check meta");
-      if (b) {
-        const MilkPowder_Meta_t *meta;
-        err = MilkPowder_Message_ToMeta(message, &meta);
-        check_err("cast meta");
-        err = MilkPowder_Meta_GetType(meta, &type);
-        check_err("get type");
+      if (message.IsMeta()) {
+        MilkPowder::MetaRef meta = message.ToMeta();
+        type = meta.GetType();
         std::cout << MilkTea::ToStringHexFromU8(type) << std::endl;
-        uint32_t len;
-        const uint8_t *args;
-        err = MilkPowder_Meta_GetArgs(meta, &args, &len);
-        check_err("get args");
+        const uint8_t *args = nullptr;
+        uint32_t len = meta.GetArgs(&args);
         std::cout << "args=" << InternalToStringFromBytes(args, len) << std::endl;
         break;
       }
       // sysex
-      err = MilkPowder_Message_IsSysex(message, &b);
-      check_err("check sysex");
-      if (b) {
-        const MilkPowder_Sysex_t *sysex;
-        err = MilkPowder_Message_ToSysex(message, &sysex);
-        check_err("cast sysex");
+      if (message.IsSysex()) {
         std::cout << std::endl;
+        MilkPowder::SysexRef sysex = message.ToSysex();
         uint32_t idx = 0;
         std::function<void(uint32_t, const uint8_t *, uint32_t)> callback = [this, &idx](uint32_t delta, const uint8_t *args, uint32_t length) -> void {
           if (idx == 0) {
@@ -359,11 +316,7 @@ class Dump final : public Command {
             std::cout << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << ", delta=" << MilkTea::ToStringHexFromVarLen(delta) << std::endl;
           }
         };
-        err = MilkPowder_Sysex_GetArgs(sysex, &callback, [](void *obj, uint32_t delta, const uint8_t *args, uint32_t length) -> void {
-          std::function<void(uint32_t, const uint8_t *, uint32_t)> &callback = *reinterpret_cast<std::function<void(uint32_t, const uint8_t *, uint32_t)> *>(obj);
-          callback(delta, args, length);
-        });
-        check_err("get args");
+        sysex.GetArgs(callback);
         break;
       }
     } while (false);

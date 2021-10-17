@@ -22,6 +22,11 @@ class FileWriter final {
   bool NonOpen() const {
     return !ofs_.is_open();
   }
+  operator std::function<void(const uint8_t *, size_t)>() {
+    return [this](const uint8_t *bytes, size_t len) -> void {
+      Write(bytes, len);
+    };
+  }
  private:
   std::ofstream ofs_;
   MilkTea_NonCopy(FileWriter)

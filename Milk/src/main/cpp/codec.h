@@ -110,78 +110,51 @@ class Codec final : public Command {
     return true;
   }
   void TornApart(const std::list<std::string_view> &filenames) {
-    MilkTea_Exception_t err;
     for (auto filename : filenames) {
-      MilkPowder_Holder(Midi) midi;
+      MilkPowder::Midi midi;
       {
         MilkPowder::FileReader reader(filename);
         if (reader.NonOpen()) {
           std::cerr << "Failed to open: " << filename << std::endl;
           return;
         }
-        err = MilkPowder_Midi_Parse(&midi, &reader, MilkPowder::FileReader::Callback);
-        check_err("read midi file");
+        midi = MilkPowder::Midi(reader);
       }
-      uint16_t format;
-      err = MilkPowder_Midi_GetFormat(midi, &format);
-      check_err("get format");
-      uint16_t ntrks;
-      err = MilkPowder_Midi_GetNtrks(midi, &ntrks);
-      check_err("get ntrks");
-      uint16_t division;
-      err = MilkPowder_Midi_GetDivision(midi, &division);
-      check_err("get division");
+      uint16_t format = midi.GetFormat();
+      uint16_t ntrks = midi.GetNtrks();
+      uint16_t division = midi.GetDivision();
       if (format_ != -1) {
         format = static_cast<uint16_t>(format_);
       }
       for (uint16_t idx = 0; idx != ntrks; ++idx) {
-        MilkPowder_Track_t *tracks[1];
-        const MilkPowder_Track_t *trk;
-        err = MilkPowder_Midi_GetTrack(midi, idx, &trk);
-        check_err("get track");
-        err = MilkPowder_Track_Clone(trk, &tracks[0]);
-        check_err("clone track");
-        MilkPowder_Holder(Midi) target;
-        err = MilkPowder_Midi_Create(&target, format, 1, division, tracks);
-        check_err("create midi");
+        MilkPowder::Track tracks[1] = { MilkPowder::Track(midi.GetTrack(idx)) };
+        MilkPowder::Midi target(format, 1, division, tracks);
         MilkPowder::FileWriter writer(std::string(filename) + "." + MilkTea::ToStringHexFromU16(idx) + ".mid");
         if (writer.NonOpen()) {
           std::cerr << "Failed to open: " << filename << std::endl;
           return;
         }
-        err = MilkPowder_Midi_Dump(target, &writer, MilkPowder::FileWriter::Callback);
-        check_err("dump midi");
+        target.Dump(writer);
       }
     }
   }
   void GenTarget(const std::list<std::string_view> &filenames, std::string_view name) {
-    MilkTea_Exception_t err;
-    int32_t f = -1;
+    int32_t f = format_;
     int32_t d = -1;
-    std::vector<MilkPowder_Track_t *> tracks;
-    if (format_ != -1) {
-      f = format_;
-    }
+    std::vector<MilkPowder::Track> tracks;
     for (auto filename : filenames) {
-      MilkPowder_Holder(Midi) midi;
+      MilkPowder::Midi midi;
       {
         MilkPowder::FileReader reader(filename);
         if (reader.NonOpen()) {
           std::cerr << "Failed to open: " << filename << std::endl;
           return;
         }
-        err = MilkPowder_Midi_Parse(&midi, &reader, MilkPowder::FileReader::Callback);
-        check_err("read midi file");
+        midi = MilkPowder::Midi(reader);
       }
-      uint16_t format;
-      err = MilkPowder_Midi_GetFormat(midi, &format);
-      check_err("get format");
-      uint16_t ntrks;
-      err = MilkPowder_Midi_GetNtrks(midi, &ntrks);
-      check_err("get ntrks");
-      uint16_t division;
-      err = MilkPowder_Midi_GetDivision(midi, &division);
-      check_err("get division");
+      uint16_t format = midi.GetFormat();
+      uint16_t ntrks = midi.GetNtrks();
+      uint16_t division = midi.GetDivision();
       if (f == -1) {
         f = static_cast<int32_t>(format);
       }
@@ -189,67 +162,47 @@ class Codec final : public Command {
         d = static_cast<int32_t>(division);
       }
       for (uint16_t idx = 0; idx != ntrks; ++idx) {
-        const MilkPowder_Track_t *trk;
-        err = MilkPowder_Midi_GetTrack(midi, idx, &trk);
-        check_err("get track");
-        MilkPowder_Holder(Track) track;
-        err = MilkPowder_Track_Clone(trk, &track);
-        check_err("clone track");
-        tracks.push_back(track.release());
+        tracks.emplace_back(midi.GetTrack(idx));
       }
     }
     if (f == 0) {
       MergeTracks(tracks);
     }
-    MilkPowder_Holder(Midi) target;
-    err = MilkPowder_Midi_Create(&target, static_cast<uint16_t>(f), static_cast<uint16_t>(tracks.size()), static_cast<uint16_t>(d), tracks.data());
-    check_err("create midi");
+    MilkPowder::Midi target = MilkPowder::Midi(static_cast<uint16_t>(f), static_cast<uint16_t>(tracks.size()), static_cast<uint16_t>(d), tracks.data());
     MilkPowder::FileWriter writer(name);
     if (writer.NonOpen()) {
       std::cerr << "Failed to open: " << name << std::endl;
       return;
     }
-    err = MilkPowder_Midi_Dump(target, &writer, MilkPowder::FileWriter::Callback);
-    check_err("dump midi");
+    target.Dump(writer);
   }
-  static void MergeTracks(std::vector<MilkPowder_Track_t *> &tracks) {
-    MilkTea_Exception_t err;
-    std::vector<MilkPowder_Message_t *> messages = MergeMsgs(GetMsgs(tracks));
-    for (auto track : tracks) {
-      err = MilkPowder_Track_Destroy(track);
-      check_err("destroy track");
-    }
+  static void MergeTracks(std::vector<MilkPowder::Track> &tracks) {
+    std::vector<MilkPowder::Message> messages = MergeMsgs(GetMsgs(tracks));
     tracks.clear();
-    MilkPowder_Holder(Track) track;
-    err = MilkPowder_Track_Create(&track, messages.data(), static_cast<uint32_t>(messages.size()));
-    check_err("create track");
-    tracks.push_back(track.release());
+    tracks.emplace_back(messages.data(), static_cast<uint32_t>(messages.size()));
   }
-  static std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>> GetMsgs(const std::vector<MilkPowder_Track_t *> &tracks) {
-    MilkTea_Exception_t err;
+  static std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageRef>>> GetMsgs(const std::vector<MilkPowder::Track> &tracks) {
     const size_t size = tracks.size();
-    std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>> message_vec(size);
+    std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageRef>>> message_vec(size);
     std::vector<uint64_t> delta_vec(size);
     for (size_t i = 0; i != size; ++i) {
       uint64_t &delta = delta_vec[i];
-      std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>> &messages = message_vec[i];
-      std::function<void(const MilkPowder_Message_t *)> callback = [&delta, &messages](const MilkPowder_Message_t *item) -> void {
-        uint32_t d = 0;
-        MilkTea_Exception_t err = MilkPowder_Message_GetDelta(item, &d);
-        check_err("get delta");
-        delta += d;
+      std::vector<std::tuple<uint64_t, MilkPowder::MessageRef>> &messages = message_vec[i];
+      std::function<void(MilkPowder::MessageRef)> callback = [&delta, &messages](MilkPowder::MessageRef item) -> void {
+        delta += item.GetDelta();
         messages.push_back(std::make_tuple(delta, item));
       };
-      err = MilkPowder_Track_GetMessages(tracks[i], &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke);
-      check_err("get messages");
+      tracks[i].GetMessages([&delta, &messages](MilkPowder::MessageRef item) -> void {
+        delta += item.GetDelta();
+        messages.push_back(std::make_tuple(delta, item));
+      });
     }
     return message_vec;
   }
-  static std::vector<MilkPowder_Message_t *> MergeMsgs(const std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>> &messages) {
-    MilkTea_Exception_t err;
+  static std::vector<MilkPowder::Message> MergeMsgs(const std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageRef>>> &messages) {
     const size_t size = messages.size();
-    std::vector<MilkPowder_Message_t *> messages_vec;
-    std::vector<std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>::const_iterator> itrs_vec(size);
+    std::vector<MilkPowder::Message> messages_vec;
+    std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageRef>>::const_iterator> itrs_vec(size);
     for (size_t i = 0; i != size; ++i) {
       itrs_vec[i] = messages[i].begin();
     }
@@ -273,13 +226,10 @@ class Codec final : public Command {
       if (idx == 0) {
         break;
       }
-      MilkPowder_Holder(Message) message;
-      const std::vector<std::tuple<uint64_t, const MilkPowder_Message_t *>>::const_iterator itr = itrs_vec[idx - 1]++;
-      err = MilkPowder_Message_Clone(std::get<1>(*itr), &message);
-      check_err("clone message");
-      err = MilkPowder_Message_SetDelta(message, static_cast<uint32_t>(std::get<0>(*itr) - delta));
-      check_err("set message delta");
-      messages_vec.push_back(message.release());
+      const std::vector<std::tuple<uint64_t, MilkPowder::MessageRef>>::const_iterator itr = itrs_vec[idx - 1]++;
+      MilkPowder::Message message(std::get<1>(*itr));
+      message.SetDelta(static_cast<uint32_t>(std::get<0>(*itr) - delta));
+      messages_vec.emplace_back(std::move(message));
       delta = std::get<0>(*itr);
     }
     return messages_vec;
