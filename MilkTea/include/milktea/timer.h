@@ -4,29 +4,27 @@
 #ifdef __cplusplus
 #include <milktea/exception.h>
 #include <milktea/defer.h>
-#include <functional>
+#include <milktea/timertask.h>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <tuple>
-#include <chrono>
-#include <atomic>
-#include <exception>
 namespace MilkTea {
 
 class Timer final {
  private:
-  using clock_type = std::chrono::system_clock;
-  using duration_type = std::chrono::milliseconds;
-  using time_point_type = std::chrono::time_point<clock_type, duration_type>;
-  using action_type = std::function<void()>;
-  using task_type = std::tuple<time_point_type, action_type>;
+  using clock_type = TimerTask::clock_type;
+  using duration_type = TimerTask::duration_type;
+  using time_point_type = TimerTask::time_point_type;
+  using action_type = TimerTask::action_type;
+  using future_type = TimerTask::future_type;
+  using task_type = std::shared_ptr<TimerTask>;
   static bool OnTerminateDefault(std::exception *e) {
     return false;
   }
   struct greater_type {
     bool operator()(const task_type& lhs, const task_type& rhs) const {
-      return TargetTimePoint(lhs) > TargetTimePoint(rhs);
+      return lhs->time() > rhs->time();
     }
   };
  public:
@@ -82,21 +80,23 @@ class Timer final {
     });
     return vec;
   }
-  time_point_type Post(action_type f, duration_type delay = duration_type::zero()) {
+  future_type Post(action_type f, duration_type delay = duration_type::zero()) {
+    auto future = std::make_shared<TimerFuture>();
     if (delay < duration_type::zero()) {
       delay = duration_type::zero();
     }
     time_point_type target = CurrentTimePoint() + delay;
     std::lock_guard guard(lock_);
     if (state_ != State::RUNNING) {
-      return time_point_type();
+      future->Cancel();
+      return future;
     }
-    bool wake = tasks_.empty() || TargetTimePoint(tasks_.top()) > target;
-    tasks_.push(std::make_tuple(target, f));
+    bool wake = tasks_.empty() || tasks_.top()->time() > target;
+    tasks_.push(std::make_shared<TimerTask>(future, target, f));
     if (wake) {
       tasks_cond_.notify_one();
     }
-    return target;
+    return future;
   }
  private:
   void Run() {
@@ -149,14 +149,16 @@ class Timer final {
           MilkTea_LogPrint(ERROR, TAG, "Take assert State::STOP");
           MilkTea_throw(Assertion, "STOP");
         }
-        duration_type delta = TargetTimePoint(tasks_.top()) - CurrentTimePoint();
+        duration_type delta = tasks_.top()->time() - CurrentTimePoint();
         if (delta > duration_type::zero()) {
           tasks_cond_.wait_for(guard, delta);
           continue;
         } else {
-          std::tuple<bool, action_type> action = std::make_tuple(true, ActionOf(tasks_.top()));
+          auto task = std::move(tasks_.top());
           tasks_.pop();
-          return action;
+          return std::make_tuple(true, [task]() -> void {
+            task->Run();
+          });
         }
       } else {
         if (state_ == State::RUNNING) {
@@ -182,12 +184,6 @@ class Timer final {
   }
   static time_point_type CurrentTimePoint() {
     return std::chrono::time_point_cast<duration_type>(clock_type::now());
-  }
-  static time_point_type TargetTimePoint(const task_type &task) {
-    return std::get<0>(task);
-  }
-  static action_type ActionOf(const task_type &task) {
-    return std::get<1>(task);
   }
   std::function<bool(std::exception *)> onTerminate_;
   State state_;

@@ -13,6 +13,8 @@
 #define MilkTea_CALL __attribute__((__stdcall__))
 #endif
 
+#ifdef __cplusplus
+
 #define MilkTea_IMPL(section, list, block) \
 MilkTea_Exception_t \
 section list { \
@@ -21,7 +23,6 @@ section list { \
   MilkTea_with_except(block) \
 }
 
-#ifdef __cplusplus
 #define MilkTea_NonCopy(T) \
   T(const T &) = delete; \
   void operator=(const T &) = delete;
@@ -31,6 +32,7 @@ section list { \
 #define MilkTea_NonAssign(T) \
   void operator=(const T &) = delete; \
   void operator=(T &&) = delete;
+
 #endif // ifdef __cplusplus
 
 #ifdef __cplusplus

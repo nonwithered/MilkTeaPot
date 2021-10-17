@@ -1,6 +1,8 @@
 #ifndef LIB_MILKTEA_LOGGER_H_
 #define LIB_MILKTEA_LOGGER_H_
 
+#include <milktea/util.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
