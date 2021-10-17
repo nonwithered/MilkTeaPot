@@ -45,12 +45,8 @@ class Timer final {
     return state_;
   }
   bool Start(std::function<void(action_type)> callback) {
-    {
-      std::lock_guard guard(lock_);
-      if (state_ != State::INIT) {
-        return false;
-      }
-      state_ = State::RUNNING;
+    if (!ChangeState(State::RUNNING, State::INIT)) {
+      return false;
     }
     callback(std::bind(Run, this));
     return true;
@@ -71,29 +67,22 @@ class Timer final {
     }
   }
   bool Shutdown() {
-    std::lock_guard guard(lock_);
-    if (state_ != State::RUNNING) {
-      return false;
-    }
-    state_ = State::SHUTDOWN;
-    tasks_cond_.notify_one();
-    return true;
+    return ChangeState(State::SHUTDOWN, State::RUNNING, [this]() -> void {
+      tasks_cond_.notify_one();
+    });
   }
   std::vector<task_type> ShutdownNow() {
     std::vector<task_type> vec;
-    std::lock_guard guard(lock_);
-    if (state_ != State::RUNNING) {
-      return vec;
-    }
-    state_ = State::STOP;
-    tasks_cond_.notify_one();
-    while (!tasks_.empty()) {
-      vec.push_back(tasks_.top());
-      tasks_.pop();
-    }
+    ChangeState(State::STOP, State::RUNNING, [this, &vec]() -> void {
+      while (!tasks_.empty()) {
+        vec.push_back(tasks_.top());
+        tasks_.pop();
+      }
+      tasks_cond_.notify_one();
+    });
     return vec;
   }
-  time_point_type Submit(action_type f, duration_type delay = duration_type::zero()) {
+  time_point_type Post(action_type f, duration_type delay = duration_type::zero()) {
     if (delay < duration_type::zero()) {
       delay = duration_type::zero();
     }
@@ -113,7 +102,7 @@ class Timer final {
   void Run() {
     try {
       while (true) {
-        auto [b, f] = Poll();
+        auto [b, f] = Take();
         f();
         if (!b) {
           break;
@@ -127,42 +116,37 @@ class Timer final {
     }
   }
   bool TryTerminate(std::exception *e) {
-    {
-      std::lock_guard guard(lock_);
-      if (state_ == State::TERMINATED) {
-        return false;
-      }
-      state_ = State::TIDYING;
-    }
-    return OnTerminate(e);
+    return ChangeState(State::TIDYING, [](State state) -> bool {
+      return state != State::TERMINATED;
+    }) && OnTerminate(e);
   }
   bool OnTerminate(std::exception *e) {
     Defer defer([this]() -> void {
-      std::lock_guard guard(lock_);
-      state_ = State::TERMINATED;
-      state_cond_.notify_all();
+      ChangeState(State::TERMINATED, [](State) -> bool { return true; }, [this]() -> void {
+        state_cond_.notify_all();
+      });
     });
     return onTerminate_(e);
   }
-  std::tuple<bool, action_type> Poll() {
+  std::tuple<bool, action_type> Take() {
     std::unique_lock guard(lock_);
     while (true) {
       switch (state_) {
         case State::INIT:
-          MilkTea_LogPrint(ERROR, TAG, "Poll assert State::INIT");
+          MilkTea_LogPrint(ERROR, TAG, "Take assert State::INIT");
           MilkTea_throw(Assertion, "INIT");
         case State::TIDYING:
-          MilkTea_LogPrint(ERROR, TAG, "Poll assert State::TIDYING");
+          MilkTea_LogPrint(ERROR, TAG, "Take assert State::TIDYING");
           MilkTea_throw(Assertion, "TIDYING");
         case State::TERMINATED:
-          MilkTea_LogPrint(ERROR, TAG, "Poll assert State::TERMINATED");
+          MilkTea_LogPrint(ERROR, TAG, "Take assert State::TERMINATED");
           MilkTea_throw(Assertion, "TERMINATED");
         default:
           break;
       }
       if (!tasks_.empty()) {
         if (state_ == State::STOP) {
-          MilkTea_LogPrint(ERROR, TAG, "Poll assert State::STOP");
+          MilkTea_LogPrint(ERROR, TAG, "Take assert State::STOP");
           MilkTea_throw(Assertion, "STOP");
         }
         duration_type delta = TargetTimePoint(tasks_.top()) - CurrentTimePoint();
@@ -184,6 +168,18 @@ class Timer final {
       }
     }
   }
+  bool ChangeState(State target, std::function<bool(State)> predicate = [](State) -> bool { return true; }, action_type action = []() -> void {}) {
+    std::lock_guard guard(lock_);
+    if (!predicate(state_)) {
+      return false;
+    }
+    state_ = target;
+    action();
+    return true;
+  }
+  bool ChangeState(State target, State expect, action_type action = []() -> void {}) {
+    return ChangeState(target, [expect](State state) -> bool { return state == expect; }, action);
+  }
   static time_point_type CurrentTimePoint() {
     return std::chrono::time_point_cast<duration_type>(clock_type::now());
   }
@@ -196,9 +192,9 @@ class Timer final {
   std::function<bool(std::exception *)> onTerminate_;
   State state_;
   std::priority_queue<task_type, std::vector<task_type>, greater_type> tasks_;
-  std::mutex lock_;
-  std::condition_variable state_cond_;
-  std::condition_variable tasks_cond_;
+  std::recursive_mutex lock_;
+  std::condition_variable_any state_cond_;
+  std::condition_variable_any tasks_cond_;
   static constexpr char TAG[] = "timer";
 };
 
