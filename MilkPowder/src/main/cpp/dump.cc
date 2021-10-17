@@ -46,7 +46,7 @@ void DumpArgs(const std::vector<uint8_t> &args, std::vector<uint8_t> &vec) {
 
 namespace MilkPowder {
     
-void Midi::Dump(std::vector<uint8_t> &vec) const {
+void MidiImpl::Dump(std::vector<uint8_t> &vec) const {
   DumpU8(static_cast<uint8_t>('M'), vec);
   DumpU8(static_cast<uint8_t>('T'), vec);
   DumpU8(static_cast<uint8_t>('h'), vec);
@@ -58,12 +58,12 @@ void Midi::Dump(std::vector<uint8_t> &vec) const {
   DumpU16(format_, vec);
   DumpU16(static_cast<uint16_t>(items_.size()), vec);
   DumpU16(division_, vec);
-  for (const std::unique_ptr<Track> &it : items_) {
+  for (const std::unique_ptr<TrackImpl> &it : items_) {
     it->Dump(vec);
   }
 }
 
-void Track::Dump(std::vector<uint8_t> &vec) const {
+void TrackImpl::Dump(std::vector<uint8_t> &vec) const {
   DumpU8(static_cast<uint8_t>('M'), vec);
   DumpU8(static_cast<uint8_t>('T'), vec);
   DumpU8(static_cast<uint8_t>('r'), vec);
@@ -73,7 +73,7 @@ void Track::Dump(std::vector<uint8_t> &vec) const {
   DumpU8(0, vec);
   DumpU8(0, vec);
   DumpU8(0, vec);
-  for (const std::unique_ptr<Message> &it : items_) {
+  for (const std::unique_ptr<MessageImpl> &it : items_) {
     it->Dump(vec);
   }
   std::vector<uint8_t> len;
@@ -83,9 +83,9 @@ void Track::Dump(std::vector<uint8_t> &vec) const {
   }
 }
 
-void Event::Dump(std::vector<uint8_t> &vec) const {
-  DumpUsize(Message::delta(), vec);
-  uint8_t type = Message::type();
+void EventImpl::Dump(std::vector<uint8_t> &vec) const {
+  DumpUsize(MessageImpl::delta(), vec);
+  uint8_t type = MessageImpl::type();
   DumpU8(type, vec);
   DumpU8(std::get<0>(args_), vec);
   type &= 0xf0;
@@ -94,15 +94,15 @@ void Event::Dump(std::vector<uint8_t> &vec) const {
   }
 }
 
-void Meta::Dump(std::vector<uint8_t> &vec) const {
-  DumpUsize(Message::delta(), vec);
+void MetaImpl::Dump(std::vector<uint8_t> &vec) const {
+  DumpUsize(MessageImpl::delta(), vec);
   DumpU8(0xff, vec);
   DumpU8(type_, vec);
   DumpArgs(args_, vec);
 }
 
-void Sysex::Dump(std::vector<uint8_t> &vec) const {
-  DumpUsize(Message::delta(), vec);
+void SysexImpl::Dump(std::vector<uint8_t> &vec) const {
+  DumpUsize(MessageImpl::delta(), vec);
   DumpU8(0xf0, vec);
   std::vector<std::tuple<uint32_t, std::vector<uint8_t>>>::const_iterator itr = items_.begin();
   DumpArgs(std::get<1>(*itr++), vec);

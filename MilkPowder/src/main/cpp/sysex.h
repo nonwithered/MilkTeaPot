@@ -8,14 +8,14 @@
 
 namespace MilkPowder {
 
-class Sysex final : public Message {
+class SysexImpl final : public MessageImpl {
  public:
-  static std::unique_ptr<Sysex> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
+  static std::unique_ptr<SysexImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const final;
-  std::unique_ptr<Message> Clone() const final {
-    return std::unique_ptr<Message>(new Sysex(*this));
+  std::unique_ptr<MessageImpl> Clone() const final {
+    return std::make_unique<SysexImpl>(*this);
   }
-  Sysex(std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items) : Message(std::get<0>(items.front()), 0xf0), items_(std::move(items)) {
+  SysexImpl(std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items) : MessageImpl(std::get<0>(items.front()), 0xf0), items_(std::move(items)) {
     if (items_.size() == 0) {
       MilkTea_LogPrint(ERROR, TAG, "ctor: size: 0");
       MilkTea_throw(InvalidParam, "size: 0");

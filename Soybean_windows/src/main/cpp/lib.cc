@@ -1,6 +1,6 @@
 #include <soybean_windows.h>
 
-#include "factory_impl.h"
+#include "factory.h"
 
 namespace {
 

@@ -5,14 +5,14 @@
 
 namespace MilkPowder {
 
-class Meta final : public Message {
+class MetaImpl final : public MessageImpl {
  public:
-  static std::unique_ptr<Meta> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
+  static std::unique_ptr<MetaImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const final;
-  std::unique_ptr<Message> Clone() const final {
-    return std::unique_ptr<Message>(new Meta(*this));
+  std::unique_ptr<MessageImpl> Clone() const final {
+    return std::make_unique<MetaImpl>(*this);
   }
-  Meta(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : Message(delta, 0xff), type_(type), args_(std::move(args)) {
+  MetaImpl(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : MessageImpl(delta, 0xff), type_(type), args_(std::move(args)) {
     if (type >= 0x80) {
       MilkTea_LogPrint(ERROR, TAG, "ctor: type: %02" PRIx8, type);
       MilkTea_throwf(InvalidParam, "type: %02" PRIx8, type);

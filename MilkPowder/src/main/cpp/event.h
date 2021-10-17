@@ -7,14 +7,14 @@
 
 namespace MilkPowder {
 
-class Event final : public Message {
+class EventImpl final : public MessageImpl {
  public:
-  static std::unique_ptr<Event> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
+  static std::unique_ptr<EventImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
   void Dump(std::vector<uint8_t> &) const final;
-  std::unique_ptr<Message> Clone() const final {
-    return std::unique_ptr<Message>(new Event(*this));
+  std::unique_ptr<MessageImpl> Clone() const final {
+    return std::make_unique<EventImpl>(*this);
   }
-  Event(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : Message(delta, type), args_(args) {
+  EventImpl(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : MessageImpl(delta, type), args_(args) {
     if (type >= 0xf0) {
       MilkTea_LogPrint(ERROR, TAG, "ctor: type: %02" PRIx8, type);
       MilkTea_throwf(InvalidParam, "type: %02" PRIx8, type);

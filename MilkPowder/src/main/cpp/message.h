@@ -8,13 +8,13 @@
 
 namespace MilkPowder {
 
-class Message {
+class MessageImpl {
  public:
-  static std::unique_ptr<Message> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
+  static std::unique_ptr<MessageImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
   virtual void Dump(std::vector<uint8_t> &) const = 0;
-  virtual std::unique_ptr<Message> Clone() const = 0;
-  virtual ~Message() = default;
-  Message(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
+  virtual std::unique_ptr<MessageImpl> Clone() const = 0;
+  virtual ~MessageImpl() = default;
+  MessageImpl(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
     CheckDelta(delta);
     if (type < 0x80 || (type > 0xf0 && type < 0xff)) {
       MilkTea_LogPrint(ERROR, TAG, "ctor type %02" PRIx8, type);
