@@ -7,9 +7,7 @@ namespace SoyMilk {
 
 class Player final {
  public:
-  explicit Player(const MilkTea::Timer &);
   ~Player();
-  void Init();
  private:
 };
 

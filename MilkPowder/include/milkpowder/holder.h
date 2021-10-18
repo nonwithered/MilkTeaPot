@@ -66,6 +66,9 @@ class HolderRef {
   operator const T *() const {
     return get();
   }
+  void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
+    MilkTea_panic(DumpMap<T>::dump(get(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
+  }
  private:
   const T *ref_;
 };
@@ -123,7 +126,7 @@ class Holder {
     return ptr;
   }
   void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
-    MilkTea_panic(DumpMap<T>::dump(get(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
+    HolderRef<T>(*this).Dump(callback);
   }
  private:
   T *ptr_;

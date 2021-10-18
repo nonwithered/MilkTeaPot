@@ -1,8 +1,7 @@
-#ifndef LIB_MILKTEA_TIMER_H_
-#define LIB_MILKTEA_TIMER_H_
+#ifndef LIB_MILKTEA_TIMERWORKER_H_
+#define LIB_MILKTEA_TIMERWORKER_H_
 
 #ifdef __cplusplus
-#include <milktea/exception.h>
 #include <milktea/defer.h>
 #include <milktea/timertask.h>
 #include <queue>
@@ -10,24 +9,38 @@
 #include <condition_variable>
 #include <tuple>
 namespace MilkTea {
-
-class Timer final {
+class TimerWorker final {
  private:
+  using worker_type = std::shared_ptr<TimerWorker>;
+  using task_type = TimerTask::task_type;
+  using future_type = TimerTask::future_type;
   using clock_type = TimerTask::clock_type;
   using duration_type = TimerTask::duration_type;
   using time_point_type = TimerTask::time_point_type;
   using action_type = TimerTask::action_type;
-  using future_type = TimerTask::future_type;
-  using task_type = std::shared_ptr<TimerTask>;
-  static bool OnTerminateDefault(std::exception *e) {
-    return false;
-  }
   struct greater_type {
     bool operator()(const task_type& lhs, const task_type& rhs) const {
       return lhs->time() > rhs->time();
     }
   };
  public:
+  static worker_type Create(std::function<void(action_type)> call) {
+    worker_type worker = std::move(std::make_shared<TimerWorker>());
+    if (worker->Start(call)) {
+        return worker;
+    }
+    return nullptr;
+  }
+  explicit TimerWorker(std::function<bool(std::exception *)> on_terminate = [](std::exception *) -> bool { return false; })
+  : state_(State::INIT),
+    on_terminate_(on_terminate) {}
+  ~TimerWorker() {
+    if (state_ == State::INIT) {
+      return;
+    }
+    Shutdown();
+    AwaitTermination();
+  }
   enum class State {
     INIT,
     RUNNING,
@@ -36,18 +49,14 @@ class Timer final {
     TIDYING,
     TERMINATED
   };
-  explicit Timer(std::function<bool(std::exception *)> onTerminate = OnTerminateDefault)
-  : onTerminate_(onTerminate),
-    state_(State::INIT) {}
   State state() const {
     return state_;
   }
-  bool Start(std::function<void(action_type)> worker) {
-    if (!ChangeState(State::RUNNING, State::INIT)) {
-      return false;
+  void AwaitTermination() {
+    std::unique_lock guard(lock_);
+    while (state_ != State::TERMINATED) {
+      state_cond_.wait(guard);
     }
-    worker(std::bind(Run, this));
-    return true;
   }
   bool AwaitTermination(duration_type delay) {
     time_point_type target = CurrentTimePoint() + delay;
@@ -65,13 +74,13 @@ class Timer final {
     }
   }
   bool Shutdown() {
-    return ChangeState(State::SHUTDOWN, State::RUNNING, [this]() -> void {
+    return ChangeState(State::RUNNING, State::SHUTDOWN, [this]() -> void {
       tasks_cond_.notify_one();
     });
   }
   std::vector<task_type> ShutdownNow() {
     std::vector<task_type> vec;
-    ChangeState(State::STOP, State::RUNNING, [this, &vec]() -> void {
+    ChangeState(State::RUNNING, State::STOP, [this, &vec]() -> void {
       while (!tasks_.empty()) {
         vec.push_back(tasks_.top());
         tasks_.pop();
@@ -81,7 +90,7 @@ class Timer final {
     return vec;
   }
   future_type Post(action_type f, duration_type delay = duration_type::zero()) {
-    auto future = std::make_shared<TimerFuture>();
+    future_type future = TimerFuture::Create();
     if (delay < duration_type::zero()) {
       delay = duration_type::zero();
     }
@@ -92,41 +101,67 @@ class Timer final {
       return future;
     }
     bool wake = tasks_.empty() || tasks_.top()->time() > target;
-    tasks_.push(std::make_shared<TimerTask>(future, target, f));
+    tasks_.push(TimerTask::Create(future, target, f));
     if (wake) {
       tasks_cond_.notify_one();
     }
     return future;
   }
  private:
+  bool Start(std::function<void(action_type)> call) {
+    if (!ChangeState(State::INIT, State::RUNNING)) {
+      return false;
+    }
+    call([this]() -> void { Run(); });
+    return true;
+  }
   void Run() {
     try {
       while (true) {
         auto [b, f] = Take();
-        f();
         if (!b) {
           break;
         }
+        f();
       }
+      TryTerminate(nullptr);
     } catch (std::exception &e) {
-      bool b = TryTerminate(&e);
-      if (!b) {
+      if (!TryTerminate(&e)) {
         throw e;
       }
     }
   }
   bool TryTerminate(std::exception *e) {
     return ChangeState(State::TIDYING, [](State state) -> bool {
-      return state != State::TERMINATED;
+      switch (state) {
+        case State::INIT:
+          MilkTea_LogPrint(ERROR, TAG, "TryTerminate assert State::INIT");
+          MilkTea_throw(Assertion, "TryTerminate assert State::INIT");
+        case State::RUNNING:
+          MilkTea_LogPrint(ERROR, TAG, "TryTerminate assert State::RUNNING");
+          MilkTea_throw(Assertion, "TryTerminate assert State::RUNNING");
+        case State::TIDYING:
+        case State::TERMINATED:
+          return false;
+        case State::SHUTDOWN:
+        case State::STOP:
+          return true;
+        default:
+          MilkTea_LogPrint(ERROR, TAG, "TryTerminate assert default");
+          MilkTea_throw(Assertion, "TryTerminate assert default");
+      }
     }) && OnTerminate(e);
   }
   bool OnTerminate(std::exception *e) {
     Defer defer([this]() -> void {
-      ChangeState(State::TERMINATED, [](State) -> bool { return true; }, [this]() -> void {
+      if (!ChangeState(State::TIDYING, State::TERMINATED, [this]() -> void {
         state_cond_.notify_all();
-      });
+      })) {
+        MilkTea_LogPrint(ERROR, TAG, "OnTerminate assert");
+        MilkTea_throw(Assertion, "OnTerminate assert");
+      }
     });
-    return onTerminate_(e);
+    return on_terminate_(e);
   }
   std::tuple<bool, action_type> Take() {
     std::unique_lock guard(lock_);
@@ -134,27 +169,25 @@ class Timer final {
       switch (state_) {
         case State::INIT:
           MilkTea_LogPrint(ERROR, TAG, "Take assert State::INIT");
-          MilkTea_throw(Assertion, "INIT");
+          MilkTea_throw(Assertion, "Take assert State::INIT");
         case State::TIDYING:
           MilkTea_LogPrint(ERROR, TAG, "Take assert State::TIDYING");
-          MilkTea_throw(Assertion, "TIDYING");
+          MilkTea_throw(Assertion, "Take assert State::TIDYING");
         case State::TERMINATED:
           MilkTea_LogPrint(ERROR, TAG, "Take assert State::TERMINATED");
-          MilkTea_throw(Assertion, "TERMINATED");
-        default:
-          break;
+          MilkTea_throw(Assertion, "Take assert State::TERMINATED");
       }
       if (!tasks_.empty()) {
         if (state_ == State::STOP) {
           MilkTea_LogPrint(ERROR, TAG, "Take assert State::STOP");
-          MilkTea_throw(Assertion, "STOP");
+          MilkTea_throw(Assertion, "Take assert State::STOP");
         }
         duration_type delta = tasks_.top()->time() - CurrentTimePoint();
         if (delta > duration_type::zero()) {
           tasks_cond_.wait_for(guard, delta);
           continue;
         } else {
-          auto task = std::move(tasks_.top());
+          task_type task = std::move(tasks_.top());
           tasks_.pop();
           return std::make_tuple(true, [task]() -> void {
             task->Run();
@@ -165,7 +198,7 @@ class Timer final {
           tasks_cond_.wait(guard);
           continue;
         } else {
-          return std::make_tuple(false, std::bind(TryTerminate, this, nullptr));
+          return std::make_tuple(false, []() -> void {});
         }
       }
     }
@@ -179,24 +212,23 @@ class Timer final {
     action();
     return true;
   }
-  bool ChangeState(State target, State expect, action_type action = []() -> void {}) {
+  bool ChangeState(State expect, State target, action_type action = []() -> void {}) {
     return ChangeState(target, [expect](State state) -> bool { return state == expect; }, action);
   }
   static time_point_type CurrentTimePoint() {
     return std::chrono::time_point_cast<duration_type>(clock_type::now());
   }
-  std::function<bool(std::exception *)> onTerminate_;
   State state_;
   std::priority_queue<task_type, std::vector<task_type>, greater_type> tasks_;
   std::recursive_mutex lock_;
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
+  std::function<bool(std::exception *)> on_terminate_;
   static constexpr char TAG[] = "timer";
-  MilkTea_NonCopy(Timer)
-  MilkTea_NonMove(Timer)
+  MilkTea_NonCopy(TimerWorker)
+  MilkTea_NonMove(TimerWorker)
 };
-
 } // namespace MilkTea
 #endif // ifdef __cplusplus
 
-#endif // ifndef LIB_MILKTEA_TIMER_H_
+#endif // ifndef LIB_MILKTEA_TIMERWORKER_H_
