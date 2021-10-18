@@ -18,14 +18,9 @@ class TimerWorker final {
   using duration_type = TimerTask::duration_type;
   using time_point_type = TimerTask::time_point_type;
   using action_type = TimerTask::action_type;
-  struct greater_type {
-    bool operator()(const task_type& lhs, const task_type& rhs) const {
-      return lhs->time() > rhs->time();
-    }
-  };
  public:
   static worker_type Create(std::function<void(action_type)> call) {
-    worker_type worker = std::move(std::make_shared<TimerWorker>());
+    worker_type worker = std::make_shared<TimerWorker>();
     if (worker->Start(call)) {
         return worker;
     }
@@ -90,18 +85,18 @@ class TimerWorker final {
     return vec;
   }
   future_type Post(action_type f, duration_type delay = duration_type::zero()) {
-    future_type future = TimerFuture::Create();
     if (delay < duration_type::zero()) {
       delay = duration_type::zero();
     }
     time_point_type target = CurrentTimePoint() + delay;
+    future_type future = TimerFuture::Create(target);
     std::lock_guard guard(lock_);
     if (state_ != State::RUNNING) {
       future->Cancel();
       return future;
     }
-    bool wake = tasks_.empty() || tasks_.top()->time() > target;
-    tasks_.push(TimerTask::Create(future, target, f));
+    bool wake = tasks_.empty() || *tasks_.top() - target > duration_type::zero();
+    tasks_.push(TimerTask::Create(future, f));
     if (wake) {
       tasks_cond_.notify_one();
     }
@@ -182,7 +177,7 @@ class TimerWorker final {
           MilkTea_LogPrint(ERROR, TAG, "Take assert State::STOP");
           MilkTea_throw(Assertion, "Take assert State::STOP");
         }
-        duration_type delta = tasks_.top()->time() - CurrentTimePoint();
+        duration_type delta = *tasks_.top() - CurrentTimePoint();
         if (delta > duration_type::zero()) {
           tasks_cond_.wait_for(guard, delta);
           continue;
@@ -219,7 +214,7 @@ class TimerWorker final {
     return std::chrono::time_point_cast<duration_type>(clock_type::now());
   }
   State state_;
-  std::priority_queue<task_type, std::vector<task_type>, greater_type> tasks_;
+  std::priority_queue<task_type, std::vector<task_type>, std::greater<task_type>> tasks_;
   std::recursive_mutex lock_;
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
