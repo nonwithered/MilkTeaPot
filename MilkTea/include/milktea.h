@@ -7,6 +7,6 @@
 #include <milktea/callback.h>
 #include <milktea/tostring.h>
 #include <milktea/defer.h>
-#include <milktea/timerworker.h>
+#include <milktea/timer.h>
 
 #endif // ifndef LIB_MILKTEA_H_

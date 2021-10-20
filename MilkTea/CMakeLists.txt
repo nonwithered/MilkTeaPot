@@ -2,6 +2,7 @@ project(milktea)
 
 set(src_files
     "lib.cc"
+    "timer.cc"
 )
 
 set(src_dir
