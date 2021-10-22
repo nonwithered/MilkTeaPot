@@ -51,10 +51,10 @@ typedef struct MilkTea_TimerTask_t MilkTea_TimerTask_t;
 #endif // ifndef __cplusplus
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkTea_TimerWorker_Create(MilkTea_TimerWorker_t **self, void *obj, void (MilkTea_CALL *callback)(void *obj, void *worker, void (MilkTea_CALL *run)(void *worker)));
+MilkTea_TimerWorker_Create(MilkTea_TimerWorker_t **self, void *obj, void (MilkTea_CALL *callback)(void *obj, void *action, void (MilkTea_CALL *run)(void *action)));
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkTea_TimerWorker_Refer(MilkTea_TimerWorker_t **self, MilkTea_TimerWorker_t *worker);
+MilkTea_TimerWorker_Refer(MilkTea_TimerWorker_t *self, MilkTea_TimerWorker_t **worker);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkTea_TimerWorker_Destroy(MilkTea_TimerWorker_t *self);
@@ -72,7 +72,31 @@ MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkTea_TimerWorker_ShutdownNow(MilkTea_TimerWorker_t *self, void *obj, void (MilkTea_CALL *callback)(void *obj, uint32_t len, MilkTea_TimerTask_t *tasks[]));
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkTea_TimerWorker_Post(MilkTea_TimerWorker_t *self, int64_t delay, void *task, uint32_t size, void (MilkTea_CALL *deletor)(void *task), void (MilkTea_CALL *run)(void *task));
+MilkTea_TimerWorker_Post(MilkTea_TimerWorker_t *self, int64_t delay, void *task, void (MilkTea_CALL *deletor)(void *task), void (MilkTea_CALL *run)(void *task), MilkTea_TimerFuture_t **future);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerFuture_Refer(MilkTea_TimerFuture_t *self, MilkTea_TimerFuture_t **future);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerFuture_Destroy(MilkTea_TimerFuture_t *self);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerFuture_GetState(MilkTea_TimerFuture_t *self, MilkTea_TimerFuture_State_t *state);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerFuture_GetTime(MilkTea_TimerFuture_t *self, int64_t *time);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerFuture_Cancel(MilkTea_TimerFuture_t *self, bool *success);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerTask_Destroy(MilkTea_TimerTask_t *self);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerTask_GetFuture(MilkTea_TimerTask_t *self, MilkTea_TimerFuture_t **future);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerTask_Run(MilkTea_TimerTask_t *self);
 
 #ifdef __cplusplus
 } // extern "C"

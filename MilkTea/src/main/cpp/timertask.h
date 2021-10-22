@@ -28,6 +28,9 @@ class TimerTaskImpl final {
   duration_type operator-(time_point_type time) const {
     return future_->time() - time;
   }
+  future_type future() {
+    return future_;
+  }
   void Run() {
     if (!future_->ChangeState(TimerFutureImpl::State::SCHEDULED, TimerFutureImpl::State::EXECUTED)) {
         return;

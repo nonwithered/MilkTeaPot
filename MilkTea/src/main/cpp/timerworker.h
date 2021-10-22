@@ -26,7 +26,7 @@ class TimerWorkerImpl final {
     if (worker->Start(call)) {
         return worker;
     }
-    return nullptr;
+    return worker_type(nullptr);
   }
   ~TimerWorkerImpl() {
     if (state_ == State::INIT) {
