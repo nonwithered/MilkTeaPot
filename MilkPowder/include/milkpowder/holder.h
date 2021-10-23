@@ -89,21 +89,23 @@ class Holder {
   Holder(Holder<T> &&another) : ptr_(another.release()) {
   }
   void operator=(const Holder<T> &another) {
-    if (this->ptr_ == another.ptr_) {
+    if (ptr_ == another.ptr_) {
       return;
     }
-    Clear();
-    CloneMap<T>::clone(*another, &this);
+    this->~Holder();
+    CloneMap<T>::clone(another.ptr_, &ptr_);
   }
   void operator=(Holder<T> &&another) {
-    if (this->ptr_ == another.ptr_) {
+    if (ptr_ == another.ptr_) {
       return;
     }
-    Clear();
-    std::swap(this->ptr_, another.ptr_);
+    this->~Holder();
+    std::swap(ptr_, another.ptr_);
   }
   virtual ~Holder() {
-    Clear();
+    if (ptr_ != nullptr) {
+      MilkTea_panic(DestroyMap<T>::destroy(release()));
+    }
   }
   operator T *() {
     return get();
@@ -130,11 +132,6 @@ class Holder {
   }
  private:
   T *ptr_;
-  void Clear() {
-    if (get() != nullptr) {
-      MilkTea_panic(DestroyMap<T>::destroy(release()));
-    }
-  }
 };
 
 } // namespace MilkPowder

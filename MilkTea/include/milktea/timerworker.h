@@ -1,40 +1,24 @@
-#ifndef MILKTEA_TIMERWORKER_H_
-#define MILKTEA_TIMERWORKER_H_
+#ifndef LIB_MILKTEA_TIMERWORKER_H_
+#define LIB_MILKTEA_TIMERWORKER_H_
 
+#ifdef __cplusplus
 #include <milktea/defer.h>
-
+#include <milktea/timertask.h>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <tuple>
-
-#include "timertask.h"
-
 namespace MilkTea {
 
-class TimerWorkerImpl final {
+class TimerWorker final {
  public:
-  using worker_type = std::shared_ptr<TimerWorkerImpl>;
-  using task_type = TimerTaskImpl::task_type;
-  using future_type = TimerTaskImpl::future_type;
-  using clock_type = TimerTaskImpl::clock_type;
-  using duration_type = TimerTaskImpl::duration_type;
-  using time_point_type = TimerTaskImpl::time_point_type;
-  using action_type = TimerTaskImpl::action_type;
-  static worker_type Create(std::function<void(action_type)> call) {
-    worker_type worker(new TimerWorkerImpl());
-    if (worker->Start(call)) {
-        return worker;
-    }
-    return worker_type(nullptr);
-  }
-  ~TimerWorkerImpl() {
-    if (state_ == State::INIT) {
-      return;
-    }
-    Shutdown();
-    AwaitTermination();
-  }
+  using worker_type = std::shared_ptr<TimerWorker>;
+  using task_type = TimerTask::task_type;
+  using future_type = TimerTask::future_type;
+  using clock_type = TimerTask::clock_type;
+  using duration_type = TimerTask::duration_type;
+  using time_point_type = TimerTask::time_point_type;
+  using action_type = TimerTask::action_type;
   enum class State {
     INIT,
     RUNNING,
@@ -43,15 +27,29 @@ class TimerWorkerImpl final {
     TIDYING,
     TERMINATED
   };
-  State state() const {
-    return state_;
+  explicit TimerWorker(std::function<bool(std::exception *)> on_terminate = [](std::exception *) -> bool { return false; })
+  : state_(State::INIT),
+    on_terminate_(on_terminate) {}
+  ~TimerWorker() {
+    State state = state_;
+    if (state_ == State::INIT) {
+      return;
+    }
+    if (state_ != State::TERMINATED) {
+      MilkTea_LogPrint(ERROR, TAG, "dtor state %s", StateName(state));
+      Shutdown();
+      AwaitTermination();
+    }
   }
-  bool Start(std::function<void(action_type)> call) {
+  bool Start() {
     if (!ChangeState(State::INIT, State::RUNNING)) {
       return false;
     }
-    call([this]() -> void { Run(); });
+    Run();
     return true;
+  }
+  State state() const {
+    return state_;
   }
   void AwaitTermination() {
     std::unique_lock guard(lock_);
@@ -95,23 +93,20 @@ class TimerWorkerImpl final {
       delay = duration_type::zero();
     }
     time_point_type target = CurrentTimePoint() + delay;
-    future_type future = TimerFutureImpl::Create(target);
+    future_type future = TimerFuture::Create(target);
     std::lock_guard guard(lock_);
     if (state_ != State::RUNNING) {
       future->Cancel();
       return future;
     }
     bool wake = tasks_.empty() || *tasks_.top() - target > duration_type::zero();
-    tasks_.push(TimerTaskImpl::Create(future, f));
+    tasks_.push(TimerTask::Create(future, f));
     if (wake) {
       tasks_cond_.notify_one();
     }
     return future;
   }
  private:
-  explicit TimerWorkerImpl(std::function<bool(std::exception *)> on_terminate = [](std::exception *) -> bool { return false; })
-  : state_(State::INIT),
-    on_terminate_(on_terminate) {}
   void Run() {
     try {
       while (true) {
@@ -215,6 +210,17 @@ class TimerWorkerImpl final {
   static time_point_type CurrentTimePoint() {
     return std::chrono::time_point_cast<duration_type>(clock_type::now());
   }
+  static const char *StateName(State state) {
+    switch (state) {
+      case State::INIT: return "INIT";
+      case State::RUNNING: return "RUNNING";
+      case State::SHUTDOWN: return "SHUTDOWN";
+      case State::STOP: return "STOP";
+      case State::TIDYING: return "TIDYING";
+      case State::TERMINATED: return "TERMINATED";
+      default: MilkTea_throw(Assertion, "StateName assert");
+    }
+  }
   State state_;
   std::priority_queue<task_type, std::vector<task_type>, std::greater<task_type>> tasks_;
   std::recursive_mutex lock_;
@@ -222,10 +228,11 @@ class TimerWorkerImpl final {
   std::condition_variable_any tasks_cond_;
   std::function<bool(std::exception *)> on_terminate_;
   static constexpr char TAG[] = "timer";
-  MilkTea_NonCopy(TimerWorkerImpl)
-  MilkTea_NonMove(TimerWorkerImpl)
+  MilkTea_NonCopy(TimerWorker)
+  MilkTea_NonMove(TimerWorker)
 };
 
 } // namespace MilkTea
+#endif // ifdef __cplusplus
 
-#endif // ifndef MILKTEA_TIMERWORKER_H_
+#endif // ifndef LIB_MILKTEA_TIMERWORKER_H_
