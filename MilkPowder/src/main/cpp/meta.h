@@ -14,8 +14,7 @@ class MetaImpl final : public MessageImpl {
   }
   MetaImpl(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : MessageImpl(delta, 0xff), type_(type), args_(std::move(args)) {
     if (type >= 0x80) {
-      MilkTea_LogPrint(ERROR, TAG, "ctor: type: %02" PRIx8, type);
-      MilkTea_throwf(InvalidParam, "type: %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "ctor -- type: %02" PRIx8, type);
     }
   }
   uint8_t type() const { return type_; }
@@ -23,7 +22,7 @@ class MetaImpl final : public MessageImpl {
  private:
   const uint8_t type_;
   const std::vector<uint8_t> args_;
-  static constexpr char TAG[] = "meta";
+  static constexpr char TAG[] = "MilkPowder#Meta";
 };
 
 } // namespace MilkPowder

@@ -5,10 +5,11 @@
 
 namespace SoyMilk {
 
-class Player final {
+class PlayerImpl final {
  public:
-  ~Player();
+  ~PlayerImpl();
  private:
+  static constexpr char TAG[] = "SoyMilk#Player";
 };
 
 } // namespace SoyBean_Windows

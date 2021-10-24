@@ -68,20 +68,17 @@ class HandleImpl final : public SoyBean::BaseHandle {
  private:
   void CheckClosed() const {
     if (closed_) {
-      MilkTea_LogPrint(ERROR, TAG, "handle is closed");
-      MilkTea_throw(LogicError, "handle is closed");
+      MilkTea_throw(LogicError, "CheckClosed -- handle is closed");
     }
   }
   static void CheckChannel(uint8_t channel) {
     if (channel > 0x0f) {
-      MilkTea_LogPrint(ERROR, TAG, "channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
-      MilkTea_throwf(InvalidParam, "channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
+      MilkTea_throwf(InvalidParam, "CheckChannel -- channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
     }
   }
   static void CheckArgs(uint8_t arg, const char *sym) {
     if (arg > 0x7f) {
-      MilkTea_LogPrint(ERROR, TAG, "%s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
-      MilkTea_throwf(InvalidParam, "%s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
+      MilkTea_throwf(InvalidParam, "CheckArgs -- %s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
     }
   }
   static uint32_t Dword(uint8_t type, uint8_t arg_0, uint8_t arg_1) {

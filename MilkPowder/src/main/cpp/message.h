@@ -1,6 +1,8 @@
 #ifndef MILKPOWDER_MESSAGE_H_
 #define MILKPOWDER_MESSAGE_H_
 
+#include <milktea.h>
+
 #include <cstdint>
 #include <vector>
 #include <memory>
@@ -17,8 +19,7 @@ class MessageImpl {
   MessageImpl(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
     CheckDelta(delta);
     if (type < 0x80 || (type > 0xf0 && type < 0xff)) {
-      MilkTea_LogPrint(ERROR, TAG, "ctor type %02" PRIx8, type);
-      MilkTea_throwf(InvalidParam, "type: %02" PRIx8, type);
+      MilkTea_throwf(InvalidParam, "ctor -- type: %02" PRIx8, type);
     }
   }
   bool IsEvent() const {
@@ -39,13 +40,12 @@ class MessageImpl {
  private:
   uint32_t delta_;
   const uint8_t type_;
-  static constexpr char TAG[] = "message";
   static void CheckDelta(uint32_t delta) {
     if (delta > 0x0fff'ffff) {
-      MilkTea_LogPrint(ERROR, TAG, "ctor: delta: %08" PRIx32, delta);
       MilkTea_throwf(InvalidParam, "delta: %08" PRIx32, delta);
     }
   }
+  static constexpr char TAG[] = "MilkPowder#Message";
 };
 
 } // namespace MilkPowder

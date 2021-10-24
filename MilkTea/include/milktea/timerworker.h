@@ -36,7 +36,7 @@ class TimerWorker final {
       return;
     }
     if (state_ != State::TERMINATED) {
-      MilkTea_LogPrint(ERROR, TAG, "dtor state %s", StateName(state));
+      MilkTea_logE("dtor -- state %s", StateName(state));
       Shutdown();
       AwaitTermination();
     }
@@ -127,11 +127,11 @@ class TimerWorker final {
     return ChangeState(State::TIDYING, [](State state) -> bool {
       switch (state) {
         case State::INIT:
-          MilkTea_LogPrint(ERROR, TAG, "TryTerminate assert State::INIT");
-          MilkTea_throw(Assertion, "TryTerminate assert State::INIT");
+          MilkTea_logE("TryTerminate assert State::INIT");
+          MilkTea_assert("TryTerminate assert State::INIT");
         case State::RUNNING:
-          MilkTea_LogPrint(ERROR, TAG, "TryTerminate assert State::RUNNING");
-          MilkTea_throw(Assertion, "TryTerminate assert State::RUNNING");
+          MilkTea_logE("TryTerminate assert State::RUNNING");
+          MilkTea_assert("TryTerminate assert State::RUNNING");
         case State::TIDYING:
         case State::TERMINATED:
           return false;
@@ -139,8 +139,8 @@ class TimerWorker final {
         case State::STOP:
           return true;
         default:
-          MilkTea_LogPrint(ERROR, TAG, "TryTerminate assert default");
-          MilkTea_throw(Assertion, "TryTerminate assert default");
+          MilkTea_logE("TryTerminate assert default");
+          MilkTea_assert("TryTerminate assert default");
       }
     }) && OnTerminate(e);
   }
@@ -149,8 +149,8 @@ class TimerWorker final {
       if (!ChangeState(State::TIDYING, State::TERMINATED, [this]() -> void {
         state_cond_.notify_all();
       })) {
-        MilkTea_LogPrint(ERROR, TAG, "OnTerminate assert");
-        MilkTea_throw(Assertion, "OnTerminate assert");
+        MilkTea_logE("OnTerminate assert");
+        MilkTea_assert("OnTerminate assert");
       }
     });
     return on_terminate_(e);
@@ -160,19 +160,19 @@ class TimerWorker final {
     while (true) {
       switch (state_) {
         case State::INIT:
-          MilkTea_LogPrint(ERROR, TAG, "Take assert State::INIT");
-          MilkTea_throw(Assertion, "Take assert State::INIT");
+          MilkTea_logE("Take assert State::INIT");
+          MilkTea_assert("Take assert State::INIT");
         case State::TIDYING:
-          MilkTea_LogPrint(ERROR, TAG, "Take assert State::TIDYING");
-          MilkTea_throw(Assertion, "Take assert State::TIDYING");
+          MilkTea_logE("Take assert State::TIDYING");
+          MilkTea_assert("Take assert State::TIDYING");
         case State::TERMINATED:
-          MilkTea_LogPrint(ERROR, TAG, "Take assert State::TERMINATED");
-          MilkTea_throw(Assertion, "Take assert State::TERMINATED");
+          MilkTea_logE("Take assert State::TERMINATED");
+          MilkTea_assert("Take assert State::TERMINATED");
       }
       if (!tasks_.empty()) {
         if (state_ == State::STOP) {
-          MilkTea_LogPrint(ERROR, TAG, "Take assert State::STOP");
-          MilkTea_throw(Assertion, "Take assert State::STOP");
+          MilkTea_logE("Take assert State::STOP");
+          MilkTea_assert("Take assert State::STOP");
         }
         duration_type delta = *tasks_.top() - CurrentTimePoint();
         if (delta > duration_type::zero()) {
@@ -218,7 +218,7 @@ class TimerWorker final {
       case State::STOP: return "STOP";
       case State::TIDYING: return "TIDYING";
       case State::TERMINATED: return "TERMINATED";
-      default: MilkTea_throw(Assertion, "StateName assert");
+      default: MilkTea_assert("StateName assert");
     }
   }
   State state_;
@@ -227,9 +227,9 @@ class TimerWorker final {
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
   std::function<bool(std::exception *)> on_terminate_;
-  static constexpr char TAG[] = "timer";
   MilkTea_NonCopy(TimerWorker)
   MilkTea_NonMove(TimerWorker)
+  static constexpr char TAG[] = "MilkTea#TimerWorker";
 };
 
 } // namespace MilkTea

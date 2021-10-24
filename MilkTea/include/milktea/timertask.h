@@ -36,13 +36,11 @@ class TimerTask final {
     try {
       action_();
       if (!future_->ChangeState(TimerFuture::State::EXECUTED, TimerFuture::State::NORMAL)) {
-        MilkTea_LogPrint(ERROR, TAG, "Run assert NORMAL");
-        MilkTea_throw(Assertion, "Run assert NORMAL");
+        MilkTea_assert("Run -- assert NORMAL");
       }
     } catch (std::exception &e) {
       if (!future_->ChangeState(TimerFuture::State::EXECUTED, TimerFuture::State::EXCEPTIONAL)) {
-          MilkTea_LogPrint(ERROR, TAG, "Run assert EXCEPTIONAL");
-          MilkTea_throw(Assertion, "Run assert EXCEPTIONAL");
+        MilkTea_assert("Run -- assert EXCEPTIONAL");
       }
       throw e;
     }
@@ -51,9 +49,9 @@ class TimerTask final {
   TimerTask(future_type future, action_type action) : future_(future), action_(action) {}
   future_type future_;
   const action_type action_;
-  static constexpr char TAG[] = "timertask";
   MilkTea_NonCopy(TimerTask)
   MilkTea_NonMove(TimerTask)
+  static constexpr char TAG[] = "MilkTea#TimerTask";
 };
 
 } // namespace MilkTea

@@ -2,6 +2,8 @@
 
 namespace {
 
+constexpr char TAG[] = "SoyBean#extern";
+
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_Deletor(void *self) MilkTea_with_except({
   MilkTea_nonnull(self);
   delete reinterpret_cast<SoyBean::BaseHandle *>(self);

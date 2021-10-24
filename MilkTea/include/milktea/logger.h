@@ -61,6 +61,18 @@ do { \
 } while (false)
 #endif // ifdef NDEBUG
 
+#define MilkTea_logD(...) \
+MilkTea_LogPrint(DEBUG, TAG, ##__VA_ARGS__)
+
+#define MilkTea_logI(...) \
+MilkTea_LogPrint(INFO, TAG, ##__VA_ARGS__)
+
+#define MilkTea_logW(...) \
+MilkTea_LogPrint(WARN, TAG, ##__VA_ARGS__)
+
+#define MilkTea_logE(...) \
+MilkTea_LogPrint(ERROR, TAG, ##__VA_ARGS__)
+
 class Logger final {
  public:
   enum class Level : uint8_t {

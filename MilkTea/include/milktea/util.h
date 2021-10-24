@@ -18,8 +18,8 @@
 #define MilkTea_IMPL(section, list, block) \
 MilkTea_Exception_t \
 section list { \
-  MilkTea_LogPrint(DEBUG, TAG, "begin " #section); \
-  MilkTea::Defer defer_([]() -> void { MilkTea_LogPrint(DEBUG, TAG, "end " #section); }); \
+  MilkTea_logD("begin " #section); \
+  MilkTea::Defer defer_([]() -> void { MilkTea_logD("end " #section); }); \
   MilkTea_with_except(block) \
 }
 

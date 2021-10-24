@@ -2,7 +2,7 @@
 
 namespace {
 
-constexpr char TAG[] = "SoyBean_API";
+constexpr char TAG[] = "SoyBean#extern";
 
 } // namespace
 

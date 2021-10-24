@@ -8,6 +8,8 @@
 
 namespace {
 
+constexpr char TAG[] = "MilkPowder#Dump";
+
 void DumpU8(uint8_t n, std::vector<uint8_t> &vec) {
   vec.push_back(n);
 }

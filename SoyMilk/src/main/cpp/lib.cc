@@ -4,7 +4,7 @@
 
 namespace {
 
-constexpr char TAG[] = "MilkTea_API";
+constexpr char TAG[] = "SoyMilk#extern";
 
 } // namespace
 

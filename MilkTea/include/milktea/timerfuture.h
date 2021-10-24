@@ -43,9 +43,9 @@ class TimerFuture final {
   }
   std::atomic<State> state_;
   const time_point_type time_;
-  static constexpr char TAG[] = "timerfuture";
   MilkTea_NonCopy(TimerFuture)
   MilkTea_NonMove(TimerFuture)
+  static constexpr char TAG[] = "MilkTea#TimerFuture";
 };
 
 } // namespace MilkTea

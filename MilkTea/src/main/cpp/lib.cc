@@ -1,5 +1,11 @@
 #include <milktea.h>
 
+namespace {
+
+constexpr char TAG[] = "MilkTea#extern";
+
+} // namespace
+
 extern "C" {
 
 const char *MilkTea_Exception_What() {

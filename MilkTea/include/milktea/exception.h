@@ -43,7 +43,7 @@ MilkTea_Exception_What();
 #endif
 
 #ifdef __cplusplus
-#include <milktea/util.h>
+#include <milktea/logger.h>
 #include <exception>
 #include <string>
 #include <cstdio>
@@ -51,6 +51,7 @@ namespace MilkTea {
 
 #define MilkTea_throw(type, what) \
 do { \
+  MilkTea_logE("%s: %s", MilkTea_Exception_Name(MilkTea_Exception_##type), what); \
   throw MilkTea::Exception(MilkTea::Exception::Type::type, what); \
 } while (false)
 
@@ -62,10 +63,16 @@ do { \
   MilkTea_throw(type, what); \
 } while (false)
 
+#define MilkTea_assert(what) \
+MilkTea_throw(Assertion, what)
+
+#define MilkTea_assertf(...) \
+MilkTea_throwf(Assertion, ##__VA_ARGS__)
+
 #define MilkTea_nonnull(sym) \
 do { \
   if (sym == nullptr) { \
-    MilkTea_throw(NullPointer, #sym); \
+    MilkTea_throw(NullPointer, #sym " is nullptr"); \
   } \
 } while (false)
 

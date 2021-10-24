@@ -12,10 +12,10 @@ class TrackImpl final {
   static std::unique_ptr<TrackImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const;
   TrackImpl(std::vector<std::unique_ptr<MessageImpl>> items) : items_(std::move(items)) {
-    MilkTea_LogPrint(INFO, TAG, "ctor size=%" PRIu32, static_cast<uint32_t>(items_.size()));
+    MilkTea_logI("ctor size=%" PRIu32, static_cast<uint32_t>(items_.size()));
   }
   TrackImpl(const TrackImpl &another) : items_(Clone(another.items_)) {
-    MilkTea_LogPrint(INFO, TAG, "copy size=%" PRIu32, static_cast<uint32_t>(items_.size()));
+    MilkTea_logI("copy size=%" PRIu32, static_cast<uint32_t>(items_.size()));
   }
   const std::vector<std::unique_ptr<MessageImpl>> &items() const { return items_; }
  private:
@@ -27,7 +27,7 @@ class TrackImpl final {
     }
     return std::move(items);
   }
-  static constexpr char TAG[] = "track";
+  static constexpr char TAG[] = "MilkPowder#Track";
 };
 
 } // namespace MilkPowder

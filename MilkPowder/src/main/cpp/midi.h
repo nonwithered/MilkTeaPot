@@ -12,13 +12,13 @@ class MidiImpl final {
   static std::unique_ptr<MidiImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const;
   MidiImpl(uint16_t format, uint16_t division, std::vector<std::unique_ptr<TrackImpl>> items) : format_(format), division_(division), items_(std::move(items)) {
-    MilkTea_LogPrint(INFO, TAG, "ctor format=%" PRIu16 ", division=%" PRIu16 ", ntrks=%" PRIu16, format_, division_, static_cast<uint16_t>(items_.size()));
+    MilkTea_logI("ctor format=%" PRIu16 ", division=%" PRIu16 ", ntrks=%" PRIu16, format_, division_, static_cast<uint16_t>(items_.size()));
     if (format > static_cast<uint16_t>(0x0002)) {
-      MilkTea_LogPrint(WARN, TAG, "ctor format %" PRIu16, format);
+      MilkTea_logW("ctor format %" PRIu16, format);
     }
   }
   MidiImpl(const MidiImpl &another) : format_(another.format_), division_(another.division_), items_(Clone(another.items_)) {
-    MilkTea_LogPrint(INFO, TAG, "copy format=%" PRIu16 ", division=%" PRIu16 ", ntrks=%" PRIu16, format_, division_, static_cast<uint16_t>(items_.size()));
+    MilkTea_logI("copy format=%" PRIu16 ", division=%" PRIu16 ", ntrks=%" PRIu16, format_, division_, static_cast<uint16_t>(items_.size()));
   }
   uint16_t format() const { return format_; }
   uint16_t division() const { return division_; }
@@ -34,7 +34,7 @@ class MidiImpl final {
     }
     return std::move(items);
   }
-  static constexpr char TAG[] = "midi";
+  static constexpr char TAG[] = "MilkPowder#Midi";
 };
 
 } // namespace MilkPowder

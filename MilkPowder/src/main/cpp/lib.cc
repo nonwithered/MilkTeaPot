@@ -9,7 +9,7 @@
 
 namespace {
 
-constexpr char TAG[] = "MilkPowder_API";
+constexpr char TAG[] = "MilkPowder#extern";
 
 template<typename T>
 struct milkpowder_cast_map;
@@ -121,7 +121,7 @@ MilkTea_IMPL(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t format,
   if (ntrks != 0) {
     MilkTea_nonnull(items);
   } else {
-    MilkTea_LogPrint(WARN, TAG, "MilkPowder_Midi_Create: ntrks equals 0");
+    MilkTea_logW("MilkPowder_Midi_Create: ntrks equals 0");
   }
   std::vector<std::unique_ptr<milkpowder_cast_map<decltype(items)>::Type>> vec;
   for (uint16_t i = 0; i < ntrks; ++i) {
@@ -180,7 +180,7 @@ MilkTea_IMPL(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_Mes
   if (length != 0) {
     MilkTea_nonnull(items);
   } else {
-    MilkTea_LogPrint(WARN, TAG, "MilkPowder_Track_Create: length equals 0");
+    MilkTea_logW("MilkPowder_Track_Create: length equals 0");
   }
   std::vector<std::unique_ptr<milkpowder_cast_map<decltype(items)>::Type>> vec;
   for (uint16_t i = 0; i < length; ++i) {
@@ -345,7 +345,7 @@ MilkTea_IMPL(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, 
   if (length != 0) {
     MilkTea_nonnull(args);
   } else {
-    MilkTea_LogPrint(WARN, TAG, "MilkPowder_Meta_Create: length equals 0");
+    MilkTea_logW("MilkPowder_Meta_Create: length equals 0");
   }
   *self = milkpowder_cast(new milkpowder_cast_map<decltype(self)>::Type(delta, type, std::vector<uint8_t>(args, args + length)));
 })
@@ -395,7 +395,7 @@ MilkTea_IMPL(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t delta
     MilkTea_nonnull(args);
     MilkTea_nonnull(length);
   } else {
-    MilkTea_LogPrint(WARN, TAG, "MilkPowder_Sysex_Create: size equals 0");
+    MilkTea_logW("MilkPowder_Sysex_Create: size equals 0");
   }
   Vec vec;
   for (uint32_t i = 0; i < size; ++i) {
