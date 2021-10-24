@@ -2,16 +2,50 @@
 #define LIB_MILKTEA_UTIL_H_
 
 #if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
-#define MilkTea_API __declspec(dllexport)
-#else
-#define MilkTea_API __attribute__((visibility("default")))
+#define MilkTea_WIN
 #endif
 
-#if defined(WIN32) || defined(WIN64) || defined(_MSC_VER) || defined(_WIN32)
-#define MilkTea_CALL __stdcall
-#else
-#define MilkTea_CALL __attribute__((__stdcall__))
+#ifndef MilkTea_API
+  #ifdef MilkTea_WIN
+    #ifdef MilkTea_dynlink
+      #define MilkTea_API __declspec(dllimport)
+    #else // ifdef MilkTea_dynlink
+      #define MilkTea_API __declspec(dllexport)
+    #endif // ifdef MilkTea_dynlink
+  #endif // ifdef MilkTea_WIN
+#endif // ifndef MilkTea_API
+
+#ifndef MilkTea_API
+  #ifdef __GNUC__
+    #define MilkTea_API __attribute__((visibility("default")))
+  #endif // ifdef __GNUC__
+#endif // ifndef MilkTea_API
+
+#ifndef MilkTea_API
+#define MilkTea_API
 #endif
+
+#ifndef MilkTea_CALL
+  #ifdef MilkTea_WIN
+    #define MilkTea_CALL __stdcall
+  #endif // ifdef MilkTea_WIN
+#endif // ifndef MilkTea_CALL
+
+#ifndef MilkTea_CALL
+  #ifdef __GNUC__
+    #ifdef __i386__
+      #define MilkTea_CALL __attribute__((__stdcall__))
+    #endif // ifdef __i386__
+  #endif // ifdef __GNUC__
+#endif // ifndef MilkTea_CALL
+
+#ifndef MilkTea_CALL
+#define MilkTea_CALL
+#endif
+
+#ifdef MilkTea_WIN
+#undef MilkTea_WIN
+#endif // ifdef MilkTea_WIN
 
 #ifdef __cplusplus
 
