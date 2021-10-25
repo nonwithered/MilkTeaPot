@@ -11,42 +11,42 @@ class MessageRef final : public MilkPowder_HolderRef(Message) {
   explicit MessageRef(const MilkPowder_Message_t *ref) : MilkPowder_HolderRef(Message)(ref) {}
   bool IsEvent() const {
     bool res = false;
-    MilkTea_panic(MilkPowder_Message_IsEvent(*this, &res));
+    MilkTea_panic(MilkPowder_Message_IsEvent(get(), &res));
     return res;
   }
   bool IsMeta() const {
     bool res = false;
-    MilkTea_panic(MilkPowder_Message_IsMeta(*this, &res));
+    MilkTea_panic(MilkPowder_Message_IsMeta(get(), &res));
     return res;
   }
   bool IsSysex() const {
     bool res = false;
-    MilkTea_panic(MilkPowder_Message_IsSysex(*this, &res));
+    MilkTea_panic(MilkPowder_Message_IsSysex(get(), &res));
     return res;
   }
   uint32_t GetDelta() const {
     uint32_t res = 0;
-    MilkTea_panic(MilkPowder_Message_GetDelta(*this, &res));
+    MilkTea_panic(MilkPowder_Message_GetDelta(get(), &res));
     return res;
   }
   uint8_t GetType() const {
     uint8_t res = 0;
-    MilkTea_panic(MilkPowder_Message_GetType(*this, &res));
+    MilkTea_panic(MilkPowder_Message_GetType(get(), &res));
     return res;
   }
   EventRef ToEvent() const {
     const MilkPowder_Event_t *ref = nullptr;
-    MilkTea_panic(MilkPowder_Message_ToEvent(*this, &ref));
+    MilkTea_panic(MilkPowder_Message_ToEvent(get(), &ref));
     return EventRef(ref);
   }
   MetaRef ToMeta() const {
     const MilkPowder_Meta_t *ref = nullptr;
-    MilkTea_panic(MilkPowder_Message_ToMeta(*this, &ref));
+    MilkTea_panic(MilkPowder_Message_ToMeta(get(), &ref));
     return MetaRef(ref);
   }
   SysexRef ToSysex() const {
     const MilkPowder_Sysex_t *ref = nullptr;
-    MilkTea_panic(MilkPowder_Message_ToSysex(*this, &ref));
+    MilkTea_panic(MilkPowder_Message_ToSysex(get(), &ref));
     return SysexRef(ref);
   }
 };
@@ -55,43 +55,43 @@ class Message final : public MilkPowder_Holder(Message) {
   Message() {}
   explicit Message(const MessageRef &ref) : MilkPowder_Holder(Message)(ref) {}
   explicit Message(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) {
-    MilkTea_panic(MilkPowder_Message_Parse(&*this, &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke, last));
+    MilkTea_panic(MilkPowder_Message_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke, last));
   }
   explicit Message(Event &&another) {
-    MilkTea_panic(MilkPowder_Message_FromEvent(&*this, another.release()));
+    MilkTea_panic(MilkPowder_Message_FromEvent(reset(), another.release()));
   }
   explicit Message(Meta &&another) {
-    MilkTea_panic(MilkPowder_Message_FromMeta(&*this, another.release()));
+    MilkTea_panic(MilkPowder_Message_FromMeta(reset(), another.release()));
   }
   explicit Message(Sysex &&another) {
-    MilkTea_panic(MilkPowder_Message_FromSysex(&*this, another.release()));
+    MilkTea_panic(MilkPowder_Message_FromSysex(reset(), another.release()));
   }
   void SetDelta(uint32_t delta) {
-    MilkTea_panic(MilkPowder_Message_SetDelta(*this, delta));
+    MilkTea_panic(MilkPowder_Message_SetDelta(get(), delta));
   }
   EventRef ToEvent() const {
-    return MessageRef(*this).ToEvent();
+    return MessageRef(get()).ToEvent();
   }
   MetaRef ToMeta() const {
-    return MessageRef(*this).ToMeta();
+    return MessageRef(get()).ToMeta();
   }
   SysexRef ToSysex() const {
-    return MessageRef(*this).ToSysex();
+    return MessageRef(get()).ToSysex();
   }
   bool IsEvent() const {
-    return MessageRef(*this).IsEvent();
+    return MessageRef(get()).IsEvent();
   }
   bool IsMeta() const {
-    return MessageRef(*this).IsMeta();
+    return MessageRef(get()).IsMeta();
   }
   bool IsSysex() const {
-    return MessageRef(*this).IsSysex();
+    return MessageRef(get()).IsSysex();
   }
   uint32_t GetDelta() const {
-    return MessageRef(*this).GetDelta();
+    return MessageRef(get()).GetDelta();
   }
   uint8_t GetType() const {
-    return MessageRef(*this).GetType();
+    return MessageRef(get()).GetType();
   }
 };
 } // namespace MilkPowder

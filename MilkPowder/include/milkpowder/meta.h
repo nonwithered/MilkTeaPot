@@ -10,13 +10,13 @@ class MetaRef final : public MilkPowder_HolderRef(Meta) {
   explicit MetaRef(const MilkPowder_Meta_t *ref) : MilkPowder_HolderRef(Meta)(ref) {}
   uint8_t GetType() const {
     uint8_t res = 0;
-    MilkTea_panic(MilkPowder_Meta_GetType(*this, &res));
+    MilkTea_panic(MilkPowder_Meta_GetType(get(), &res));
     return res;
   }
   uint32_t GetArgs(const uint8_t **args) const {
     uint32_t res = 0;
     const uint8_t *ptr = nullptr;
-    MilkTea_panic(MilkPowder_Meta_GetArgs(*this, &ptr, &res));
+    MilkTea_panic(MilkPowder_Meta_GetArgs(get(), &ptr, &res));
     if (args != nullptr) {
       *args = ptr;
     }
@@ -28,16 +28,16 @@ class Meta final : public MilkPowder_Holder(Meta) {
   Meta() {}
   explicit Meta(const MetaRef &ref) : MilkPowder_Holder(Meta)(ref) {}
   explicit Meta(std::function<bool(uint8_t *)> callback) {
-    MilkTea_panic(MilkPowder_Meta_Parse(&*this, &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
+    MilkTea_panic(MilkPowder_Meta_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
   }
   Meta(uint32_t delta, uint8_t type, const uint8_t args[], uint32_t length) {
-    MilkTea_panic(MilkPowder_Meta_Create(&*this, delta, type, args, length));
+    MilkTea_panic(MilkPowder_Meta_Create(reset(), delta, type, args, length));
   }
   uint8_t GetType() const {
-    return MetaRef(*this).GetType();
+    return MetaRef(get()).GetType();
   }
   uint32_t GetArgs(const uint8_t **args) const {
-    return MetaRef(*this).GetArgs(args);
+    return MetaRef(get()).GetArgs(args);
   }
 };
 } // namespace MilkPowder

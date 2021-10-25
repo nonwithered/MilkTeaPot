@@ -63,9 +63,6 @@ class HolderRef {
   const T *get() const {
     return ref_;
   }
-  operator const T *() const {
-    return get();
-  }
   void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
     MilkTea_panic(DumpMap<T>::dump(get(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
   }
@@ -81,40 +78,31 @@ class Holder {
   explicit Holder(T *ptr = nullptr) : ptr_(ptr) {
   }
   explicit Holder(const HolderRef<T> &ref) {
-    MilkTea_panic(CloneMap<T>::clone(ref, &*this));
+    MilkTea_panic(CloneMap<T>::clone(ref.get(), reset()));
   }
   Holder(const Holder<T> &another) {
-    MilkTea_panic(CloneMap<T>::clone(another, &*this));
+    MilkTea_panic(CloneMap<T>::clone(another.get(), reset()));
   }
   Holder(Holder<T> &&another) : ptr_(another.release()) {
   }
   void operator=(const Holder<T> &another) {
-    if (ptr_ == another.ptr_) {
+    if (get() == another.get()) {
       return;
     }
     this->~Holder();
-    CloneMap<T>::clone(another.ptr_, &ptr_);
+    CloneMap<T>::clone(another.get(), reset());
   }
   void operator=(Holder<T> &&another) {
-    if (ptr_ == another.ptr_) {
+    if (get() == another.get()) {
       return;
     }
     this->~Holder();
     std::swap(ptr_, another.ptr_);
   }
   virtual ~Holder() {
-    if (ptr_ != nullptr) {
+    if (get() != nullptr) {
       MilkTea_panic(DestroyMap<T>::destroy(release()));
     }
-  }
-  operator T *() {
-    return get();
-  }
-  operator const T *() const {
-    return get();
-  }
-  T **operator&() {
-    return &ptr_;
   }
   T *get() {
     return ptr_;
@@ -124,13 +112,20 @@ class Holder {
   }
   T *release() {
     T *ptr = get();
-    ptr_ = nullptr;
+    reset(nullptr);
     return ptr;
   }
   void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
-    HolderRef<T>(*this).Dump(callback);
+    HolderRef<T>(get()).Dump(callback);
+  }
+ protected:
+  T **reset() {
+    return &ptr_;
   }
  private:
+  void reset(T *ptr) {
+    ptr_ = ptr;
+  }
   T *ptr_;
 };
 
