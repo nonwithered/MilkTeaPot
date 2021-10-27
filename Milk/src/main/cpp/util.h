@@ -2,6 +2,7 @@
 #define MILK_UTIL_H_
 
 #include <string>
+#include <iostream>
 
 #include <milkpowder.h>
 
@@ -28,6 +29,32 @@ inline std::string LogTime() {
   ss[1] >> s[1];
   return s[0] + " " + s[1];
 }
+
+class LoggerImpl : public MilkTea::BaseLogger {
+ public:
+  static LoggerImpl &Instance();
+  void level(MilkTea::Logger::Level level) {
+    level_ = level;
+  }
+  LoggerImpl(): level_(MilkTea::Logger::Level::ASSERT) {}
+  MilkTea::Logger::Level level() const final {
+    return level_;
+  }
+  void Debug(const char *tag, const char *msg) final {
+    std::cerr << LogTime() << "/DEBUG: " << tag << ": " << msg << std::endl;
+  }
+  void Info(const char *tag, const char *msg) final {
+    std::cerr << LogTime() << "/INFO: " << tag << ": " << msg << std::endl;
+  }
+  void Warn(const char *tag, const char *msg) final {
+    std::cerr << LogTime() << "/WARN: " << tag << ": " << msg << std::endl;
+  }
+  void Error(const char *tag, const char *msg) final {
+    std::cerr << LogTime() << "/ERROR: " << tag << ": " << msg << std::endl;
+  }
+ private:
+  MilkTea::Logger::Level level_;
+};
 
 } // namespace Milk
 

@@ -19,29 +19,6 @@
 
 namespace Milk {
 
-template<MilkTea_LogLevel_t level>
-void LogPrint(void *, const char *tag, const char *msg);
-
-template<>
-void LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_DEBUG>(void *, const char *tag, const char *msg) {
-  std::cerr << LogTime() << "/DEBUG: " << tag << ": " << msg << std::endl;
-}
-
-template<>
-void LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_INFO>(void *, const char *tag, const char *msg) {
-  std::cerr << LogTime() << "/INFO: " << tag << ": " << msg << std::endl;
-}
-
-template<>
-void LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_WARN>(void *, const char *tag, const char *msg) {
-  std::cerr << LogTime() << "/WARN: " << tag << ": " << msg << std::endl;
-}
-
-template<>
-void LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR>(void *, const char *tag, const char *msg) {
-  std::cerr << LogTime() << "/ERROR: " << tag << ": " << msg << std::endl;
-}
-
 class Command {
  public:
   static void LaunchMain(std::list<std::string_view> &args, const std::vector<std::unique_ptr<Milk::Command>> &arr) {
@@ -75,24 +52,25 @@ class Command {
     show_help_();
   }
   bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
-    MilkTea_LogLevel_t level = MilkTea_LogLevel_t::MilkTea_LogLevel_ASSERT;
+    MilkTea::Logger::Level level = MilkTea::Logger::Level::ASSERT;
     if (itr == args.end()) {
       std::cerr << "milk dump --log: need log level" << std::endl;
       return false;
     } else if (*itr == "d" || *itr == "debug") {
-      level = MilkTea_LogLevel_t::MilkTea_LogLevel_DEBUG;
+      level = MilkTea::Logger::Level::DEBUG;
     } else if (*itr == "i" || *itr == "info") {
-      level = MilkTea_LogLevel_t::MilkTea_LogLevel_INFO;
+      level = MilkTea::Logger::Level::INFO;
     } else if (*itr == "w" || *itr == "warn") {
-      level = MilkTea_LogLevel_t::MilkTea_LogLevel_WARN;
+      level = MilkTea::Logger::Level::WARN;
     } else if (*itr == "e" || *itr == "error") {
-      level = MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR;
+      level = MilkTea::Logger::Level::ERROR;
     }
-    if (level == MilkTea_LogLevel_t::MilkTea_LogLevel_ASSERT) {
+    if (level == MilkTea::Logger::Level::ASSERT) {
       std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
       return false;
     }
-    LogInitLevel(level);
+    LoggerImpl::Instance().level(level);
+    MilkTea_Logger_Init(Milk::LoggerImpl::Instance().RawLogger());
     itr = args.erase(itr);
     return true;
   }
@@ -124,17 +102,6 @@ class Command {
       return;
     }
     Launch(args);
-  }
-  static void LogInitLevel(MilkTea_LogLevel_t level) {
-    MilkTea_Logger_t log_ = {
-      .obj = nullptr,
-      .debug = LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_DEBUG>,
-      .info = LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_INFO>,
-      .warn = LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_WARN>,
-      .error = LogPrint<MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR>,
-      .level = level
-    };
-    MilkTea_Logger_Init(log_);
   }
   std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   std::function<void()> show_help_;

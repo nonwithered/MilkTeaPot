@@ -21,11 +21,11 @@ typedef enum MilkTea_LogLevel_t MilkTea_LogLevel_t;
 
 struct MilkTea_Logger_t {
   void *obj;
-  void (*debug)(void *obj, const char *tag, const char *msg);
-  void (*info)(void *obj, const char *tag, const char *msg);
-  void (*warn)(void *obj, const char *tag, const char *msg);
-  void (*error)(void *obj, const char *tag, const char *msg);
   enum MilkTea_LogLevel_t level;
+  void (MilkTea_CALL *debug)(void *obj, const char *tag, const char *msg);
+  void (MilkTea_CALL *info)(void *obj, const char *tag, const char *msg);
+  void (MilkTea_CALL *warn)(void *obj, const char *tag, const char *msg);
+  void (MilkTea_CALL *error)(void *obj, const char *tag, const char *msg);
 };
 
 #ifndef __cplusplus
@@ -49,15 +49,17 @@ namespace MilkTea {
 do { \
 } while (false)
 #else // ifdef NDEBUG
-#define MilkTea_LogPrint(L, TAG, ...) \
+#define MilkTea_LogPrint(LEVEL, TAG, ...) \
 do { \
-  constexpr size_t kLogMaxSize = 128; \
-  MilkTea::Logger logger_ = MilkTea::Logger::Instance(); \
-  if (logger_.level() <= MilkTea::Logger::Level::L) { \
-    char msg[kLogMaxSize]; \
-    snprintf(msg, kLogMaxSize, ##__VA_ARGS__); \
-    logger_(MilkTea::Logger::Level::L, TAG, msg); \
+  MilkTea::Logger &logger = MilkTea::Logger::Instance(); \
+  MilkTea::Logger::Level level = MilkTea::Logger::Level::LEVEL; \
+  if (!logger.Available(level)) { \
+    break; \
   } \
+  const size_t len = snprintf(nullptr, 0, ##__VA_ARGS__) + 1; \
+  char msg[len]; \
+  snprintf(msg, len, ##__VA_ARGS__); \
+  logger.Print(level, TAG, msg); \
 } while (false)
 #endif // ifdef NDEBUG
 
@@ -82,32 +84,24 @@ class Logger final {
     ERROR,
     ASSERT
   };
+  static Level LevelOf(MilkTea_LogLevel_t level) {
+    switch (level) {
+      case MilkTea_LogLevel_t::MilkTea_LogLevel_DEBUG: return Level::DEBUG;
+      case MilkTea_LogLevel_t::MilkTea_LogLevel_INFO: return Level::INFO;
+      case MilkTea_LogLevel_t::MilkTea_LogLevel_WARN: return Level::WARN;
+      case MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR: return Level::ERROR;
+      default: return Level::ASSERT;
+    }
+  }
   MilkTea_API static Logger & MilkTea_CALL Instance(Logger *logger = nullptr);
   Logger(
+    Level level,
     std::function<void(const char *, const char *)> debug,
     std::function<void(const char *, const char *)> info,
     std::function<void(const char *, const char *)> warn,
-    std::function<void(const char *, const char *)> error,
-    Level level
-  ) : debug_(debug), info_(info), warn_(warn), error_(error), level_(level) {}
-  explicit Logger(MilkTea_Logger_t logger) : Logger(
-    LogCallback(logger.obj, logger.debug),
-    LogCallback(logger.obj, logger.info),
-    LogCallback(logger.obj, logger.warn),
-    LogCallback(logger.obj, logger.error),
-    LevelOf(logger.level)
-  ) {}
-  Logger() : Logger(
-    LogDefault, 
-    LogDefault, 
-    LogDefault, 
-    LogDefault, 
-    Level::ASSERT
-  ) {}
-  Level level() const {
-    return level_;
-  }
-  void operator()(Level level, const char *tag, const char *msg) {
+    std::function<void(const char *, const char *)> error
+  ) : level_(level), debug_(debug), info_(info), warn_(warn), error_(error) {}
+  void Print(Level level, const char *tag, const char *msg) {
     switch (level) {
       case Level::DEBUG: debug_(tag, msg); break;
       case Level::INFO: info_(tag, msg); break;
@@ -116,27 +110,34 @@ class Logger final {
       default: break;
     }
   }
+  bool Available(Level level) const {
+    return level_ <= level;
+  }
  private:
+  Level level_;
   std::function<void(const char *, const char *)> debug_;
   std::function<void(const char *, const char *)> info_;
   std::function<void(const char *, const char *)> warn_;
   std::function<void(const char *, const char *)> error_;
-  Level level_;
-  static std::function<void(const char *, const char *)> LogCallback(void *obj, void (*callback)(void *obj, const char *tag, const char *msg)) {
-    return [obj, callback](const char *tag, const char *msg) -> void {
-      callback(obj, tag, msg);
-    };
-  }
-  static Level LevelOf(MilkTea_LogLevel_t level) {
+};
+
+class BaseLogger {
+ public:
+  static MilkTea_LogLevel_t RawLevel(Logger::Level level) {
     switch (level) {
-        case MilkTea_LogLevel_t::MilkTea_LogLevel_DEBUG: return Level::DEBUG;
-        case MilkTea_LogLevel_t::MilkTea_LogLevel_INFO: return Level::INFO;
-        case MilkTea_LogLevel_t::MilkTea_LogLevel_WARN: return Level::WARN;
-        case MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR: return Level::ERROR;
-        default: return Level::ASSERT;
+      case Logger::Level::DEBUG: return MilkTea_LogLevel_t::MilkTea_LogLevel_DEBUG;
+      case Logger::Level::INFO: return MilkTea_LogLevel_t::MilkTea_LogLevel_INFO;
+      case Logger::Level::WARN: return MilkTea_LogLevel_t::MilkTea_LogLevel_WARN;
+      case Logger::Level::ERROR: return MilkTea_LogLevel_t::MilkTea_LogLevel_ERROR;
+      default: return MilkTea_LogLevel_t::MilkTea_LogLevel_ASSERT;
     }
   }
-  static void LogDefault(const char *, const char *) {}
+  MilkTea_Logger_t RawLogger();
+  virtual Logger::Level level() const = 0;
+  virtual void Debug(const char *tag, const char *msg) = 0;
+  virtual void Info(const char *tag, const char *msg) = 0;
+  virtual void Warn(const char *tag, const char *msg) = 0;
+  virtual void Error(const char *tag, const char *msg) = 0;
 };
 
 } // namespace MilkTea

@@ -6,6 +6,13 @@
 #include "dump.h"
 #include "play.h"
 
+#include "util.h"
+
+Milk::LoggerImpl &Milk::LoggerImpl::Instance() {
+  static Milk::LoggerImpl logger_;
+  return logger_;
+}
+
 int main(int argc, char *argv[]) try {
   std::list<std::string_view> args;
   for (int i = 1; i < argc; ++i) {
