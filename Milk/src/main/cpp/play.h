@@ -5,8 +5,6 @@
 
 #include "launch.h"
 
-#include <soybean_windows.h>
-
 namespace Milk {
 
 class Play final : public Command {
@@ -18,10 +16,9 @@ class Play final : public Command {
   }
  protected:
   void Launch(std::list<std::string_view> &) final {
-    SoyBean_Handle_t h;
-    SoyBean_Factory_t factory;
-    MilkTea_panic(SoyBean_Windows_Factory_Create(&factory, 0, 0, 0, 0));
-    MilkTea_panic(SoyBean_Windows_Factory_Create(&factory, 0, 0, 0, 0));
+    SoyBean_Handle_t h{};
+    SoyBean_Factory_t factory{};
+    MilkTea_panic(Inject::SoyBean_Factory()(&factory));
     MilkTea_panic(SoyBean_Handle_Create(&h, factory));
     MilkTea_panic(SoyBean_Factory_Destroy(factory));
     MilkTea_panic(SoyBean_Handle_NoteOn(h, 0, 0x45, 0x7f));

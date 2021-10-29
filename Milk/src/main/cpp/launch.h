@@ -1,19 +1,14 @@
 #ifndef MILK_LAUNCH_H_
 #define MILK_LAUNCH_H_
 
-#include <ctime>
-#include <iostream>
-#include <iomanip>
 #include <string_view>
 #include <list>
+#include <vector>
 #include <map>
 #include <memory>
 #include <functional>
-#include <string>
-#include <sstream>
 
 #include <milkpowder.h>
-#include <soybean_windows.h>
 
 #include "util.h"
 
@@ -69,8 +64,7 @@ class Command {
       std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
       return false;
     }
-    LoggerImpl::Instance().level(level);
-    MilkTea_Logger_Init(Milk::LoggerImpl::Instance().RawLogger());
+    MilkTea_Logger_Init(Inject::Logger()(MilkTea::BaseLogger::RawLevel(level)));
     itr = args.erase(itr);
     return true;
   }

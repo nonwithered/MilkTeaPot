@@ -1,42 +1,80 @@
 project(milk)
 
 set(src_files
-    "main.cc"
+    "lib.cc"
 )
 
 set(src_dir
     "src/main/cpp"
 )
 
+set(api_dir
+    "include/"
+)
+
 foreach(it ${src_files})
     list(APPEND src_paths "${src_dir}/${it}")
 endforeach(it)
 
-add_executable(${PROJECT_NAME} ${src_paths})
+add_library(${PROJECT_NAME}_static STATIC ${src_paths})
 
-target_link_libraries(${PROJECT_NAME}
+target_include_directories(${PROJECT_NAME}_static
+    PUBLIC ${api_dir}
+)
+
+target_link_libraries(${PROJECT_NAME}_static
+    PRIVATE milktea_static
     PRIVATE milkpowder_static
     PRIVATE soybean_static
     PRIVATE soymilk_static
 )
 
-message("${PROJECT_NAME}: MilkTeaPot_system_flag_linux = ${MilkTeaPot_system_flag_linux}")
-if (MilkTeaPot_system_flag_linux MATCHES "ON")
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE soybean_linux_static
-    )
-endif()
+add_library(${PROJECT_NAME}_shared SHARED ${src_paths})
 
-message("${PROJECT_NAME}: MilkTeaPot_system_flag_windows = ${MilkTeaPot_system_flag_windows}")
-if (MilkTeaPot_system_flag_windows MATCHES "ON")
-    target_link_libraries(${PROJECT_NAME}
-        PRIVATE soybean_windows_static
-    )
-endif()
+target_include_directories(${PROJECT_NAME}_shared
+    PUBLIC ${api_dir}
+)
 
-message("${PROJECT_NAME}: MilkTeaPot_system_flag_mac = ${MilkTeaPot_system_flag_mac}")
-if (MilkTeaPot_system_flag_mac MATCHES "ON")
+target_link_libraries(${PROJECT_NAME}_shared
+    PRIVATE milktea_shared
+    PRIVATE milkpowder_shared
+    PRIVATE soybean_shared
+    PRIVATE soymilk_shared
+)
+
+if(NOT MilkTeaPot_system_flag MATCHES "OFF")
+    if (MilkTeaPot_system_flag_linux MATCHES "ON")
+        set(src_main
+            "main_linux.cc"
+        )
+    endif()
+    if (MilkTeaPot_system_flag_windows MATCHES "ON")
+        set(src_main
+            "main_windows.cc"
+        )
+    endif()
+    if (MilkTeaPot_system_flag_mac MATCHES "ON")
+        set(src_main
+            "main_mac.cc"
+        )
+    endif()
+    add_executable(${PROJECT_NAME} "${src_dir}/${src_main}")
     target_link_libraries(${PROJECT_NAME}
-        PRIVATE soybean_mac_static
+        PRIVATE ${PROJECT_NAME}_static
     )
+    if (MilkTeaPot_system_flag_linux MATCHES "ON")
+        target_link_libraries(${PROJECT_NAME}
+            PRIVATE soybean_linux_static
+        )
+    endif()
+    if (MilkTeaPot_system_flag_windows MATCHES "ON")
+        target_link_libraries(${PROJECT_NAME}
+            PRIVATE soybean_windows_static
+        )
+    endif()
+    if (MilkTeaPot_system_flag_mac MATCHES "ON")
+        target_link_libraries(${PROJECT_NAME}
+            PRIVATE soybean_mac_static
+        )
+    endif()
 endif()

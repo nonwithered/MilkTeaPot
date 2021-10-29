@@ -3,8 +3,12 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
+#include <ctime>
+#include <iostream>
 
-#include <milkpowder.h>
+#include <milktea.h>
+#include <soybean.h>
 
 #define check_err(s) \
 do { \
@@ -54,6 +58,13 @@ class LoggerImpl : public MilkTea::BaseLogger {
   }
  private:
   MilkTea::Logger::Level level_;
+};
+
+struct Inject {
+  using Logger_type = MilkTea_Logger_t (MilkTea_CALL *)(MilkTea_LogLevel_t level);
+  static Logger_type Logger(Logger_type inject = nullptr);
+  using SoyBean_Factory_type = MilkTea_Exception_t (MilkTea_CALL *)(SoyBean_Factory_t *factory);
+  static SoyBean_Factory_type SoyBean_Factory(SoyBean_Factory_type inject = nullptr);
 };
 
 } // namespace Milk

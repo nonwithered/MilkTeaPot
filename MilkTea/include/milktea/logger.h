@@ -132,7 +132,7 @@ class BaseLogger {
       default: return MilkTea_LogLevel_t::MilkTea_LogLevel_ASSERT;
     }
   }
-  MilkTea_Logger_t RawLogger();
+  MilkTea_API MilkTea_Logger_t MilkTea_CALL RawLogger();
   virtual Logger::Level level() const = 0;
   virtual void Debug(const char *tag, const char *msg) = 0;
   virtual void Info(const char *tag, const char *msg) = 0;
