@@ -29,7 +29,13 @@ class TimerWorker final {
   };
   explicit TimerWorker(std::function<bool(std::exception *)> on_terminate = [](std::exception *) -> bool { return false; })
   : state_(State::INIT),
-    on_terminate_(on_terminate) {}
+    on_terminate_(on_terminate),
+    on_cancel_(std::make_shared<std::function<void(TimerFuture &)>>([this](TimerFuture &self) -> void {
+      std::unique_lock guard(lock_);
+      if (!tasks_.empty() && tasks_.top()->future().get() == &self) {
+        tasks_cond_.notify_one();
+      }
+    })) {}
   ~TimerWorker() {
     State state = state_;
     if (state_ == State::INIT) {
@@ -37,8 +43,7 @@ class TimerWorker final {
     }
     if (state_ != State::TERMINATED) {
       MilkTea_logE("dtor -- state %s", StateName(state));
-      Shutdown();
-      AwaitTermination();
+      std::terminate();
     }
   }
   bool Start() {
@@ -99,6 +104,7 @@ class TimerWorker final {
       future->Cancel();
       return future;
     }
+    future->SetOnCancel(GetOnCancel());
     bool wake = tasks_.empty() || *tasks_.top() - target > duration_type::zero();
     tasks_.push(TimerTask::Create(future, f));
     if (wake) {
@@ -107,6 +113,15 @@ class TimerWorker final {
     return future;
   }
  private:
+  std::function<void(TimerFuture &)> GetOnCancel() {
+    std::weak_ptr<std::function<void(TimerFuture &)>> on_cancel = on_cancel_;
+    return [on_cancel](TimerFuture &self) -> void {
+      std::shared_ptr<decltype(on_cancel)::element_type> on_cancel_ = on_cancel.lock();
+      if (on_cancel_.get() != nullptr) {
+        (*on_cancel_)(self);
+      }
+    };
+  }
   void Run() {
     try {
       while (true) {
@@ -174,6 +189,9 @@ class TimerWorker final {
           MilkTea_logE("Take assert State::STOP");
           MilkTea_assert("Take assert State::STOP");
         }
+        while (tasks_.top()->future()->state() == TimerFuture::State::CANCELLED) {
+          tasks_.pop();
+        }
         duration_type delta = *tasks_.top() - CurrentTimePoint();
         if (delta > duration_type::zero()) {
           tasks_cond_.wait_for(guard, delta);
@@ -227,6 +245,7 @@ class TimerWorker final {
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
   std::function<bool(std::exception *)> on_terminate_;
+  std::shared_ptr<std::function<void(TimerFuture &)>> on_cancel_;
   MilkTea_NonCopy(TimerWorker)
   MilkTea_NonMove(TimerWorker)
   static constexpr char TAG[] = "MilkTea#TimerWorker";

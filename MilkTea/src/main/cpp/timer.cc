@@ -4,6 +4,18 @@ namespace {
 
 constexpr char TAG[] = "MilkTea#extern";
 
+MilkTea_TimerWorker_State_t MilkTea_TimerWorker_State_Map(MilkTea::TimerWorker::State state) {
+  switch (state) {
+    case MilkTea::TimerWorker::State::INIT: return MilkTea_TimerWorker_State_INIT;
+    case MilkTea::TimerWorker::State::RUNNING: return MilkTea_TimerWorker_State_RUNNING;
+    case MilkTea::TimerWorker::State::SHUTDOWN: return MilkTea_TimerWorker_State_SHUTDOWN;
+    case MilkTea::TimerWorker::State::STOP: return MilkTea_TimerWorker_State_STOP;
+    case MilkTea::TimerWorker::State::TIDYING: return MilkTea_TimerWorker_State_TIDYING;
+    case MilkTea::TimerWorker::State::TERMINATED: return MilkTea_TimerWorker_State_TERMINATED;
+    default: MilkTea_assert("MilkTea_TimerWorker_GetState assert");
+  }
+}
+
 } // namespace
 
 extern "C" {
@@ -12,7 +24,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, void *ob
   MilkTea_nonnull(self);
   MilkTea_nonnull(obj);
   MilkTea_nonnull(on_terminate);
-  auto worker = std::make_unique<MilkTea::TimerWorker>([obj, on_terminate](std::exception *e) -> bool {
+  auto &worker = *new MilkTea::TimerWorker([obj, on_terminate](std::exception *e) -> bool {
     if (e == nullptr) {
       return on_terminate(obj, MilkTea_Exception_t::MilkTea_Exception_Nil, nullptr);
     }
@@ -22,46 +34,39 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, void *ob
     }
     return on_terminate(obj, MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
   });
-  *self = reinterpret_cast<MilkTea_TimerWorker_t *>(new std::shared_ptr<decltype(worker)::element_type>(worker.release()));
+  *self = reinterpret_cast<MilkTea_TimerWorker_t *>(&worker);
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Destroy, (MilkTea_TimerWorker_t *self), {
   MilkTea_nonnull(self);
-  delete reinterpret_cast<std::shared_ptr<MilkTea::TimerWorker> *>(self);
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
+  delete &worker;
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Start, (MilkTea_TimerWorker_t *self, bool *success), {
   MilkTea_nonnull(self);
-  auto &worker = **reinterpret_cast<std::shared_ptr<MilkTea::TimerWorker> *>(self);
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
   *success = worker.Start();
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_GetState, (MilkTea_TimerWorker_t *self, MilkTea_TimerWorker_State_t *state), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(state);
-  auto &worker = **reinterpret_cast<std::shared_ptr<MilkTea::TimerWorker> *>(self);
-  switch (worker.state()) {
-    case MilkTea::TimerWorker::State::INIT: *state = MilkTea_TimerWorker_State_INIT; break;
-    case MilkTea::TimerWorker::State::RUNNING: *state = MilkTea_TimerWorker_State_RUNNING; break;
-    case MilkTea::TimerWorker::State::SHUTDOWN: *state = MilkTea_TimerWorker_State_SHUTDOWN; break;
-    case MilkTea::TimerWorker::State::STOP: *state = MilkTea_TimerWorker_State_STOP; break;
-    case MilkTea::TimerWorker::State::TIDYING: *state = MilkTea_TimerWorker_State_TIDYING; break;
-    case MilkTea::TimerWorker::State::TERMINATED: *state = MilkTea_TimerWorker_State_TERMINATED; break;
-    default: MilkTea_assert("MilkTea_TimerWorker_GetState assert");
-  }
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
+  *state = MilkTea_TimerWorker_State_Map(worker.state());
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Shutdown, (MilkTea_TimerWorker_t *self, bool *success), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
-  auto &worker = **reinterpret_cast<std::shared_ptr<MilkTea::TimerWorker> *>(self);
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
   *success = worker.Shutdown();
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_AwaitTermination, (MilkTea_TimerWorker_t *self, int64_t delay, bool *success), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
-  auto &worker = **reinterpret_cast<std::shared_ptr<MilkTea::TimerWorker> *>(self);
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
   if (delay > 0) {
     *success = worker.AwaitTermination(MilkTea::TimerWorker::duration_type(delay));
   } else {

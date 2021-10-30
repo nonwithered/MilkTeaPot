@@ -6,10 +6,12 @@
 #include <chrono>
 #include <atomic>
 #include <memory>
+#include <functional>
 namespace MilkTea {
 
 class TimerFuture final {
   friend class TimerTask;
+  friend class TimerWorker;
  public:
   using future_type = std::shared_ptr<TimerFuture>;
   using clock_type = std::chrono::system_clock;
@@ -26,7 +28,11 @@ class TimerFuture final {
     EXCEPTIONAL
   };
   bool Cancel() {
-    return ChangeState(State::SCHEDULED, State::CANCELLED);
+    bool b = ChangeState(State::SCHEDULED, State::CANCELLED);
+    if (b) {
+      OnCancel();
+    }
+    return b;
   }
   State state() const {
     return state_;
@@ -37,12 +43,20 @@ class TimerFuture final {
  private:
   TimerFuture(time_point_type time)
   : state_(State::SCHEDULED),
-    time_(time) {}
+    time_(time),
+    on_cancel_([](TimerFuture &) -> void {}) {}
   bool ChangeState(State expect, State target) {
     return state_.compare_exchange_strong(expect, target);
   }
+  void SetOnCancel(std::function<void(TimerFuture &)> on_cancel) {
+    on_cancel_ = on_cancel;
+  }
+  void OnCancel() {
+    on_cancel_(*this);
+  }
   std::atomic<State> state_;
   const time_point_type time_;
+  std::function<void(TimerFuture &)> on_cancel_;
   MilkTea_NonCopy(TimerFuture)
   MilkTea_NonMove(TimerFuture)
   static constexpr char TAG[] = "MilkTea#TimerFuture";
