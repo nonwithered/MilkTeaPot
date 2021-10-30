@@ -47,6 +47,7 @@ class Play final : public Command {
     std::cerr << Usage() << std::endl;
     return true;
   }
+  static constexpr char TAG[] = "Milk#Play";
 };
 
 } // namespace Milk

@@ -45,12 +45,9 @@ MilkTea_Logger_Init(MilkTea_Logger_t log);
 namespace MilkTea {
 
 #ifdef NDEBUG
-#define MilkTea_LogPrint(L, TAG, ...) \
-do { \
-} while (false)
+#define MilkTea_LogPrint(L, TAG, ...) MilkTea_block({})
 #else // ifdef NDEBUG
-#define MilkTea_LogPrint(LEVEL, TAG, ...) \
-do { \
+#define MilkTea_LogPrint(LEVEL, TAG, ...) MilkTea_block({ \
   MilkTea::Logger &logger = MilkTea::Logger::Instance(); \
   MilkTea::Logger::Level level = MilkTea::Logger::Level::LEVEL; \
   if (!logger.Available(level)) { \
@@ -60,7 +57,7 @@ do { \
   char msg[len]; \
   snprintf(msg, len, ##__VA_ARGS__); \
   logger.Print(level, TAG, msg); \
-} while (false)
+})
 #endif // ifdef NDEBUG
 
 #define MilkTea_logD(...) \

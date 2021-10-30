@@ -319,6 +319,8 @@ class Dump final : public Command {
         sysex.GetArgs(callback);
         break;
       }
+      // assert
+      MilkTea_assertf("ShowMessagesVerbose -- type: %02" PRIx8, message.GetType());
     } while (false);
     std::cout << "[/EVENT]" << std::endl;
   }
@@ -353,6 +355,7 @@ class Dump final : public Command {
   static uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
     return (bytes[0] << 010) | bytes[1];
   }
+  static constexpr char TAG[] = "Milk#Dump";
 };
 
 } // namespace Milk

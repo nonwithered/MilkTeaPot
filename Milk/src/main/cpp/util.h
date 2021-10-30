@@ -10,13 +10,12 @@
 #include <milktea.h>
 #include <soybean.h>
 
-#define check_err(s) \
-do { \
+#define check_err(s) MilkTea_block({ \
   if (err != MilkTea_Exception_t::MilkTea_Exception_Nil) { \
     std::cerr << "Failed to " s " because of " << MilkTea_Exception_Name(err) << ": " << MilkTea_Exception_What() << std::endl; \
     exit(0); \
   } \
-} while (false)
+})
 
 namespace Milk {
 

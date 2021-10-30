@@ -49,19 +49,17 @@ MilkTea_Exception_What();
 #include <cstdio>
 namespace MilkTea {
 
-#define MilkTea_throw(type, what) \
-do { \
+#define MilkTea_throw(type, what) MilkTea_block({ \
   MilkTea_logE("%s: %s", MilkTea_Exception_Name(MilkTea_Exception_##type), what); \
   throw MilkTea::Exception(MilkTea::Exception::Type::type, what); \
-} while (false)
+})
 
-#define MilkTea_throwf(type, ...) \
-do { \
+#define MilkTea_throwf(type, ...) MilkTea_block({ \
   constexpr size_t kWhatMaxSize = 128; \
   char what[kWhatMaxSize]; \
   snprintf(what, kWhatMaxSize, ##__VA_ARGS__); \
   MilkTea_throw(type, what); \
-} while (false)
+})
 
 #define MilkTea_assert(what) \
 MilkTea_throw(Assertion, what)
@@ -69,12 +67,11 @@ MilkTea_throw(Assertion, what)
 #define MilkTea_assertf(...) \
 MilkTea_throwf(Assertion, ##__VA_ARGS__)
 
-#define MilkTea_nonnull(sym) \
-do { \
+#define MilkTea_nonnull(sym) MilkTea_block({ \
   if (sym == nullptr) { \
     MilkTea_throw(NullPointer, #sym " is nullptr"); \
   } \
-} while (false)
+})
 
 #define MilkTea_with_except(block) { \
   try { \

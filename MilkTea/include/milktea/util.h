@@ -47,6 +47,8 @@
 #undef MilkTea_WIN
 #endif // ifdef MilkTea_WIN
 
+#define MilkTea_block(b) do b while (false)
+
 #ifdef __cplusplus
 
 #define MilkTea_IMPL(section, list, block) \
