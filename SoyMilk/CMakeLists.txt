@@ -2,6 +2,7 @@ project(soymilk)
 
 set(src_files
     "lib.cc"
+    "callback.cc"
 )
 
 set(src_dir

@@ -14,12 +14,12 @@ class SysexRef final : public MilkPowder_HolderRef(Sysex) {
 };
 class Sysex final : public MilkPowder_Holder(Sysex) {
  public:
-  Sysex() {}
+  explicit Sysex(MilkPowder_Sysex_t *ptr = nullptr) : MilkPowder_Holder(Sysex)(ptr) {}
   explicit Sysex(const SysexRef &ref) : MilkPowder_Holder(Sysex)(ref) {}
-  explicit Sysex(std::function<bool(uint8_t *)> callback) {
+  explicit Sysex(std::function<bool(uint8_t *)> callback) : Sysex() {
     MilkTea_panic(MilkPowder_Sysex_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
   }
-  Sysex(uint32_t delta[], const uint8_t *const args[], uint32_t const length[], uint32_t size) {
+  Sysex(uint32_t delta[], const uint8_t *const args[], uint32_t const length[], uint32_t size) : Sysex() {
     MilkTea_panic(MilkPowder_Sysex_Create(reset(), delta, args, length, size));
   }
   void GetArgs(std::function<void(uint32_t, const uint8_t *, uint32_t)> callback) const {

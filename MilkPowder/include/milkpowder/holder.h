@@ -75,7 +75,7 @@ class HolderRef {
 template<typename T>
 class Holder {
  public:
-  explicit Holder(T *ptr = nullptr) : ptr_(ptr) {
+  explicit Holder(T *ptr) : ptr_(ptr) {
   }
   explicit Holder(const HolderRef<T> &ref) {
     MilkTea_panic(CloneMap<T>::clone(ref.get(), reset()));

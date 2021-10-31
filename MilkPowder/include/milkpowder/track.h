@@ -17,15 +17,15 @@ class TrackRef final : public MilkPowder_HolderRef(Track) {
 };
 class Track final : public MilkPowder_Holder(Track) {
  public:
-  Track() {}
+  explicit Track(MilkPowder_Track_t *ptr = nullptr) : MilkPowder_Holder(Track)(ptr) {}
   explicit Track(const TrackRef &ref) : MilkPowder_Holder(Track)(ref) {}
-  explicit Track(std::function<bool(uint8_t *)> callback) {
+  explicit Track(std::function<bool(uint8_t *)> callback) : Track() {
     MilkTea_panic(MilkPowder_Track_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
   }
-  Track(Message items[], uint32_t length) {
-    auto size = static_cast<size_t>(length);
+  Track(Message items[], uint32_t length) : Track() {
+    size_t size = static_cast<size_t>(length);
     std::vector<MilkPowder_Message_t *> vec(size);
-    for (auto i = 0; i != size; ++i) {
+    for (size_t i = 0; i != size; ++i) {
       vec[i] = items[i].release();
     }
     MilkTea_panic(MilkPowder_Track_Create(reset(), vec.data(), length));

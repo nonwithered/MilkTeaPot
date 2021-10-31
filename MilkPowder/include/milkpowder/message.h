@@ -52,18 +52,18 @@ class MessageRef final : public MilkPowder_HolderRef(Message) {
 };
 class Message final : public MilkPowder_Holder(Message) {
  public:
-  Message() {}
+  explicit Message(MilkPowder_Message_t *ptr = nullptr) : MilkPowder_Holder(Message)(ptr) {}
   explicit Message(const MessageRef &ref) : MilkPowder_Holder(Message)(ref) {}
-  explicit Message(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) {
+  explicit Message(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) : Message() {
     MilkTea_panic(MilkPowder_Message_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke, last));
   }
-  explicit Message(Event &&another) {
+  explicit Message(Event &&another) : Message() {
     MilkTea_panic(MilkPowder_Message_FromEvent(reset(), another.release()));
   }
-  explicit Message(Meta &&another) {
+  explicit Message(Meta &&another) : Message() {
     MilkTea_panic(MilkPowder_Message_FromMeta(reset(), another.release()));
   }
-  explicit Message(Sysex &&another) {
+  explicit Message(Sysex &&another) : Message() {
     MilkTea_panic(MilkPowder_Message_FromSysex(reset(), another.release()));
   }
   void SetDelta(uint32_t delta) {

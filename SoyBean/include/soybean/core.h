@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 struct SoyBean_Handle_Interface_t {
-  MilkTea_Exception_t (MilkTea_CALL *Deletor)(void *self);
+  MilkTea_Exception_t (MilkTea_CALL *Deleter)(void *self);
   MilkTea_Exception_t (MilkTea_CALL *NoteOff)(void *self, uint8_t channel, uint8_t note, uint8_t pressure);
   MilkTea_Exception_t (MilkTea_CALL *NoteOn)(void *self, uint8_t channel, uint8_t note, uint8_t pressure);
   MilkTea_Exception_t (MilkTea_CALL *AfterTouch)(void *self, uint8_t channel, uint8_t note, uint8_t pressure);
@@ -23,7 +23,7 @@ typedef struct SoyBean_Handle_Interface_t SoyBean_Handle_Interface_t;
 #endif
 
 struct SoyBean_Handle_t {
-  void *handle_;
+  void *self_;
   const SoyBean_Handle_Interface_t *interface_;
 };
 
@@ -32,8 +32,8 @@ typedef struct SoyBean_Handle_t SoyBean_Handle_t;
 #endif
 
 struct SoyBean_Factory_Interface_t {
-  MilkTea_Exception_t (MilkTea_CALL *Deletor)(void *factory);
-  MilkTea_Exception_t (MilkTea_CALL *Create)(void *factory, SoyBean_Handle_t *handle);
+  MilkTea_Exception_t (MilkTea_CALL *Deleter)(void *self);
+  MilkTea_Exception_t (MilkTea_CALL *Create)(void *self, SoyBean_Handle_t *handle);
 };
 
 #ifndef __cplusplus
@@ -41,7 +41,7 @@ typedef struct SoyBean_Factory_Interface_t SoyBean_Factory_Interface_t;
 #endif
 
 struct SoyBean_Factory_t {
-  void *factory_;
+  void *self_;
   const SoyBean_Factory_Interface_t *interface_;
 };
 

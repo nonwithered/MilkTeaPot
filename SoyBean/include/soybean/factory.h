@@ -21,38 +21,35 @@ class BaseHandle {
 
 class HandleWrapper final : public BaseHandle {
  public:
-  static BaseHandle *FromRawHandle(const SoyBean_Handle_t &handle) {
-    return new HandleWrapper(handle);
-  }
+  explicit HandleWrapper(const SoyBean_Handle_t &handle) : self_(handle) {}
   ~HandleWrapper() final {
-    MilkTea_panic(SoyBean_Handle_Destroy(handle_));
-    handle_.handle_ = nullptr;
-    handle_.interface_ = nullptr;
+    MilkTea_panic(SoyBean_Handle_Destroy(self_));
+    self_.self_ = nullptr;
+    self_.interface_ = nullptr;
   }
   void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_NoteOff(handle_, channel, note, pressure));
+    MilkTea_panic(SoyBean_Handle_NoteOff(self_, channel, note, pressure));
   }
   void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_NoteOn(handle_, channel, note, pressure));
+    MilkTea_panic(SoyBean_Handle_NoteOn(self_, channel, note, pressure));
   }
   void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_AfterTouch(handle_, channel, note, pressure));
+    MilkTea_panic(SoyBean_Handle_AfterTouch(self_, channel, note, pressure));
   }
   void ControlChange(uint8_t channel, uint8_t control, uint8_t argument) final {
-    MilkTea_panic(SoyBean_Handle_ControlChange(handle_, channel, control, argument));
+    MilkTea_panic(SoyBean_Handle_ControlChange(self_, channel, control, argument));
   }
   void ProgramChange(uint8_t channel, uint8_t program) final {
-    MilkTea_panic(SoyBean_Handle_ProgramChange(handle_, channel, program));
+    MilkTea_panic(SoyBean_Handle_ProgramChange(self_, channel, program));
   }
   void ChannelPressure(uint8_t channel, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_ChannelPressure(handle_, channel, pressure));
+    MilkTea_panic(SoyBean_Handle_ChannelPressure(self_, channel, pressure));
   }
   void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
-    MilkTea_panic(SoyBean_Handle_PitchBend(handle_, channel, low, height));
+    MilkTea_panic(SoyBean_Handle_PitchBend(self_, channel, low, height));
   }
  private:
-  explicit HandleWrapper(const SoyBean_Handle_t &handle) : handle_(handle) {}
-  SoyBean_Handle_t handle_;
+  SoyBean_Handle_t self_;
   MilkTea_NonCopy(HandleWrapper)
   MilkTea_NonMove(HandleWrapper)
 };
