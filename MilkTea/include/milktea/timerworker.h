@@ -13,6 +13,7 @@ namespace MilkTea {
 class TimerWorker final {
  public:
   using worker_type = std::shared_ptr<TimerWorker>;
+  using future_weak = TimerFuture::future_weak;
   using task_type = TimerTask::task_type;
   using future_type = TimerTask::future_type;
   using clock_type = TimerTask::clock_type;
@@ -30,11 +31,8 @@ class TimerWorker final {
   explicit TimerWorker(std::function<bool(std::exception *)> on_terminate = [](std::exception *) -> bool { return false; })
   : state_(State::INIT),
     on_terminate_(on_terminate),
-    on_cancel_(std::make_shared<std::function<void(TimerFuture &)>>([this](TimerFuture &self) -> void {
-      std::unique_lock guard(lock_);
-      if (!tasks_.empty() && tasks_.top()->future().get() == &self) {
-        tasks_cond_.notify_one();
-      }
+    on_cancel_(std::make_shared<decltype(on_cancel_)::element_type>([this](future_weak future) -> void {
+      OnCancel(future);
     })) {}
   ~TimerWorker() {
     State state = state_;
@@ -104,7 +102,7 @@ class TimerWorker final {
       future->Cancel();
       return future;
     }
-    future->SetOnCancel(GetOnCancel());
+    future->SetOnCancel(on_cancel_);
     bool wake = tasks_.empty() || *tasks_.top() - target > duration_type::zero();
     tasks_.push(TimerTask::Create(future, f));
     if (wake) {
@@ -113,15 +111,6 @@ class TimerWorker final {
     return future;
   }
  private:
-  std::function<void(TimerFuture &)> GetOnCancel() {
-    std::weak_ptr<std::function<void(TimerFuture &)>> on_cancel = on_cancel_;
-    return [on_cancel](TimerFuture &self) -> void {
-      std::shared_ptr<decltype(on_cancel)::element_type> on_cancel_ = on_cancel.lock();
-      if (on_cancel_.get() != nullptr) {
-        (*on_cancel_)(self);
-      }
-    };
-  }
   void Run() {
     try {
       while (true) {
@@ -213,6 +202,12 @@ class TimerWorker final {
       }
     }
   }
+  void OnCancel(future_weak future) {
+    std::unique_lock guard(lock_);
+    if (!tasks_.empty() && tasks_.top()->future() == future.lock()) {
+      tasks_cond_.notify_one();
+    }
+  }
   bool ChangeState(State target, std::function<bool(State)> predicate = [](State) -> bool { return true; }, action_type action = []() -> void {}) {
     std::lock_guard guard(lock_);
     if (!predicate(state_)) {
@@ -245,7 +240,7 @@ class TimerWorker final {
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
   std::function<bool(std::exception *)> on_terminate_;
-  std::shared_ptr<std::function<void(TimerFuture &)>> on_cancel_;
+  std::shared_ptr<std::function<void(future_weak)>> on_cancel_;
   MilkTea_NonCopy(TimerWorker)
   MilkTea_NonMove(TimerWorker)
   static constexpr char TAG[] = "MilkTea#TimerWorker";

@@ -9,10 +9,11 @@
 #include <functional>
 namespace MilkTea {
 
-class TimerFuture final {
+class TimerFuture final : public std::enable_shared_from_this<TimerFuture> {
   friend class TimerTask;
   friend class TimerWorker;
  public:
+  using future_weak = std::weak_ptr<TimerFuture>;
   using future_type = std::shared_ptr<TimerFuture>;
   using clock_type = std::chrono::system_clock;
   using duration_type = std::chrono::milliseconds;
@@ -44,19 +45,22 @@ class TimerFuture final {
   TimerFuture(time_point_type time)
   : state_(State::SCHEDULED),
     time_(time),
-    on_cancel_([](TimerFuture &) -> void {}) {}
+    on_cancel_(std::shared_ptr<decltype(on_cancel_)::element_type>(nullptr)) {}
   bool ChangeState(State expect, State target) {
     return state_.compare_exchange_strong(expect, target);
   }
-  void SetOnCancel(std::function<void(TimerFuture &)> on_cancel) {
+  void SetOnCancel(std::weak_ptr<std::function<void(future_weak)>> on_cancel) {
     on_cancel_ = on_cancel;
   }
   void OnCancel() {
-    on_cancel_(*this);
+    auto on_cancel = on_cancel_.lock();
+    if (on_cancel != nullptr) {
+        (*on_cancel)(weak_from_this());
+    }
   }
   std::atomic<State> state_;
   const time_point_type time_;
-  std::function<void(TimerFuture &)> on_cancel_;
+  std::weak_ptr<std::function<void(future_weak)>> on_cancel_;
   MilkTea_NonCopy(TimerFuture)
   MilkTea_NonMove(TimerFuture)
   static constexpr char TAG[] = "MilkTea#TimerFuture";
