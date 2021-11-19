@@ -24,7 +24,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, void *ob
   MilkTea_nonnull(self);
   MilkTea_nonnull(obj);
   MilkTea_nonnull(on_terminate);
-  auto &worker = *new MilkTea::TimerWorker([obj, on_terminate](std::exception *e) -> bool {
+  auto *worker = new MilkTea::TimerWorker::worker_type(MilkTea::TimerWorker::Create([obj, on_terminate](std::exception *e) -> bool {
     if (e == nullptr) {
       return on_terminate(obj, MilkTea_Exception_t::MilkTea_Exception_Nil, nullptr);
     }
@@ -33,44 +33,44 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, void *ob
       return on_terminate(obj, exception->GetRawType(), exception->what());
     }
     return on_terminate(obj, MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
-  });
-  *self = reinterpret_cast<MilkTea_TimerWorker_t *>(&worker);
+  }));
+  *self = reinterpret_cast<MilkTea_TimerWorker_t *>(worker);
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Destroy, (MilkTea_TimerWorker_t *self), {
   MilkTea_nonnull(self);
-  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
-  delete &worker;
+  auto *worker = reinterpret_cast<MilkTea::TimerWorker::worker_type *>(self);
+  delete worker;
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Start, (MilkTea_TimerWorker_t *self, bool *success), {
   MilkTea_nonnull(self);
-  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
-  *success = worker.Start();
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker::worker_type *>(self);
+  *success = worker->Start();
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_GetState, (MilkTea_TimerWorker_t *self, MilkTea_TimerWorker_State_t *state), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(state);
-  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
-  *state = MilkTea_TimerWorker_State_Map(worker.state());
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker::worker_type *>(self);
+  *state = MilkTea_TimerWorker_State_Map(worker->state());
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Shutdown, (MilkTea_TimerWorker_t *self, bool *success), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
-  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
-  *success = worker.Shutdown();
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker::worker_type *>(self);
+  *success = worker->Shutdown();
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_AwaitTermination, (MilkTea_TimerWorker_t *self, int64_t delay, bool *success), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
-  auto &worker = *reinterpret_cast<MilkTea::TimerWorker *>(self);
+  auto &worker = *reinterpret_cast<MilkTea::TimerWorker::worker_type *>(self);
   if (delay > 0) {
-    *success = worker.AwaitTermination(MilkTea::TimerWorker::duration_type(delay));
+    *success = worker->AwaitTermination(MilkTea::TimerWorker::duration_type(delay));
   } else {
-    worker.AwaitTermination();
+    worker->AwaitTermination();
     *success = true;
   }
 })

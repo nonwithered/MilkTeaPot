@@ -10,10 +10,11 @@
 #include <tuple>
 namespace MilkTea {
 
-class TimerWorker final {
+class TimerWorker final : public std::enable_shared_from_this<TimerWorker> {
  public:
-  using worker_type = std::shared_ptr<TimerWorker>;
+  using worker_weak = std::weak_ptr<TimerWorker>;
   using future_weak = TimerFuture::future_weak;
+  using worker_type = std::shared_ptr<TimerWorker>;
   using task_type = TimerTask::task_type;
   using future_type = TimerTask::future_type;
   using clock_type = TimerTask::clock_type;
@@ -28,20 +29,17 @@ class TimerWorker final {
     TIDYING,
     TERMINATED
   };
-  explicit TimerWorker(std::function<bool(std::exception *)> on_terminate = [](std::exception *) -> bool { return false; })
-  : state_(State::INIT),
-    on_terminate_(on_terminate),
-    on_cancel_(std::make_shared<decltype(on_cancel_)::element_type>([this](future_weak future) -> void {
-      OnCancel(future);
-    })) {}
+  static worker_type Create(std::function<bool(std::exception *)> on_terminate = [](std::exception *) -> bool { return false; }) {
+    return worker_type(new TimerWorker(on_terminate));
+  }
   ~TimerWorker() {
     State state = state_;
     if (state_ == State::INIT) {
       return;
     }
     if (state_ != State::TERMINATED) {
-      MilkTea_logE("dtor -- state %s", StateName(state));
-      std::terminate();
+      auto tasks = ShutdownNow();
+      MilkTea_logE("dtor -- state %s tasks %" PRIu32, StateName(state), static_cast<uint32_t>(tasks.size()));
     }
   }
   bool Start() {
@@ -102,7 +100,7 @@ class TimerWorker final {
       future->Cancel();
       return future;
     }
-    future->SetOnCancel(on_cancel_);
+    future->SetCancel(GetCancel());
     bool wake = tasks_.empty() || *tasks_.top() - target > duration_type::zero();
     tasks_.push(TimerTask::Create(future, f));
     if (wake) {
@@ -111,6 +109,9 @@ class TimerWorker final {
     return future;
   }
  private:
+  explicit TimerWorker(std::function<bool(std::exception *)> on_terminate)
+  : state_(State::INIT),
+    on_terminate_(on_terminate) {}
   void Run() {
     try {
       while (true) {
@@ -172,6 +173,8 @@ class TimerWorker final {
         case State::TERMINATED:
           MilkTea_logE("Take assert State::TERMINATED");
           MilkTea_assert("Take assert State::TERMINATED");
+        default:
+          break;
       }
       if (!tasks_.empty()) {
         if (state_ == State::STOP) {
@@ -208,6 +211,15 @@ class TimerWorker final {
       tasks_cond_.notify_one();
     }
   }
+  std::function<void(future_weak)> GetCancel() {
+    worker_weak weak = weak_from_this();
+    return [weak](future_weak future) -> void {
+      worker_type worker = weak.lock();
+      if (worker) {
+        worker->OnCancel(future);
+      }
+    };
+  }
   bool ChangeState(State target, std::function<bool(State)> predicate = [](State) -> bool { return true; }, action_type action = []() -> void {}) {
     std::lock_guard guard(lock_);
     if (!predicate(state_)) {
@@ -240,7 +252,6 @@ class TimerWorker final {
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
   std::function<bool(std::exception *)> on_terminate_;
-  std::shared_ptr<std::function<void(future_weak)>> on_cancel_;
   MilkTea_NonCopy(TimerWorker)
   MilkTea_NonMove(TimerWorker)
   static constexpr char TAG[] = "MilkTea#TimerWorker";

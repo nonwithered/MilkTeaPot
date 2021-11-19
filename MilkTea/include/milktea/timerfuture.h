@@ -42,25 +42,24 @@ class TimerFuture final : public std::enable_shared_from_this<TimerFuture> {
     return time_;
   }
  private:
-  TimerFuture(time_point_type time)
+  explicit TimerFuture(time_point_type time)
   : state_(State::SCHEDULED),
     time_(time),
-    on_cancel_(std::shared_ptr<decltype(on_cancel_)::element_type>(nullptr)) {}
+    on_cancel_() {}
   bool ChangeState(State expect, State target) {
     return state_.compare_exchange_strong(expect, target);
   }
-  void SetOnCancel(std::weak_ptr<std::function<void(future_weak)>> on_cancel) {
-    on_cancel_ = on_cancel;
-  }
   void OnCancel() {
-    auto on_cancel = on_cancel_.lock();
-    if (on_cancel != nullptr) {
-        (*on_cancel)(weak_from_this());
+    if (on_cancel_) {
+      on_cancel_(weak_from_this());
     }
+  }
+  void SetCancel(std::function<void(future_weak)> on_cancel) {
+    on_cancel_ = on_cancel;
   }
   std::atomic<State> state_;
   const time_point_type time_;
-  std::weak_ptr<std::function<void(future_weak)>> on_cancel_;
+  std::function<void(future_weak)> on_cancel_;
   MilkTea_NonCopy(TimerFuture)
   MilkTea_NonMove(TimerFuture)
   static constexpr char TAG[] = "MilkTea#TimerFuture";
