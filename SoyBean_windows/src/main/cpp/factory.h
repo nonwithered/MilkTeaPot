@@ -14,6 +14,9 @@ class FactoryImpl final : public SoyBean::BaseFactory {
     dwCallback_(dwCallback),
     dwInstance_(dwInstance),
     fdwOpen_(fdwOpen){}
+  void Destroy() final {
+    delete this;
+  }
   SoyBean::BaseHandle *Create() final {
     return new HandleImpl(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
   }

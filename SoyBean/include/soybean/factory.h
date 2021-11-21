@@ -10,6 +10,7 @@ class BaseHandle {
  public:
   MilkTea_API SoyBean_Handle_t MilkTea_CALL ToRawType();
   virtual ~BaseHandle() = default;
+  virtual void Destroy() = 0;
   virtual void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
   virtual void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
   virtual void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
@@ -26,6 +27,9 @@ class HandleWrapper final : public BaseHandle {
     MilkTea_panic(SoyBean_Handle_Destroy(self_));
     self_.self_ = nullptr;
     self_.interface_ = nullptr;
+  }
+  void Destroy() final {
+    MilkTea_panic(SoyBean_Handle_Destroy(self_));
   }
   void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
     MilkTea_panic(SoyBean_Handle_NoteOff(self_, channel, note, pressure));
@@ -58,6 +62,7 @@ class BaseFactory {
  public:
   MilkTea_API SoyBean_Factory_t MilkTea_CALL ToRawType();
   virtual ~BaseFactory() = default;
+  virtual void Destroy() = 0;
   virtual BaseHandle *Create() = 0;
 };
 

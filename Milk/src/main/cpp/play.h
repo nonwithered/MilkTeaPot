@@ -1,6 +1,9 @@
 #ifndef MILK_PLAY_H_
 #define MILK_PLAY_H_
 
+#include <thread>
+#include <chrono>
+
 #include <soymilk.h>
 
 #include "launch.h"
@@ -22,7 +25,9 @@ class Play final : public Command {
     MilkTea_panic(SoyBean_Handle_Create(&h, factory));
     MilkTea_panic(SoyBean_Factory_Destroy(factory));
     MilkTea_panic(SoyBean_Handle_NoteOn(h, 0, 0x45, 0x7f));
-    while (true) ;
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    MilkTea_panic(SoyBean_Handle_Destroy(h));
+    std::cout << "finish" << std::endl;
   }
   std::string_view Usage() const final {
     return
@@ -38,7 +43,7 @@ class Play final : public Command {
   }
  private:
   bool help_;
-  bool ShowHelp(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
+  bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
     if (help_) {
       return true;
     } else {

@@ -15,7 +15,7 @@ SoyBean::BaseFactory &BaseFactory_cast(void *self) {
 }
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_Deleter(void *self) MilkTea_with_except({
-  delete &BaseHandle_cast(self);
+  BaseHandle_cast(self).Destroy();
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_NoteOff(void *self, uint8_t channel, uint8_t note, uint8_t pressure) MilkTea_with_except({
@@ -61,7 +61,7 @@ const SoyBean_Handle_Interface_t &SoyBean_Handle_Interface_Instance() {
 }
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Deleter(void *self) MilkTea_with_except({
-  delete &BaseFactory_cast(self);
+  BaseFactory_cast(self).Destroy();
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Create(void *self, SoyBean_Handle_t *handle) MilkTea_with_except({

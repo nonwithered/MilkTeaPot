@@ -18,6 +18,9 @@ class HandleImpl final : public SoyBean::BaseHandle {
     ThrowOrNot(Proxy_midiOutClose(handle_));
     handle_ = nullptr;
   }
+  void Destroy() final {
+    delete this;
+  }
   void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
     CheckClosed();
     CheckChannel(channel);

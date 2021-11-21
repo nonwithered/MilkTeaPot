@@ -61,7 +61,7 @@ class Codec final : public Command {
   bool version_;
   std::string_view target_;
   int32_t format_;
-  bool ShowHelp(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
+  bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
     if (help_) {
       return true;
     } else {
