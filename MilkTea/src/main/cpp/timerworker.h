@@ -105,7 +105,8 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
       return future;
     }
     future->SetCancel(GetCancel());
-    bool wake = tasks_.empty() || *tasks_.top() - target > duration_type::zero();
+    auto task_top = Peek();
+    bool wake = task_top == nullptr || *task_top - target > duration_type::zero();
     Offer(TimerTaskImpl::Create(future, f));
     if (wake) {
       tasks_cond_.notify_one();
@@ -180,15 +181,16 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
         default:
           break;
       }
-      if (!tasks_.empty()) {
+      auto task_top = Peek();
+      if (task_top != nullptr) {
         if (state_ == State::STOP) {
           MilkTea_logE("Take assert State::STOP");
           MilkTea_assert("Take assert State::STOP");
         }
-        while (tasks_.top()->future()->state() == TimerFutureImpl::State::CANCELLED) {
+        while (task_top->future()->state() == TimerFutureImpl::State::CANCELLED) {
           Poll();
         }
-        duration_type delta = *tasks_.top() - CurrentTimePoint();
+        duration_type delta = *task_top - CurrentTimePoint();
         if (delta > duration_type::zero()) {
           tasks_cond_.wait_for(guard, delta);
           continue;
@@ -210,7 +212,8 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   }
   void OnCancel(future_weak future) {
     std::unique_lock guard(lock_);
-    if (!tasks_.empty() && tasks_.top()->future() == future.lock()) {
+    auto task_top = Peek();
+    if (task_top != nullptr && task_top->future() == future.lock()) {
       tasks_cond_.notify_one();
     }
   }
@@ -242,6 +245,12 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     task_raw task = tasks_.top();
     tasks_.pop();
     return task_type(task);
+  }
+  task_raw Peek() {
+    if (tasks_.empty()) {
+      return nullptr;
+    }
+    return tasks_.top();
   }
   static time_point_type CurrentTimePoint() {
     return std::chrono::time_point_cast<duration_type>(clock_type::now());
