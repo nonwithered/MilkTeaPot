@@ -17,8 +17,8 @@ class FactoryImpl final : public SoyBean::BaseFactory {
   void Destroy() final {
     delete this;
   }
-  SoyBean::BaseHandle *Create() final {
-    return new HandleImpl(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
+  std::unique_ptr<SoyBean::BaseHandle> Create() final {
+    return std::make_unique<HandleImpl>(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
   }
  private:
   unsigned int uDeviceID_;

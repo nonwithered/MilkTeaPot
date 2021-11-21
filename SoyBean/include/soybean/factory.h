@@ -4,6 +4,7 @@
 #ifdef __cplusplus
 #include <soybean/core.h>
 #include <functional>
+#include <memory>
 namespace SoyBean {
 
 class BaseHandle {
@@ -22,7 +23,7 @@ class BaseHandle {
 
 class HandleWrapper final : public BaseHandle {
  public:
-  explicit HandleWrapper(const SoyBean_Handle_t &handle) : self_(handle) {}
+  explicit HandleWrapper(SoyBean_Handle_t &&handle) : self_(handle) {}
   ~HandleWrapper() final {
     MilkTea_panic(SoyBean_Handle_Destroy(self_));
     self_.self_ = nullptr;
@@ -63,7 +64,29 @@ class BaseFactory {
   MilkTea_API SoyBean_Factory_t MilkTea_CALL ToRawType();
   virtual ~BaseFactory() = default;
   virtual void Destroy() = 0;
-  virtual BaseHandle *Create() = 0;
+  virtual std::unique_ptr<BaseHandle> Create() = 0;
+};
+
+class FactoryWrapper final : public BaseFactory {
+ public:
+  explicit FactoryWrapper(SoyBean_Factory_t &&factory) : self_(factory) {}
+  ~FactoryWrapper() final {
+    MilkTea_panic(SoyBean_Factory_Destroy(self_));
+    self_.self_ = nullptr;
+    self_.interface_ = nullptr;
+  }
+  void Destroy() final {
+    MilkTea_panic(SoyBean_Factory_Destroy(self_));
+  }
+  std::unique_ptr<BaseHandle> Create() final {
+    SoyBean_Handle_t handle{};
+    MilkTea_panic(SoyBean_Handle_Create(&handle, self_));
+    return std::make_unique<HandleWrapper>(std::move(handle));
+  }
+private:
+  SoyBean_Factory_t self_;
+  MilkTea_NonCopy(FactoryWrapper)
+  MilkTea_NonMove(FactoryWrapper)
 };
 
 } // namespace SoyBean

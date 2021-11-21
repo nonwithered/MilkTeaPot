@@ -19,14 +19,9 @@ class Play final : public Command {
   }
  protected:
   void Launch(std::list<std::string_view> &) final {
-    SoyBean_Handle_t h{};
-    SoyBean_Factory_t factory{};
-    MilkTea_panic(Inject::SoyBean_Factory()(&factory));
-    MilkTea_panic(SoyBean_Handle_Create(&h, factory));
-    MilkTea_panic(SoyBean_Factory_Destroy(factory));
-    MilkTea_panic(SoyBean_Handle_NoteOn(h, 0, 0x45, 0x7f));
+    auto handle = GetFactory()->Create();
+    handle->NoteOn(0, 0x45, 0x7f);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    MilkTea_panic(SoyBean_Handle_Destroy(h));
     std::cout << "finish" << std::endl;
   }
   std::string_view Usage() const final {
@@ -42,6 +37,11 @@ class Play final : public Command {
     return "play";
   }
  private:
+  static std::unique_ptr<SoyBean::BaseFactory> GetFactory() {
+    SoyBean_Factory_t factory{};
+    MilkTea_panic(Inject::SoyBean_Factory()(&factory));
+    return std::make_unique<SoyBean::FactoryWrapper>(std::move(factory));
+  }
   bool help_;
   bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
     if (help_) {
