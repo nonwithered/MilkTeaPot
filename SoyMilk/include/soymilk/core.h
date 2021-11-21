@@ -19,7 +19,8 @@ enum SoyMilk_Player_State_t {
 typedef enum SoyMilk_Player_State_t SoyMilk_Player_State_t;
 #endif
 
-struct SoyMilk_Player_Callback_Interface_t {
+struct SoyMilk_Player_Controller_Interface_t {
+  void (MilkTea_CALL *OnSubmit)(void *self, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *submit)(void *obj));
   void (MilkTea_CALL *OnPlay)(void *self, int64_t time, uint16_t ntrk, MilkPowder_Message_t *message);
   void (MilkTea_CALL *OnPrepare)(void *self, int64_t time);
   void (MilkTea_CALL *OnStart)(void *self);
@@ -29,17 +30,16 @@ struct SoyMilk_Player_Callback_Interface_t {
   void (MilkTea_CALL *OnResume)(void *self);
   void (MilkTea_CALL *OnStop)(void *self, int64_t time);
   void (MilkTea_CALL *OnComplete)(void *self);
-  void (MilkTea_CALL *OnCompleteSubmit)(void *self, void *obj, void (MilkTea_CALL *submit)(void *obj));
   void (MilkTea_CALL *OnReset)(void *self);
 };
 
 #ifndef __cplusplus
-typedef struct SoyMilk_Player_Callback_Interface_t SoyMilk_Player_Callback_Interface_t;
+typedef struct SoyMilk_Player_Controller_Interface_t SoyMilk_Player_Controller_Interface_t;
 #endif
 
-struct SoyMilk_Player_Callback_t {
+struct SoyMilk_Player_Controller_t {
   void *self_;
-  const SoyMilk_Player_Callback_Interface_t *interface_;
+  const SoyMilk_Player_Controller_Interface_t *interface_;
 };
 
 #ifndef __cplusplus
@@ -53,7 +53,7 @@ typedef struct SoyMilk_Player_t SoyMilk_Player_t;
 #endif
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-SoyMilk_Player_Create(SoyMilk_Player_t **self, MilkTea_TimerWorker_t *timer, SoyMilk_Player_Callback_t callback);
+SoyMilk_Player_Create(SoyMilk_Player_t **self, MilkTea_TimerWorker_t *timer, SoyMilk_Player_Controller_t callback);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyMilk_Player_Destroy(SoyMilk_Player_t *self);

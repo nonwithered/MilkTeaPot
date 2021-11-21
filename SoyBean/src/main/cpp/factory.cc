@@ -1,55 +1,49 @@
 #include <soybean.h>
 
-#define BaseHandle_self \
-MilkTea_nonnull(self); \
-auto &self_ = *reinterpret_cast<SoyBean::BaseHandle *>(self);
-
-#define BaseFactory_self \
-MilkTea_nonnull(self); \
-auto &self_ = *reinterpret_cast<SoyBean::BaseFactory *>(self);
-
 namespace {
 
 constexpr char TAG[] = "SoyBean#extern";
 
+SoyBean::BaseHandle &BaseHandle_cast(void *self) {
+  MilkTea_nonnull(self);
+  return *reinterpret_cast<SoyBean::BaseHandle *>(self);
+}
+
+SoyBean::BaseFactory &BaseFactory_cast(void *self) {
+  MilkTea_nonnull(self);
+  return *reinterpret_cast<SoyBean::BaseFactory *>(self);
+}
+
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_Deleter(void *self) MilkTea_with_except({
-  BaseHandle_self
-  delete &self_;
+  delete &BaseHandle_cast(self);
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_NoteOff(void *self, uint8_t channel, uint8_t note, uint8_t pressure) MilkTea_with_except({
-  BaseHandle_self
-  self_.NoteOff(channel, note, pressure);
+  BaseHandle_cast(self).NoteOff(channel, note, pressure);
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_NoteOn(void *self, uint8_t channel, uint8_t note, uint8_t pressure) MilkTea_with_except({
-  BaseHandle_self
-  self_.NoteOn(channel, note, pressure);
+  BaseHandle_cast(self).NoteOn(channel, note, pressure);
 });
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_AfterTouch(void *self, uint8_t channel, uint8_t note, uint8_t pressure) MilkTea_with_except({
-  BaseHandle_self
-  self_.AfterTouch(channel, note, pressure);
+  BaseHandle_cast(self).AfterTouch(channel, note, pressure);
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_ControlChange(void *self, uint8_t channel, uint8_t control, uint8_t argument) MilkTea_with_except({
-  BaseHandle_self
-  self_.ControlChange(channel, control, argument);
+  BaseHandle_cast(self).ControlChange(channel, control, argument);
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_ProgramChange(void *self, uint8_t channel, uint8_t program) MilkTea_with_except({
-  BaseHandle_self
-  self_.ProgramChange(channel, program);
+  BaseHandle_cast(self).ProgramChange(channel, program);
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_ChannelPressure(void *self, uint8_t channel, uint8_t pressure) MilkTea_with_except({
-  BaseHandle_self
-  self_.ChannelPressure(channel, pressure);
+  BaseHandle_cast(self).ChannelPressure(channel, pressure);
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_PitchBend(void *self, uint8_t channel, uint8_t low, uint8_t height) MilkTea_with_except({
-  BaseHandle_self
-  self_.PitchBend(channel, low, height);
+  BaseHandle_cast(self).PitchBend(channel, low, height);
 })
 
 const SoyBean_Handle_Interface_t &SoyBean_Handle_Interface_Instance() {
@@ -67,13 +61,11 @@ const SoyBean_Handle_Interface_t &SoyBean_Handle_Interface_Instance() {
 }
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Deleter(void *self) MilkTea_with_except({
-  BaseFactory_self
-  delete &self_;
+  delete &BaseFactory_cast(self);
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Create(void *self, SoyBean_Handle_t *handle) MilkTea_with_except({
-  BaseFactory_self
-  *handle = self_.Create()->ToRawHandle();
+  *handle = BaseFactory_cast(self).Create()->ToRawType();
 })
 
 const SoyBean_Factory_Interface_t &SoyBean_Factory_Interface_Instance() {
@@ -88,14 +80,14 @@ const SoyBean_Factory_Interface_t &SoyBean_Factory_Interface_Instance() {
 
 namespace SoyBean {
 
-SoyBean_Handle_t BaseHandle::ToRawHandle() {
+SoyBean_Handle_t BaseHandle::ToRawType() {
   return SoyBean_Handle_t{
     .self_ = this,
     .interface_ = &SoyBean_Handle_Interface_Instance(),
   };
 }
 
-SoyBean_Factory_t BaseFactory::ToRawFactory() {
+SoyBean_Factory_t BaseFactory::ToRawType() {
   return SoyBean_Factory_t{
     .self_ = this,
     .interface_ = &SoyBean_Factory_Interface_Instance(),

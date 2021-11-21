@@ -2,6 +2,6 @@
 #define LIB_SOYMILK_H_
 
 #include <soymilk/core.h>
-#include <soymilk/callback.h>
+#include <soymilk/controller.h>
 
 #endif // ifndef LIB_SOYMILK_H_

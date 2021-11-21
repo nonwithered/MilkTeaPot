@@ -25,7 +25,7 @@ class ClosureToken {
     std::function<Res(Args...)> &callback_ = *reinterpret_cast<std::function<Res(Args...)> *>(self);
     return callback_(args...);
   }
-  static MilkTea_ClosureToken_t ToRawType(std::function<Res(Args...)> f) {
+  static MilkTea_ClosureToken_t ToRawType(const std::function<Res(Args...)> &f) {
     return MilkTea_ClosureToken_t{
       .self_ = new std::function<Res(Args...)>(f),
       .deleter_ = Deteler,
