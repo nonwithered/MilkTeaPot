@@ -55,7 +55,7 @@ class Message final : public MilkPowder_Holder(Message) {
   explicit Message(MilkPowder_Message_t *ptr = nullptr) : MilkPowder_Holder(Message)(ptr) {}
   explicit Message(const MessageRef &ref) : MilkPowder_Holder(Message)(ref) {}
   explicit Message(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) : Message() {
-    MilkTea_panic(MilkPowder_Message_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke, last));
+    MilkTea_panic(MilkPowder_Message_Parse(reset(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke, last));
   }
   explicit Message(Event &&another) : Message() {
     MilkTea_panic(MilkPowder_Message_FromEvent(reset(), another.release()));

@@ -25,7 +25,7 @@ class Event final : public MilkPowder_Holder(Event) {
   explicit Event(MilkPowder_Event_t *ptr = nullptr) : MilkPowder_Holder(Event)(ptr) {}
   explicit Event(const EventRef &ref) : MilkPowder_Holder(Event)(ref) {}
   explicit Event(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) : Event() {
-    MilkTea_panic(MilkPowder_Event_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke, last));
+    MilkTea_panic(MilkPowder_Event_Parse(reset(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke, last));
   }
   Event(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : Event() {
     MilkTea_panic(MilkPowder_Event_Create(reset(), delta, type, std::get<0>(args), std::get<1>(args)));

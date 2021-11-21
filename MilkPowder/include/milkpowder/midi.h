@@ -33,7 +33,7 @@ class Midi final : public MilkPowder_Holder(Midi) {
   explicit Midi(MilkPowder_Midi_t *ptr = nullptr) : MilkPowder_Holder(Midi)(ptr) {}
   explicit Midi(const MidiRef &ref) : MilkPowder_Holder(Midi)(ref) {}
   explicit Midi(std::function<bool(uint8_t *)> callback) : Midi() {
-    MilkTea_panic(MilkPowder_Midi_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
+    MilkTea_panic(MilkPowder_Midi_Parse(reset(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
   }
   Midi(uint16_t format, uint16_t ntrks, uint16_t division, Track items[]) : Midi() {
     size_t size = static_cast<size_t>(ntrks);

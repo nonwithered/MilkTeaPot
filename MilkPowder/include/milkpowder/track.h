@@ -12,7 +12,7 @@ class TrackRef final : public MilkPowder_HolderRef(Track) {
     std::function<void(const MilkPowder_Message_t *)> callback_ = [callback](const MilkPowder_Message_t *obj) -> void {
       callback(MessageRef(obj));
     };
-    MilkTea_panic(MilkPowder_Track_GetMessages(get(), &callback_, MilkTea::CallbackToken<decltype(callback_)>::Invoke));
+    MilkTea_panic(MilkPowder_Track_GetMessages(get(), &callback_, MilkTea::ClosureToken<decltype(callback_)>::Invoke));
   }
 };
 class Track final : public MilkPowder_Holder(Track) {
@@ -20,7 +20,7 @@ class Track final : public MilkPowder_Holder(Track) {
   explicit Track(MilkPowder_Track_t *ptr = nullptr) : MilkPowder_Holder(Track)(ptr) {}
   explicit Track(const TrackRef &ref) : MilkPowder_Holder(Track)(ref) {}
   explicit Track(std::function<bool(uint8_t *)> callback) : Track() {
-    MilkTea_panic(MilkPowder_Track_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
+    MilkTea_panic(MilkPowder_Track_Parse(reset(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
   }
   Track(Message items[], uint32_t length) : Track() {
     size_t size = static_cast<size_t>(length);

@@ -28,7 +28,7 @@ class Meta final : public MilkPowder_Holder(Meta) {
   explicit Meta(MilkPowder_Meta_t *ptr = nullptr) : MilkPowder_Holder(Meta)(ptr) {}
   explicit Meta(const MetaRef &ref) : MilkPowder_Holder(Meta)(ref) {}
   explicit Meta(std::function<bool(uint8_t *)> callback) : Meta() {
-    MilkTea_panic(MilkPowder_Meta_Parse(reset(), &callback, MilkTea::CallbackToken<decltype(callback)>::Invoke));
+    MilkTea_panic(MilkPowder_Meta_Parse(reset(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
   }
   Meta(uint32_t delta, uint8_t type, const uint8_t args[], uint32_t length) : Meta() {
     MilkTea_panic(MilkPowder_Meta_Create(reset(), delta, type, args, length));
