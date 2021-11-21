@@ -1,7 +1,7 @@
 #ifndef LIB_MILKTEA_CALLBACK_H_
 #define LIB_MILKTEA_CALLBACK_H_
 
-#include <milktea/util.h>
+#include <milktea/exception.h>
 
 struct MilkTea_ClosureToken_t {
   void *self_;
@@ -32,7 +32,9 @@ class ClosureToken {
     };
   }
   static std::function<Res(Args...)> FromRawType(MilkTea_ClosureToken_t token, std::function<Res(void *, Args...)> invoke) {
-    auto closure = std::shared_ptr<void>(token.self_, token.deleter_);
+    auto deleter = token.deleter_;
+    MilkTea_nonnull(deleter);
+    auto closure = std::shared_ptr<void>(token.self_, deleter);
     return [closure, invoke](Args... args) -> Res {
       return invoke(closure.get(), args...);
     };
@@ -41,6 +43,7 @@ class ClosureToken {
   static void MilkTea_CALL Deteler(void *self) {
     delete reinterpret_cast<std::function<Res(Args...)> *>(self);
   }
+  static constexpr char TAG[] = "MilkTea#ClosureToken";
 };
 
 template<typename Res, typename... Args>

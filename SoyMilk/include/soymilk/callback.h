@@ -3,11 +3,14 @@
 
 #include <soymilk/core.h>
 
+#include <chrono>
+#include <functional>
+
 #ifdef __cplusplus
 namespace SoyMilk {
 class BaseCallback {
  public:
-  using duration_type = MilkTea::TimerWorker::duration_type;
+  using duration_type = std::chrono::milliseconds;
   MilkTea_API SoyMilk_Player_Callback_t MilkTea_CALL ToRawCallback();
   virtual void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::Message message) = 0;
   virtual void OnPrepare(duration_type time) = 0;
@@ -18,6 +21,7 @@ class BaseCallback {
   virtual void OnResume() = 0;
   virtual void OnStop(duration_type time) = 0;
   virtual void OnComplete() = 0;
+  virtual void OnCompleteSubmit(std::function<void()>) = 0;
   virtual void OnReset() = 0;
 };
 class CallbackWrapper final : public BaseCallback {
@@ -50,6 +54,9 @@ class CallbackWrapper final : public BaseCallback {
   void OnComplete() final {
     callback_.interface_->OnComplete(callback_.self_);
   }
+  void OnCompleteSubmit(std::function<void()> submit) final {
+    callback_.interface_->OnCompleteSubmit(callback_.self_, &submit, MilkTea::ClosureToken<void()>::Invoke);
+  };
   void OnReset() final {
     callback_.interface_->OnReset(callback_.self_);
   }

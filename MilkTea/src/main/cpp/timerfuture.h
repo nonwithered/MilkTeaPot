@@ -1,25 +1,26 @@
-#ifndef LIB_MILKTEA_TIMERFUTURE_H_
-#define LIB_MILKTEA_TIMERFUTURE_H_
+#ifndef MILKTEA_TIMERFUTURE_H_
+#define MILKTEA_TIMERFUTURE_H_
 
-#ifdef __cplusplus
-#include <milktea/util.h>
 #include <chrono>
 #include <atomic>
 #include <memory>
 #include <functional>
+
+#include <milktea.h>
+
 namespace MilkTea {
 
-class TimerFuture final : public std::enable_shared_from_this<TimerFuture> {
-  friend class TimerTask;
-  friend class TimerWorker;
+class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImpl> {
+  friend class TimerTaskImpl;
+  friend class TimerWorkerImpl;
  public:
-  using future_weak = std::weak_ptr<TimerFuture>;
-  using future_type = std::shared_ptr<TimerFuture>;
+  using future_weak = std::weak_ptr<TimerFutureImpl>;
+  using future_type = std::shared_ptr<TimerFutureImpl>;
   using clock_type = std::chrono::system_clock;
   using duration_type = std::chrono::milliseconds;
   using time_point_type = std::chrono::time_point<clock_type, duration_type>;
   static future_type Create(time_point_type time) {
-    return future_type(new TimerFuture(time));
+    return future_type(new TimerFutureImpl(time));
   }
   enum class State {
     SCHEDULED,
@@ -42,7 +43,7 @@ class TimerFuture final : public std::enable_shared_from_this<TimerFuture> {
     return time_;
   }
  private:
-  explicit TimerFuture(time_point_type time)
+  explicit TimerFutureImpl(time_point_type time)
   : state_(State::SCHEDULED),
     time_(time),
     on_cancel_() {}
@@ -60,12 +61,11 @@ class TimerFuture final : public std::enable_shared_from_this<TimerFuture> {
   std::atomic<State> state_;
   const time_point_type time_;
   std::function<void(future_weak)> on_cancel_;
-  MilkTea_NonCopy(TimerFuture)
-  MilkTea_NonMove(TimerFuture)
+  MilkTea_NonCopy(TimerFutureImpl)
+  MilkTea_NonMove(TimerFutureImpl)
   static constexpr char TAG[] = "MilkTea#TimerFuture";
 };
 
 } // namespace MilkTea
-#endif // ifdef __cplusplus
 
-#endif // ifndef LIB_MILKTEA_TIMERFUTURE_H_
+#endif // ifndef MILKTEA_TIMERFUTURE_H_

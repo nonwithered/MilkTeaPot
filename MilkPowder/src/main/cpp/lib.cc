@@ -45,7 +45,7 @@ milkpowder_cast_map_(Sysex)
 #undef milkpowder_cast_map_
 
 template<typename From, typename To = typename milkpowder_cast_map<From>::Type>
-constexpr To *milkpowder_cast(From *it) {
+To *milkpowder_cast(From *it) {
   return reinterpret_cast<To *>(it);
 }
 

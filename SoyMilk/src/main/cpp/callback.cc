@@ -44,6 +44,12 @@ void MilkTea_CALL SoyMilk_BaseCallback_OnComplete(void *self) {
   BaseCallback_self
   self_.OnComplete();
 }
+void MilkTea_CALL SoyMilk_BaseCallback_OnCompleteSubmit(void *self, void *obj, void (MilkTea_CALL *submit)(void *obj)) {
+  BaseCallback_self
+  self_.OnCompleteSubmit([obj, submit]() -> void {
+    submit(obj);
+  });
+}
 void MilkTea_CALL SoyMilk_BaseCallback_OnReset(void *self) {
   BaseCallback_self
   self_.OnReset();
@@ -60,6 +66,7 @@ const SoyMilk_Player_Callback_Interface_t &SoyMilk_BaseCallback_Interface_Instan
     .OnResume = SoyMilk_BaseCallback_OnResume,
     .OnStop = SoyMilk_BaseCallback_OnStop,
     .OnComplete = SoyMilk_BaseCallback_OnComplete,
+    .OnCompleteSubmit = SoyMilk_BaseCallback_OnCompleteSubmit,
     .OnReset = SoyMilk_BaseCallback_OnReset,
   };
   return interface_;

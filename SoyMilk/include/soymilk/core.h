@@ -29,6 +29,7 @@ struct SoyMilk_Player_Callback_Interface_t {
   void (MilkTea_CALL *OnResume)(void *self);
   void (MilkTea_CALL *OnStop)(void *self, int64_t time);
   void (MilkTea_CALL *OnComplete)(void *self);
+  void (MilkTea_CALL *OnCompleteSubmit)(void *self, void *obj, void (MilkTea_CALL *submit)(void *obj));
   void (MilkTea_CALL *OnReset)(void *self);
 };
 
