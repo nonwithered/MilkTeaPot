@@ -96,6 +96,21 @@ MilkTea_TimerWorker_ShutdownNow(MilkTea_TimerWorker_t *self, void *obj, void (Mi
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkTea_TimerWorker_AwaitTermination(MilkTea_TimerWorker_t *self, int64_t delay, bool *success);
 
+struct MilkTea_TimerWorker_Weak_t;
+
+#ifndef __cplusplus
+typedef struct MilkTea_TimerWorker_Weak_t MilkTea_TimerWorker_Weak_t;
+#endif // ifndef __cplusplus
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerWorker_Weak_Create(MilkTea_TimerWorker_Weak_t **self, MilkTea_TimerWorker_t *target);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerWorker_Weak_Destroy(MilkTea_TimerWorker_Weak_t *self);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_TimerWorker_Weak_Try(MilkTea_TimerWorker_Weak_t *self, MilkTea_TimerWorker_t **target);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

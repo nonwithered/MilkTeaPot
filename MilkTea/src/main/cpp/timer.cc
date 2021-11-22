@@ -47,6 +47,11 @@ struct timer_cast_map<MilkTea_TimerWorker_t> {
   using Type = MilkTea::TimerWorkerImpl::worker_type;
 };
 
+template<>
+struct timer_cast_map<MilkTea_TimerWorker_Weak_t> {
+  using Type = MilkTea::TimerWorkerImpl::worker_weak;
+};
+
 template<typename T>
 typename timer_cast_map<T>::Type &timer_cast(T *self) {
   return *reinterpret_cast<typename timer_cast_map<T>::Type *>(self);
@@ -65,6 +70,11 @@ struct timer_cast_map<MilkTea::TimerTaskImpl::task_type::element_type> {
 template<>
 struct timer_cast_map<MilkTea::TimerWorkerImpl::worker_type> {
   using Type = MilkTea_TimerWorker_t;
+};
+
+template<>
+struct timer_cast_map<MilkTea::TimerWorkerImpl::worker_weak> {
+  using Type = MilkTea_TimerWorker_Weak_t;
 };
 
 template<typename T>
@@ -191,6 +201,28 @@ MilkTea_IMPL(MilkTea_TimerWorker_AwaitTermination, (MilkTea_TimerWorker_t *self,
   } else {
     timer_cast(self)->AwaitTermination();
     *success = true;
+  }
+})
+
+MilkTea_IMPL(MilkTea_TimerWorker_Weak_Create, (MilkTea_TimerWorker_Weak_t **self, MilkTea_TimerWorker_t *target), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(target);
+  *self = timer_cast(*new MilkTea::TimerWorkerImpl::worker_weak(timer_cast(target)));
+})
+
+MilkTea_IMPL(MilkTea_TimerWorker_Weak_Destroy, (MilkTea_TimerWorker_Weak_t *self), {
+  MilkTea_nonnull(self);
+  delete &timer_cast(self);
+})
+
+MilkTea_IMPL(MilkTea_TimerWorker_Weak_Try, (MilkTea_TimerWorker_Weak_t *self, MilkTea_TimerWorker_t **target), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(target);
+  auto strong = timer_cast(self).lock();
+  if (strong.get() != nullptr) {
+    *target = timer_cast(*new MilkTea::TimerWorkerImpl::worker_type(std::move(strong)));
+  } else {
+    *target = nullptr;
   }
 })
 
