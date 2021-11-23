@@ -20,6 +20,7 @@ typedef enum SoyMilk_Player_State_t SoyMilk_Player_State_t;
 #endif
 
 struct SoyMilk_Player_Controller_Interface_t {
+  void (MilkTea_CALL *Deleter)(void *self);
   void (MilkTea_CALL *OnSubmit)(void *self, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *submit)(void *obj));
   void (MilkTea_CALL *OnPlay)(void *self, int64_t time, uint16_t ntrk, MilkPowder_Message_t *message);
   void (MilkTea_CALL *OnPrepare)(void *self, int64_t time);

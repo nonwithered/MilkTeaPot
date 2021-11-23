@@ -10,7 +10,6 @@ namespace SoyBean {
 class BaseHandle {
  public:
   MilkTea_API SoyBean_Handle_t MilkTea_CALL ToRawType();
-  virtual ~BaseHandle() = default;
   virtual void Destroy() = 0;
   virtual void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
   virtual void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
@@ -23,11 +22,15 @@ class BaseHandle {
 
 class HandleWrapper final : public BaseHandle {
  public:
-  explicit HandleWrapper(SoyBean_Handle_t &&handle) : self_(handle) {}
-  ~HandleWrapper() final {
-    MilkTea_panic(SoyBean_Handle_Destroy(self_));
-    self_.self_ = nullptr;
-    self_.interface_ = nullptr;
+  explicit HandleWrapper(SoyBean_Handle_t &&self) : HandleWrapper() {
+    std::swap(self_, self);
+  }
+  explicit HandleWrapper(HandleWrapper &&another) : HandleWrapper(std::move(another.self_)) {}
+  ~HandleWrapper() {
+    if (self_.self_ != nullptr) {
+      Destroy();
+      self_ = {};
+    }
   }
   void Destroy() final {
     MilkTea_panic(SoyBean_Handle_Destroy(self_));
@@ -54,26 +57,30 @@ class HandleWrapper final : public BaseHandle {
     MilkTea_panic(SoyBean_Handle_PitchBend(self_, channel, low, height));
   }
  private:
+  HandleWrapper() : self_{} {}
   SoyBean_Handle_t self_;
   MilkTea_NonCopy(HandleWrapper)
-  MilkTea_NonMove(HandleWrapper)
+  MilkTea_NonMoveAssign(HandleWrapper)
 };
 
 class BaseFactory {
  public:
   MilkTea_API SoyBean_Factory_t MilkTea_CALL ToRawType();
-  virtual ~BaseFactory() = default;
   virtual void Destroy() = 0;
   virtual std::unique_ptr<BaseHandle> Create() = 0;
 };
 
 class FactoryWrapper final : public BaseFactory {
  public:
-  explicit FactoryWrapper(SoyBean_Factory_t &&factory) : self_(factory) {}
-  ~FactoryWrapper() final {
-    MilkTea_panic(SoyBean_Factory_Destroy(self_));
-    self_.self_ = nullptr;
-    self_.interface_ = nullptr;
+  explicit FactoryWrapper(SoyBean_Factory_t &&self) : FactoryWrapper() {
+    std::swap(self_, self);
+  }
+  explicit FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper(std::move(another.self_)) {}
+  ~FactoryWrapper() {
+    if (self_.self_ != nullptr) {
+      Destroy();
+      self_ = {};
+    }
   }
   void Destroy() final {
     MilkTea_panic(SoyBean_Factory_Destroy(self_));
@@ -84,9 +91,10 @@ class FactoryWrapper final : public BaseFactory {
     return std::make_unique<HandleWrapper>(std::move(handle));
   }
 private:
+  FactoryWrapper() : self_{} {}
   SoyBean_Factory_t self_;
   MilkTea_NonCopy(FactoryWrapper)
-  MilkTea_NonMove(FactoryWrapper)
+  MilkTea_NonMoveAssign(FactoryWrapper)
 };
 
 } // namespace SoyBean

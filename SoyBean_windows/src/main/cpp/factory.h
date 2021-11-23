@@ -14,6 +14,12 @@ class FactoryImpl final : public SoyBean::BaseFactory {
     dwCallback_(dwCallback),
     dwInstance_(dwInstance),
     fdwOpen_(fdwOpen){}
+  ~FactoryImpl() {
+    uDeviceID_ = 0;
+    dwCallback_ = nullptr;
+    dwCallback_ = nullptr;
+    uDeviceID_ = 0;
+  }
   void Destroy() final {
     delete this;
   }

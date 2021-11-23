@@ -80,10 +80,10 @@ class Holder {
   explicit Holder(const HolderRef<T> &ref) {
     MilkTea_panic(CloneMap<T>::clone(ref.get(), reset()));
   }
-  Holder(const Holder<T> &another) {
+  explicit Holder(const Holder<T> &another) {
     MilkTea_panic(CloneMap<T>::clone(another.get(), reset()));
   }
-  Holder(Holder<T> &&another) : ptr_(another.release()) {
+  explicit Holder(Holder<T> &&another) : ptr_(another.release()) {
   }
   void operator=(const Holder<T> &another) {
     if (get() == another.get()) {

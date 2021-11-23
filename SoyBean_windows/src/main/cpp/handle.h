@@ -9,12 +9,11 @@ namespace SoyBean_Windows {
 
 class HandleImpl final : public SoyBean::BaseHandle {
  public:
-  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : handle_(nullptr), closed_(false) {
+  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : handle_(nullptr) {
     ThrowOrNot(Proxy_midiOutOpen(&handle_, uDeviceID, dwCallback, dwInstance, fdwOpen));
   }
-  ~HandleImpl() final {
+  ~HandleImpl() {
     CheckClosed();
-    closed_ = true;
     ThrowOrNot(Proxy_midiOutClose(handle_));
     handle_ = nullptr;
   }
@@ -70,7 +69,7 @@ class HandleImpl final : public SoyBean::BaseHandle {
   }
  private:
   void CheckClosed() const {
-    if (closed_) {
+    if (handle_ == nullptr) {
       MilkTea_throw(LogicError, "CheckClosed -- handle is closed");
     }
   }
@@ -100,7 +99,6 @@ class HandleImpl final : public SoyBean::BaseHandle {
     }
   }
   Proxy_HMIDIOUT handle_;
-  bool closed_;
   static constexpr char TAG[] = "handle";
 };
 

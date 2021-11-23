@@ -12,7 +12,7 @@ class BaseController {
  public:
   using duration_type = std::chrono::milliseconds;
   MilkTea_API SoyMilk_Player_Controller_t MilkTea_CALL ToRawType();
-  virtual ~BaseController() = default;
+  virtual void Deleter() = 0;
   virtual void OnSubmit(std::function<void()>) = 0;
   virtual void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::Message message) = 0;
   virtual void OnPrepare(duration_type time) = 0;
@@ -27,7 +27,19 @@ class BaseController {
 };
 class ControllerWrapper final : public BaseController {
  public:
-  explicit ControllerWrapper(const SoyMilk_Player_Controller_t &controller) : controller_(controller) {};
+  explicit ControllerWrapper(SoyMilk_Player_Controller_t &&self) : ControllerWrapper() {
+    std::swap(self_, self);
+  };
+  explicit ControllerWrapper(ControllerWrapper &&another) : ControllerWrapper(std::move(another.self_)) {}
+  ~ControllerWrapper() {
+    if (self_.self_ != nullptr) {
+      Deleter();
+      self_ = {};
+    }
+  }
+  void Deleter() final {
+    GetInterface().Deleter(GetObj());
+  }
   void OnSubmit(std::function<void()> submit) final {
     GetInterface().OnSubmit(GetObj(), MilkTea::ClosureToken<decltype(submit)>::ToRawType(submit), MilkTea::ClosureToken<void()>::Invoke);
   };
@@ -63,12 +75,15 @@ class ControllerWrapper final : public BaseController {
   }
  private:
   void *GetObj() const {
-    return controller_.self_;
+    return self_.self_;
   }
   const SoyMilk_Player_Controller_Interface_t &GetInterface() const {
-    return *controller_.interface_;
+    return *self_.interface_;
   }
-  const SoyMilk_Player_Controller_t controller_;
+  ControllerWrapper() : self_{} {}
+  SoyMilk_Player_Controller_t self_;
+  MilkTea_NonCopy(ControllerWrapper)
+  MilkTea_NonMoveAssign(ControllerWrapper)
 };
 } // namespace SoyMilk
 #endif

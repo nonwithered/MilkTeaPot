@@ -9,6 +9,10 @@ SoyMilk::BaseController &BaseController_cast(void *self) {
   return *reinterpret_cast<SoyMilk::BaseController *>(self);
 }
 
+void MilkTea_CALL SoyMilk_BaseController_Deleter(void *self) {
+  BaseController_cast(self).Deleter();
+}
+
 void MilkTea_CALL SoyMilk_BaseController_OnSubmit(void *self, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *submit)(void *obj)) {
   auto callback = MilkTea::ClosureToken<void()>::FromRawType(obj, submit);
   BaseController_cast(self).OnSubmit([callback]() -> void {
@@ -48,6 +52,7 @@ void MilkTea_CALL SoyMilk_BaseController_OnReset(void *self) {
 
 const SoyMilk_Player_Controller_Interface_t &SoyMilk_BaseController_Interface_Instance() {
   static const SoyMilk_Player_Controller_Interface_t interface_{
+    .Deleter = SoyMilk_BaseController_Deleter,
     .OnSubmit = SoyMilk_BaseController_OnSubmit,
     .OnPlay = SoyMilk_BaseController_OnPlay,
     .OnPrepare = SoyMilk_BaseController_OnPrepare,
