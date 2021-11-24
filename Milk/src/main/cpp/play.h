@@ -22,7 +22,6 @@ class Play final : public Command {
     auto handle = GetFactory()->Create();
     handle->NoteOn(0, 0x45, 0x7f);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    std::cout << "finish" << std::endl;
   }
   std::string_view Usage() const final {
     return
@@ -37,10 +36,10 @@ class Play final : public Command {
     return "play";
   }
  private:
-  static std::unique_ptr<SoyBean::BaseFactory> GetFactory() {
+  static std::unique_ptr<SoyBean::FactoryWrapper> GetFactory() {
     SoyBean_Factory_t factory{};
     MilkTea_panic(Inject::SoyBean_Factory()(&factory));
-    return std::make_unique<SoyBean::FactoryWrapper>(std::move(factory));
+    return SoyBean::FactoryWrapper::Make(std::move(factory));
   }
   bool help_;
   bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {

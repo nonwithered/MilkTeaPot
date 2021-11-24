@@ -9,8 +9,9 @@ namespace SoyBean {
 
 class BaseHandle {
  public:
-  MilkTea_API SoyBean_Handle_t MilkTea_CALL ToRawType();
-  virtual void Destroy() = 0;
+  MilkTea_API SoyBean_Handle_t MilkTea_CALL ToRawType() &&;
+  virtual ~BaseHandle() = default;
+  virtual void Destroy() && = 0;
   virtual void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
   virtual void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
   virtual void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
@@ -22,18 +23,20 @@ class BaseHandle {
 
 class HandleWrapper final : public BaseHandle {
  public:
-  explicit HandleWrapper(SoyBean_Handle_t &&self) : HandleWrapper() {
-    std::swap(self_, self);
+  static std::unique_ptr<HandleWrapper> Make(SoyBean_Handle_t &&another) {
+    auto self = std::unique_ptr<HandleWrapper>(new HandleWrapper());
+    std::swap(self->self_, another);
+    return self;
   }
-  explicit HandleWrapper(HandleWrapper &&another) : HandleWrapper(std::move(another.self_)) {}
-  ~HandleWrapper() {
-    if (self_.self_ != nullptr) {
-      Destroy();
-      self_ = {};
+  ~HandleWrapper() final {
+    if (self_.self_ == nullptr) {
+      return;
     }
-  }
-  void Destroy() final {
     MilkTea_panic(SoyBean_Handle_Destroy(self_));
+    self_ = {};
+  }
+  void Destroy() && final {
+    delete this;
   }
   void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
     MilkTea_panic(SoyBean_Handle_NoteOff(self_, channel, note, pressure));
@@ -65,30 +68,33 @@ class HandleWrapper final : public BaseHandle {
 
 class BaseFactory {
  public:
-  MilkTea_API SoyBean_Factory_t MilkTea_CALL ToRawType();
-  virtual void Destroy() = 0;
+  MilkTea_API SoyBean_Factory_t MilkTea_CALL ToRawType() &&;
+  virtual ~BaseFactory() = default;
+  virtual void Destroy() && = 0;
   virtual std::unique_ptr<BaseHandle> Create() = 0;
 };
 
 class FactoryWrapper final : public BaseFactory {
  public:
-  explicit FactoryWrapper(SoyBean_Factory_t &&self) : FactoryWrapper() {
-    std::swap(self_, self);
+  static std::unique_ptr<FactoryWrapper> Make(SoyBean_Factory_t &&another) {
+    auto self = std::unique_ptr<FactoryWrapper>(new FactoryWrapper());
+    std::swap(self->self_, another);
+    return self;
   }
-  explicit FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper(std::move(another.self_)) {}
-  ~FactoryWrapper() {
-    if (self_.self_ != nullptr) {
-      Destroy();
-      self_ = {};
+  ~FactoryWrapper() final {
+    if (self_.self_ == nullptr) {
+      return;
     }
-  }
-  void Destroy() final {
     MilkTea_panic(SoyBean_Factory_Destroy(self_));
+    self_ = {};
+  }
+  void Destroy() && final {
+    delete this;
   }
   std::unique_ptr<BaseHandle> Create() final {
     SoyBean_Handle_t handle{};
     MilkTea_panic(SoyBean_Handle_Create(&handle, self_));
-    return std::make_unique<HandleWrapper>(std::move(handle));
+    return HandleWrapper::Make(std::forward<SoyBean_Handle_t>(handle));
   }
 private:
   FactoryWrapper() : self_{} {}

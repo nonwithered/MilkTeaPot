@@ -10,7 +10,7 @@ SoyMilk::BaseController &BaseController_cast(void *self) {
 }
 
 void MilkTea_CALL SoyMilk_BaseController_Deleter(void *self) {
-  BaseController_cast(self).Deleter();
+  std::move(BaseController_cast(self)).Destroy();
 }
 
 void MilkTea_CALL SoyMilk_BaseController_OnSubmit(void *self, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *submit)(void *obj)) {
@@ -72,7 +72,7 @@ const SoyMilk_Player_Controller_Interface_t &SoyMilk_BaseController_Interface_In
 
 namespace SoyMilk {
 
-SoyMilk_Player_Controller_t BaseController::ToRawType() {
+SoyMilk_Player_Controller_t BaseController::ToRawType() && {
   return SoyMilk_Player_Controller_t{
     .self_ = this,
     .interface_ = &SoyMilk_BaseController_Interface_Instance(),

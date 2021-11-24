@@ -9,70 +9,60 @@ namespace SoyBean_Windows {
 
 class HandleImpl final : public SoyBean::BaseHandle {
  public:
-  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : handle_(nullptr) {
-    ThrowOrNot(Proxy_midiOutOpen(&handle_, uDeviceID, dwCallback, dwInstance, fdwOpen));
+  static std::unique_ptr<HandleImpl> Make(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) {
+    return std::unique_ptr<HandleImpl>(new HandleImpl(uDeviceID, dwCallback, dwInstance, fdwOpen));
   }
-  ~HandleImpl() {
-    CheckClosed();
-    ThrowOrNot(Proxy_midiOutClose(handle_));
-    handle_ = nullptr;
+  ~HandleImpl() final {
+    if (self_ == nullptr) {
+      return;
+    }
+    ThrowOrNot(Proxy_midiOutClose(self_));
+    self_ = nullptr;
   }
-  void Destroy() final {
+  void Destroy() && final {
     delete this;
   }
   void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    CheckClosed();
     CheckChannel(channel);
     CheckArgs(note, "note");
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(handle_, Dword(0x80 | channel, note, pressure)));
+    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0x80 | channel, note, pressure)));
   }
   void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    CheckClosed();
     CheckChannel(channel);
     CheckArgs(note, "note");
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(handle_, Dword(0x90 | channel, note, pressure)));
+    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0x90 | channel, note, pressure)));
   }
   void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    CheckClosed();
     CheckChannel(channel);
     CheckArgs(note, "note");
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(handle_, Dword(0xa0 | channel, note, pressure)));
+    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xa0 | channel, note, pressure)));
   }
   void ControlChange(uint8_t channel, uint8_t control, uint8_t argument) final {
-    CheckClosed();
     CheckChannel(channel);
     CheckArgs(control, "control");
     CheckArgs(argument, "argument");
-    ThrowOrNot(Proxy_midiOutShortMsg(handle_, Dword(0xb0 | channel, control, argument)));
+    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xb0 | channel, control, argument)));
   }
   void ProgramChange(uint8_t channel, uint8_t program) final {
-    CheckClosed();
     CheckChannel(channel);
     CheckArgs(program, "program");
-    ThrowOrNot(Proxy_midiOutShortMsg(handle_, Dword(0xc0 | channel, program, 0)));
+    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xc0 | channel, program, 0)));
   }
   void ChannelPressure(uint8_t channel, uint8_t pressure) final {
-    CheckClosed();
     CheckChannel(channel);
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(handle_, Dword(0xd0 | channel, pressure, 0)));
+    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xd0 | channel, pressure, 0)));
   }
   void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
-    CheckClosed();
     CheckChannel(channel);
     CheckArgs(low, "low");
     CheckArgs(height, "height");
-    ThrowOrNot(Proxy_midiOutShortMsg(handle_, Dword(0xe0 | channel, low, height)));
+    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xe0 | channel, low, height)));
   }
  private:
-  void CheckClosed() const {
-    if (handle_ == nullptr) {
-      MilkTea_throw(LogicError, "CheckClosed -- handle is closed");
-    }
-  }
   static void CheckChannel(uint8_t channel) {
     if (channel > 0x0f) {
       MilkTea_throwf(InvalidParam, "CheckChannel -- channel should not large than 0x0f but this value is 0x%02" PRIx8 " now", channel);
@@ -98,7 +88,10 @@ class HandleImpl final : public SoyBean::BaseHandle {
       MilkTea_throwf(Unknown, "MMRESULT %u", r);
     }
   }
-  Proxy_HMIDIOUT handle_;
+  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : self_(nullptr) {
+    ThrowOrNot(Proxy_midiOutOpen(&self_, uDeviceID, dwCallback, dwInstance, fdwOpen));
+  }
+  Proxy_HMIDIOUT self_;
   static constexpr char TAG[] = "handle";
 };
 

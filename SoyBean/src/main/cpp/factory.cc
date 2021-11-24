@@ -15,7 +15,7 @@ SoyBean::BaseFactory &BaseFactory_cast(void *self) {
 }
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_Deleter(void *self) MilkTea_with_except({
-  BaseHandle_cast(self).Destroy();
+  std::move(BaseHandle_cast(self)).Destroy();
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Handle_Interface_NoteOff(void *self, uint8_t channel, uint8_t note, uint8_t pressure) MilkTea_with_except({
@@ -61,11 +61,11 @@ const SoyBean_Handle_Interface_t &SoyBean_Handle_Interface_Instance() {
 }
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Deleter(void *self) MilkTea_with_except({
-  BaseFactory_cast(self).Destroy();
+  std::move(BaseFactory_cast(self)).Destroy();
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Create(void *self, SoyBean_Handle_t *handle) MilkTea_with_except({
-  *handle = BaseFactory_cast(self).Create().release()->ToRawType();
+  *handle = std::move(*BaseFactory_cast(self).Create().release()).ToRawType();
 })
 
 const SoyBean_Factory_Interface_t &SoyBean_Factory_Interface_Instance() {
@@ -80,14 +80,14 @@ const SoyBean_Factory_Interface_t &SoyBean_Factory_Interface_Instance() {
 
 namespace SoyBean {
 
-SoyBean_Handle_t BaseHandle::ToRawType() {
+SoyBean_Handle_t BaseHandle::ToRawType() && {
   return SoyBean_Handle_t{
     .self_ = this,
     .interface_ = &SoyBean_Handle_Interface_Instance(),
   };
 }
 
-SoyBean_Factory_t BaseFactory::ToRawType() {
+SoyBean_Factory_t BaseFactory::ToRawType() && {
   return SoyBean_Factory_t{
     .self_ = this,
     .interface_ = &SoyBean_Factory_Interface_Instance(),

@@ -11,8 +11,9 @@ namespace SoyMilk {
 class BaseController {
  public:
   using duration_type = std::chrono::milliseconds;
-  MilkTea_API SoyMilk_Player_Controller_t MilkTea_CALL ToRawType();
-  virtual void Deleter() = 0;
+  MilkTea_API SoyMilk_Player_Controller_t MilkTea_CALL ToRawType() &&;
+  virtual ~BaseController() = default;
+  virtual void Destroy() && = 0;
   virtual void OnSubmit(std::function<void()>) = 0;
   virtual void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::Message message) = 0;
   virtual void OnPrepare(duration_type time) = 0;
@@ -27,18 +28,20 @@ class BaseController {
 };
 class ControllerWrapper final : public BaseController {
  public:
-  explicit ControllerWrapper(SoyMilk_Player_Controller_t &&self) : ControllerWrapper() {
-    std::swap(self_, self);
-  };
-  explicit ControllerWrapper(ControllerWrapper &&another) : ControllerWrapper(std::move(another.self_)) {}
-  ~ControllerWrapper() {
-    if (self_.self_ != nullptr) {
-      Deleter();
-      self_ = {};
-    }
+  static std::unique_ptr<ControllerWrapper> Make(SoyMilk_Player_Controller_t &&another) {
+    auto self = std::unique_ptr<ControllerWrapper>(new ControllerWrapper());
+    std::swap(self->self_, another);
+    return self;
   }
-  void Deleter() final {
+  ~ControllerWrapper() final {
+    if (GetObj() == nullptr) {
+      return;
+    }
     GetInterface().Deleter(GetObj());
+    self_ = {};
+  }
+  void Destroy() && final {
+    delete this;
   }
   void OnSubmit(std::function<void()> submit) final {
     GetInterface().OnSubmit(GetObj(), MilkTea::ClosureToken<decltype(submit)>::ToRawType(submit), MilkTea::ClosureToken<void()>::Invoke);

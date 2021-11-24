@@ -9,24 +9,27 @@ namespace SoyBean_Windows {
 
 class FactoryImpl final : public SoyBean::BaseFactory {
  public:
+  static std::unique_ptr<FactoryImpl> Make(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) {
+    return std::unique_ptr<FactoryImpl>(new FactoryImpl(uDeviceID, dwCallback, dwInstance, fdwOpen));
+  }
+  ~FactoryImpl() final {
+    uDeviceID_ = 0;
+    dwCallback_ = nullptr;
+    dwInstance_ = nullptr;
+    fdwOpen_ = 0;
+  }
+  void Destroy() && final {
+    delete this;
+  }
+  std::unique_ptr<SoyBean::BaseHandle> Create() final {
+    return HandleImpl::Make(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
+  }
+ private:
   FactoryImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen)
   : uDeviceID_(uDeviceID),
     dwCallback_(dwCallback),
     dwInstance_(dwInstance),
-    fdwOpen_(fdwOpen){}
-  ~FactoryImpl() {
-    uDeviceID_ = 0;
-    dwCallback_ = nullptr;
-    dwCallback_ = nullptr;
-    uDeviceID_ = 0;
-  }
-  void Destroy() final {
-    delete this;
-  }
-  std::unique_ptr<SoyBean::BaseHandle> Create() final {
-    return std::make_unique<HandleImpl>(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
-  }
- private:
+    fdwOpen_(fdwOpen) {}
   unsigned int uDeviceID_;
   uint32_t *dwCallback_;
   uint32_t *dwInstance_;
