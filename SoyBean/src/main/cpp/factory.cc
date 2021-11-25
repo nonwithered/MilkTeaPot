@@ -65,7 +65,7 @@ MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Deleter(void *self) M
 })
 
 MilkTea_Exception_t MilkTea_CALL SoyBean_Factory_Interface_Create(void *self, SoyBean_Handle_t *handle) MilkTea_with_except({
-  *handle = std::move(*BaseFactory_cast(self).Create().release()).ToRawType();
+  *handle = SoyBean::BaseHandle::ToRawType(BaseFactory_cast(self).Create());
 })
 
 const SoyBean_Factory_Interface_t &SoyBean_Factory_Interface_Instance() {

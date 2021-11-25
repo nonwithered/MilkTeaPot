@@ -39,7 +39,7 @@ class Play final : public Command {
   static std::unique_ptr<SoyBean::FactoryWrapper> GetFactory() {
     SoyBean_Factory_t factory{};
     MilkTea_panic(Inject::SoyBean_Factory()(&factory));
-    return SoyBean::FactoryWrapper::Make(std::move(factory));
+    return SoyBean::FactoryWrapper::FromRawType(std::move(factory));
   }
   bool help_;
   bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {

@@ -11,7 +11,9 @@ namespace SoyMilk {
 class BaseController {
  public:
   using duration_type = std::chrono::milliseconds;
-  MilkTea_API SoyMilk_Player_Controller_t MilkTea_CALL ToRawType() &&;
+  static SoyMilk_Player_Controller_t ToRawType(std::unique_ptr<BaseController> self) {
+    return std::forward<BaseController>(*self.release()).ToRawType();
+  }
   virtual ~BaseController() = default;
   virtual void Destroy() && = 0;
   virtual void OnSubmit(std::function<void()>) = 0;
@@ -25,10 +27,12 @@ class BaseController {
   virtual void OnStop(duration_type time) = 0;
   virtual void OnComplete() = 0;
   virtual void OnReset() = 0;
+ private:
+  MilkTea_API SoyMilk_Player_Controller_t MilkTea_CALL ToRawType() &&;
 };
 class ControllerWrapper final : public BaseController {
  public:
-  static std::unique_ptr<ControllerWrapper> Make(SoyMilk_Player_Controller_t &&another) {
+  static std::unique_ptr<ControllerWrapper> FromRawType(SoyMilk_Player_Controller_t &&another) {
     auto self = std::unique_ptr<ControllerWrapper>(new ControllerWrapper());
     std::swap(self->self_, another);
     return self;
