@@ -10,16 +10,24 @@
 
 namespace MilkTea {
 
+#ifdef MilkTea_TimerFuture_typedef
+#undef MilkTea_TimerFuture_typedef
+#endif
+
+#define MilkTea_TimerFuture_typedef \
+  using future_raw = MilkTea::TimerFutureImpl; \
+  using future_weak = std::weak_ptr<future_raw>; \
+  using future_type = std::shared_ptr<future_raw>; \
+  using clock_type = std::chrono::system_clock; \
+  using duration_type = std::chrono::milliseconds; \
+  using time_point_type = std::chrono::time_point<clock_type, duration_type>;
+
 class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImpl> {
   friend class TimerTaskImpl;
   friend class TimerWorkerImpl;
+  MilkTea_TimerFuture_typedef
  public:
-  using future_weak = std::weak_ptr<TimerFutureImpl>;
-  using future_type = std::shared_ptr<TimerFutureImpl>;
-  using clock_type = std::chrono::system_clock;
-  using duration_type = std::chrono::milliseconds;
-  using time_point_type = std::chrono::time_point<clock_type, duration_type>;
-  static future_type Create(time_point_type time) {
+  static future_type Make(time_point_type time) {
     return future_type(new TimerFutureImpl(time));
   }
   enum class State {

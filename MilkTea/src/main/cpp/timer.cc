@@ -29,27 +29,34 @@ MilkTea_TimerWorker_State_t MilkTea_TimerWorker_State_Map(MilkTea::TimerWorkerIm
   }
 }
 
+MilkTea_TimerWorker_typedef
+
+manager_type TimerManagerSingleton() {
+  static auto manager_ = std::make_shared<manager_raw>();
+  return manager_;
+}
+
 template<typename T>
 struct timer_cast_map;
 
 template<>
 struct timer_cast_map<MilkTea_TimerFuture_t> {
-  using Type = MilkTea::TimerFutureImpl::future_type;
+  using Type = future_type;
 };
 
 template<>
 struct timer_cast_map<MilkTea_TimerTask_t> {
-  using Type = MilkTea::TimerTaskImpl::task_type;
+  using Type = task_type;
 };
 
 template<>
 struct timer_cast_map<MilkTea_TimerWorker_t> {
-  using Type = MilkTea::TimerWorkerImpl::worker_type;
+  using Type = worker_type;
 };
 
 template<>
 struct timer_cast_map<MilkTea_TimerWorker_Weak_t> {
-  using Type = MilkTea::TimerWorkerImpl::worker_weak;
+  using Type = worker_weak;
 };
 
 template<typename T>
@@ -68,12 +75,12 @@ struct timer_cast_map<MilkTea::TimerTaskImpl::task_type::element_type> {
 };
 
 template<>
-struct timer_cast_map<MilkTea::TimerWorkerImpl::worker_type> {
+struct timer_cast_map<worker_type> {
   using Type = MilkTea_TimerWorker_t;
 };
 
 template<>
-struct timer_cast_map<MilkTea::TimerWorkerImpl::worker_weak> {
+struct timer_cast_map<worker_weak> {
   using Type = MilkTea_TimerWorker_Weak_t;
 };
 
@@ -117,7 +124,7 @@ MilkTea_IMPL(MilkTea_TimerTask_Destroy, (MilkTea_TimerTask_t *self), {
 MilkTea_IMPL(MilkTea_TimerTask_GetFuture, (MilkTea_TimerTask_t *self, MilkTea_TimerFuture_t **future), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(future);
-  *future = timer_cast(*new MilkTea::TimerFutureImpl::future_type(timer_cast(self)->future()));
+  *future = timer_cast(*new future_type(timer_cast(self)->future()));
 });
 
 MilkTea_IMPL(MilkTea_TimerTask_Run, (MilkTea_TimerTask_t *self), {
@@ -129,7 +136,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, MilkTea_
   MilkTea_nonnull(self);
   MilkTea_nonnull(on_terminate);
   auto do_terminate = MilkTea::ClosureToken<bool(MilkTea_Exception_t, const char *)>::FromRawType(obj, on_terminate);
-  *self = timer_cast(*new MilkTea::TimerWorkerImpl::worker_type(MilkTea::TimerWorkerImpl::Create([do_terminate](std::exception *e) -> bool {
+  *self = timer_cast(*new worker_type(MilkTea::TimerWorkerImpl::Make([do_terminate](std::exception *e) -> bool {
     if (e == nullptr) {
       return do_terminate(MilkTea_Exception_t::MilkTea_Exception_Nil, nullptr);
     }
@@ -139,10 +146,12 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, MilkTea_
     }
     return do_terminate(MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
   })));
+  timer_cast(*self)->Attach(TimerManagerSingleton());
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Destroy, (MilkTea_TimerWorker_t *self), {
   MilkTea_nonnull(self);
+  timer_cast(self)->Detach(std::move(timer_cast(self)));
   delete &timer_cast(self);
 })
 
@@ -165,7 +174,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_Post, (MilkTea_TimerWorker_t *self, int64_t del
     MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
   }
   auto do_action = MilkTea::ClosureToken<void()>::FromRawType(obj, action);
-  timer_cast(self)->Post(MilkTea::TimerFutureImpl::duration_type(delay), do_action);
+  timer_cast(self)->Post(duration_type(delay), do_action);
 });
 
 MilkTea_IMPL(MilkTea_TimerWorker_Shutdown, (MilkTea_TimerWorker_t *self, bool *success), {
@@ -178,7 +187,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_ShutdownNow, (MilkTea_TimerWorker_t *self, void
   MilkTea_nonnull(self);
   MilkTea_nonnull(callback);
   bool success;
-  std::vector<MilkTea::TimerTaskImpl::task_type> vec;
+  std::vector<task_type> vec;
   std::tie(success, vec) = timer_cast(self)->ShutdownNow();
   if (success) {
     auto sz = vec.size();
@@ -197,7 +206,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_AwaitTermination, (MilkTea_TimerWorker_t *self,
     MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
   }
   if (delay > 0) {
-    *success = timer_cast(self)->AwaitTermination(MilkTea::TimerFutureImpl::duration_type(delay));
+    *success = timer_cast(self)->AwaitTermination(duration_type(delay));
   } else {
     timer_cast(self)->AwaitTermination();
     *success = true;
@@ -207,7 +216,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_AwaitTermination, (MilkTea_TimerWorker_t *self,
 MilkTea_IMPL(MilkTea_TimerWorker_Weak_Create, (MilkTea_TimerWorker_Weak_t **self, MilkTea_TimerWorker_t *target), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(target);
-  *self = timer_cast(*new MilkTea::TimerWorkerImpl::worker_weak(timer_cast(target)));
+  *self = timer_cast(*new worker_weak(timer_cast(target)));
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Weak_Destroy, (MilkTea_TimerWorker_Weak_t *self), {
@@ -220,7 +229,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_Weak_Try, (MilkTea_TimerWorker_Weak_t *self, Mi
   MilkTea_nonnull(target);
   auto strong = timer_cast(self).lock();
   if (strong.get() != nullptr) {
-    *target = timer_cast(*new MilkTea::TimerWorkerImpl::worker_type(std::move(strong)));
+    *target = timer_cast(*new worker_type(std::move(strong)));
   } else {
     *target = nullptr;
   }

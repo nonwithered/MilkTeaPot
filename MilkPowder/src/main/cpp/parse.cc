@@ -154,7 +154,7 @@ std::unique_ptr<TrackImpl> TrackImpl::Parse(std::function<std::tuple<uint8_t, bo
   uint32_t len = capacity;
   std::function<std::tuple<uint8_t, bool>()> func = [callback, capacity, &len]() -> std::tuple<uint8_t, bool> {
     if (len-- == 0) {
-      MilkTea_logE("Parse --  capacity eof %" PRIu32, capacity);
+      MilkTea_logW("Parse --  capacity eof %" PRIu32, capacity);
       return std::make_tuple(0, false);
     }
     return callback();

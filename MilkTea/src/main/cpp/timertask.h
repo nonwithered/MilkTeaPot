@@ -10,16 +10,20 @@
 
 namespace MilkTea {
 
-class TimerTaskImpl final {
-  using future_type = TimerFutureImpl::future_type;
-  using clock_type = TimerFutureImpl::clock_type;
-  using duration_type = TimerFutureImpl::duration_type;
-  using time_point_type = TimerFutureImpl::time_point_type;
- public:
-  using task_raw = TimerTaskImpl *;
-  using task_type = std::unique_ptr<TimerTaskImpl>;
+#ifdef MilkTea_TimerTask_typedef
+#undef MilkTea_TimerTask_typedef
+#endif
+
+#define MilkTea_TimerTask_typedef \
+  using task_raw = MilkTea::TimerTaskImpl *; \
+  using task_type = std::unique_ptr<MilkTea::TimerTaskImpl>; \
   using action_type = std::function<void()>;
-  static task_type Create(future_type future, action_type action) {
+
+class TimerTaskImpl final {
+  MilkTea_TimerFuture_typedef
+  MilkTea_TimerTask_typedef
+ public:
+  static task_type Make(future_type future, action_type action) {
     return task_type(new TimerTaskImpl(future, action));
   }
   bool operator>(const TimerTaskImpl &another) const {
