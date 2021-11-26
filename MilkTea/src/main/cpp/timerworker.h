@@ -55,12 +55,11 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
       MilkTea_logW("dtor -- state %s tasks %" PRIu32, StateName(state), static_cast<uint32_t>(tasks.size()));
     }
   }
-  bool Start() {
-    if (!ChangeState(State::INIT, State::RUNNING)) {
-      return false;
-    }
+  void Start() {
+    ChangeStateOr(State::INIT, State::RUNNING, [this]() -> void {
+      MilkTea_throwf(LogicError, "start need INIT but now %s", StateName(state_));
+    });
     Run();
-    return true;
   }
   State state() const {
     return state_;
@@ -87,14 +86,14 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     }
   }
   bool Shutdown() {
-    return ChangeState(State::RUNNING, State::SHUTDOWN, [this]() -> void {
+    return ChangeStateAnd(State::RUNNING, State::SHUTDOWN, [this]() -> void {
       tasks_cond_.notify_one();
     });
   }
   std::tuple<bool, std::vector<task_type>> ShutdownNow() {
     bool b = false;
     std::vector<task_type> vec;
-    ChangeState(State::RUNNING, State::STOP, [this, &b, &vec]() -> void {
+    ChangeStateAnd(State::RUNNING, State::STOP, [this, &b, &vec]() -> void {
       b = true;
       while (!tasks_.empty()) {
         vec.push_back(Poll());
@@ -164,7 +163,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   }
   bool OnTerminate(std::exception *e) {
     Defer defer([this]() -> void {
-      if (!ChangeState(State::TIDYING, State::TERMINATED, [this]() -> void {
+      if (!ChangeStateAnd(State::TIDYING, State::TERMINATED, [this]() -> void {
         state_cond_.notify_all();
       })) {
         MilkTea_assert("OnTerminate assert");
@@ -213,17 +212,24 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
       }
     }
   }
-  bool ChangeState(State target, std::function<bool(State)> predicate = [](State) -> bool { return true; }, action_type action = []() -> void {}) {
+  bool ChangeState(State target, std::function<bool(State)> predicate = [](State) -> bool { return true; }, action_type action = []() -> void {}, action_type otherwise = []() -> void {}) {
     std::lock_guard guard(lock_);
     if (!predicate(state_)) {
+      otherwise();
       return false;
     }
     state_ = target;
     action();
     return true;
   }
-  bool ChangeState(State expect, State target, action_type action = []() -> void {}) {
-    return ChangeState(target, [expect](State state) -> bool { return state == expect; }, action);
+  bool ChangeState(State expect, State target, action_type action = []() -> void {}, action_type otherwise = []() -> void {}) {
+    return ChangeState(target, [expect](State state) -> bool { return state == expect; }, action, otherwise);
+  }
+  bool ChangeStateAnd(State expect, State target, action_type action) {
+    return ChangeState(expect, target, action);
+  }
+  bool ChangeStateOr(State expect, State target, action_type otherwise) {
+    return ChangeState(expect, target, []() -> void {}, otherwise);
   }
   void Offer(task_type &&task) {
     tasks_.push(task.release());
