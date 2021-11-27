@@ -60,15 +60,15 @@ class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImp
   }
   void OnCancel() {
     if (on_cancel_) {
-      on_cancel_(weak_from_this());
+      on_cancel_(shared_from_this());
     }
   }
-  void SetCancel(std::function<void(future_weak)> on_cancel) {
+  void SetCancel(std::function<void(future_type)> on_cancel) {
     on_cancel_ = on_cancel;
   }
   std::atomic<State> state_;
   const time_point_type time_;
-  std::function<void(future_weak)> on_cancel_;
+  std::function<void(future_type)> on_cancel_;
   MilkTea_NonCopy(TimerFutureImpl)
   MilkTea_NonMove(TimerFutureImpl)
   static constexpr char TAG[] = "MilkTea#TimerFuture";

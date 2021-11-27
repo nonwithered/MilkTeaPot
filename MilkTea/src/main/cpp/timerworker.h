@@ -35,14 +35,18 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     return worker_type(new TimerWorkerImpl(on_terminate));
   }
   void Attach(manager_type manager) {
-    holder_ = worker_holder(manager, manager->Register(weak_from_this()));
+    auto worker = shared_from_this();
+    if (worker == nullptr) {
+      MilkTea_assert("Attach need shared");
+    }
+    binder_.Bind(std::move(manager), std::move(worker));
   }
-  void Detach(worker_type &&self) {
+  void Detach(worker_type &&worker) {
     State state = state_;
     if (state != State::TERMINATED) {
-      MilkTea_throwf(LogicError, "Delete need TERMINATED but now %s", StateName(state));
+      MilkTea_throwf(LogicError, "Detach need TERMINATED but now %s", StateName(state));
     }
-    holder_.Close(std::forward<worker_type>(self));
+    binder_.Unbind(std::forward<worker_type>(worker));
   }
   ~TimerWorkerImpl() {
     State state = state_;
@@ -126,7 +130,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   explicit TimerWorkerImpl(std::function<bool(std::exception *)> on_terminate)
   : state_(State::INIT),
     on_terminate_(on_terminate),
-    holder_() {}
+    binder_() {}
   void Run() {
     try {
       while (true) {
@@ -245,25 +249,19 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     }
     return tasks_.top();
   }
-  void OnCancel(future_weak future) {
+  void OnCancel(future_type future) {
     std::unique_lock guard(lock_);
     auto task_top = Peek();
-    if (task_top != nullptr && task_top->future() == future.lock()) {
+    if (task_top != nullptr && task_top->future() == future) {
       tasks_cond_.notify_one();
     }
   }
-  std::function<void(future_weak)> GetCancel() {
-    worker_holder holder = holder_;
-    auto self = weak_from_this();
-    return [holder, self](future_weak future) -> void {
-      auto holder_ = holder;
-      holder_.Obtain([self, future]() -> void {
-        auto self_ = self.lock();
-        if (self_ == nullptr) {
-          MilkTea_logW("Cancel after dtor");
-          return;
-        }
-        self_->OnCancel(future);
+  std::function<void(future_type)> GetCancel() {
+    worker_binder binder = binder_;
+    return [binder](future_type future) -> void {
+      auto binder_ = binder;
+      binder_.WithGuard([future](worker_type self) -> void {
+        self->OnCancel(future);
       });
     };
   }
@@ -292,7 +290,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
   std::function<bool(std::exception *)> on_terminate_;
-  worker_holder holder_;
+  worker_binder binder_;
   MilkTea_NonCopy(TimerWorkerImpl)
   MilkTea_NonMove(TimerWorkerImpl)
   static constexpr char TAG[] = "MilkTea#TimerWorker";

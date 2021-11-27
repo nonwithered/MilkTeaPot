@@ -31,11 +31,6 @@ MilkTea_TimerWorker_State_t MilkTea_TimerWorker_State_Map(MilkTea::TimerWorkerIm
 
 MilkTea_TimerWorker_typedef
 
-manager_type TimerManagerSingleton() {
-  static auto manager_ = std::make_shared<manager_raw>();
-  return manager_;
-}
-
 template<typename T>
 struct timer_cast_map;
 
@@ -136,7 +131,7 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, MilkTea_
   MilkTea_nonnull(self);
   MilkTea_nonnull(on_terminate);
   auto do_terminate = MilkTea::ClosureToken<bool(MilkTea_Exception_t, const char *)>::FromRawType(obj, on_terminate);
-  *self = timer_cast(*new worker_type(MilkTea::TimerWorkerImpl::Make([do_terminate](std::exception *e) -> bool {
+  auto worker = MilkTea::TimerWorkerImpl::Make([do_terminate](std::exception *e) -> bool {
     if (e == nullptr) {
       return do_terminate(MilkTea_Exception_t::MilkTea_Exception_Nil, nullptr);
     }
@@ -145,8 +140,9 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, MilkTea_
       return do_terminate(exception->GetRawType(), exception->what());
     }
     return do_terminate(MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
-  })));
-  timer_cast(*self)->Attach(TimerManagerSingleton());
+  });
+  worker->Attach(manager_raw::Instance());
+  *self = timer_cast(*new worker_type(std::move(worker)));
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Destroy, (MilkTea_TimerWorker_t *self), {
@@ -155,10 +151,9 @@ MilkTea_IMPL(MilkTea_TimerWorker_Destroy, (MilkTea_TimerWorker_t *self), {
   delete &timer_cast(self);
 })
 
-MilkTea_IMPL(MilkTea_TimerWorker_Start, (MilkTea_TimerWorker_t *self, bool *success), {
+MilkTea_IMPL(MilkTea_TimerWorker_Start, (MilkTea_TimerWorker_t *self), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(success);
-  *success = timer_cast(self)->Start();
+  timer_cast(self)->Start();
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_GetState, (MilkTea_TimerWorker_t *self, MilkTea_TimerWorker_State_t *state), {
@@ -236,3 +231,12 @@ MilkTea_IMPL(MilkTea_TimerWorker_Weak_Try, (MilkTea_TimerWorker_Weak_t *self, Mi
 })
 
 } // extern "C"
+
+namespace MilkTea {
+
+manager_type TimerManagerImpl::Instance() {
+  static auto instance_ = std::shared_ptr<manager_raw>(new manager_raw());
+  return instance_;
+}
+
+} // namespace MilkTea

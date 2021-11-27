@@ -79,7 +79,7 @@ MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkTea_TimerWorker_Destroy(MilkTea_TimerWorker_t *self);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkTea_TimerWorker_Start(MilkTea_TimerWorker_t *self, bool *success);
+MilkTea_TimerWorker_Start(MilkTea_TimerWorker_t *self);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkTea_TimerWorker_GetState(MilkTea_TimerWorker_t *self, MilkTea_TimerWorker_State_t *state);
