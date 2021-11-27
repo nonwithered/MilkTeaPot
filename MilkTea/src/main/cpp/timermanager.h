@@ -23,20 +23,17 @@ struct TimerWorkerIdentity;
 #endif
 
 #define MilkTea_TimerManager_typedef \
-  using manager_raw = MilkTea::TimerManagerImpl; \
-  using manager_type = std::shared_ptr<manager_raw>; \
-  using manager_weak = std::weak_ptr<manager_raw>; \
+  using manager_type = MilkTea::TimerManagerImpl; \
   using worker_binder = MilkTea::TimerBinderImpl; \
   using worker_raw = MilkTea::TimerWorkerImpl; \
   using worker_type = std::shared_ptr<worker_raw>; \
   using worker_weak = std::weak_ptr<worker_raw>; \
   using worker_identity = MilkTea::TimerWorkerIdentity *;
 class TimerManagerImpl final : public std::enable_shared_from_this<TimerManagerImpl> {
-  friend class TimerWorkerImpl;
   friend class TimerBinderImpl;
   MilkTea_TimerManager_typedef
  public:
-  static manager_type Instance();
+  static manager_type &Instance();
  private:
   TimerManagerImpl() = default;
   void Register(worker_identity identity, worker_type worker) {
@@ -79,21 +76,14 @@ class TimerBinderImpl final {
     }
     callback(std::move(worker));
   }
-  void Bind(manager_type manager, worker_type worker) {
+  void Bind(worker_type worker) {
     auto guard = Guard();
-    if (manager_ != nullptr) {
-      MilkTea_assert("Bind after Bind");
-    }
-    manager->Register(Identity(), std::move(worker));
-    manager_ = std::move(manager);
+    worker_ = worker;
+    manager_type::Instance().Register(Identity(), std::move(worker));
   }
   void Unbind(worker_type &&worker) {
     auto guard = Guard();
-    manager_type manager = std::move(manager_);
-    if (manager == nullptr) {
-      MilkTea_assert("Unbind before Bind");
-    }
-    manager->Unregister(Identity());
+    manager_type::Instance().Unregister(Identity());
     worker.~shared_ptr();
   }
   worker_identity Identity() {
@@ -102,7 +92,6 @@ class TimerBinderImpl final {
   std::lock_guard<std::mutex> Guard() {
     return std::lock_guard(*lock_);
   }
-  manager_type manager_;
   worker_weak worker_;
   std::shared_ptr<std::mutex> lock_;
   static constexpr char TAG[] = "MilkTea#TimerHolder";

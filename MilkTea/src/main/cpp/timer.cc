@@ -141,14 +141,14 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, MilkTea_
     }
     return do_terminate(MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
   });
-  worker->Attach(manager_raw::Instance());
   *self = timer_cast(*new worker_type(std::move(worker)));
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Destroy, (MilkTea_TimerWorker_t *self), {
   MilkTea_nonnull(self);
-  timer_cast(self)->Detach(std::move(timer_cast(self)));
+  auto worker = std::move(timer_cast(self));
   delete &timer_cast(self);
+  worker_raw::Close(std::move(worker));
 })
 
 MilkTea_IMPL(MilkTea_TimerWorker_Start, (MilkTea_TimerWorker_t *self), {
@@ -234,8 +234,8 @@ MilkTea_IMPL(MilkTea_TimerWorker_Weak_Try, (MilkTea_TimerWorker_Weak_t *self, Mi
 
 namespace MilkTea {
 
-manager_type TimerManagerImpl::Instance() {
-  static auto instance_ = std::shared_ptr<manager_raw>(new manager_raw());
+manager_type &TimerManagerImpl::Instance() {
+  static manager_type instance_{};
   return instance_;
 }
 

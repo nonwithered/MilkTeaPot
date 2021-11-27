@@ -65,7 +65,8 @@ enum MilkTea_TimerWorker_State_t {
   MilkTea_TimerWorker_State_SHUTDOWN,
   MilkTea_TimerWorker_State_STOP,
   MilkTea_TimerWorker_State_TIDYING,
-  MilkTea_TimerWorker_State_TERMINATED
+  MilkTea_TimerWorker_State_TERMINATED,
+  MilkTea_TimerWorker_State_CLOSED
 };
 
 #ifndef __cplusplus
