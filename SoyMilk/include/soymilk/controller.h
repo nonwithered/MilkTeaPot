@@ -48,7 +48,7 @@ class ControllerWrapper final : public BaseController {
     delete this;
   }
   void OnSubmit(std::function<void()> submit) final {
-    GetInterface().OnSubmit(GetObj(), MilkTea::ClosureToken<decltype(submit)>::ToRawType(submit), MilkTea::ClosureToken<void()>::Invoke);
+    GetInterface().OnSubmit(GetObj(), MilkTea::ClosureToken<decltype(submit)>::ToRawType(submit), MilkTea::ClosureToken<decltype(submit)>::Invoke);
   };
   void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::Message message) final {
     GetInterface().OnPlay(GetObj(), time.count(), ntrk, message.release());

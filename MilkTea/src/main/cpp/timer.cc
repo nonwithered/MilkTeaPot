@@ -132,14 +132,8 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, MilkTea_
   MilkTea_nonnull(on_terminate);
   auto do_terminate = MilkTea::ClosureToken<bool(MilkTea_Exception_t, const char *)>::FromRawType(obj, on_terminate);
   auto worker = MilkTea::TimerWorkerImpl::Make([do_terminate](std::exception *e) -> bool {
-    if (e == nullptr) {
-      return do_terminate(MilkTea_Exception_t::MilkTea_Exception_Nil, nullptr);
-    }
-    MilkTea::Exception *exception = dynamic_cast<MilkTea::Exception *>(e);
-    if (exception != nullptr) {
-      return do_terminate(exception->GetRawType(), exception->what());
-    }
-    return do_terminate(MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
+    auto [type, what] = MilkTea::Exception::ToRawType(e);
+    return do_terminate(type, what);
   });
   *self = timer_cast(*new worker_type(std::move(worker)));
 })
@@ -162,14 +156,17 @@ MilkTea_IMPL(MilkTea_TimerWorker_GetState, (MilkTea_TimerWorker_t *self, MilkTea
   *state = MilkTea_TimerWorker_State_Map(timer_cast(self)->state());
 })
 
-MilkTea_IMPL(MilkTea_TimerWorker_Post, (MilkTea_TimerWorker_t *self, int64_t delay, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *action)(void *obj)), {
+MilkTea_IMPL(MilkTea_TimerWorker_Post, (MilkTea_TimerWorker_t *self, MilkTea_TimerFuture_t **future, int64_t delay, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *action)(void *obj)), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(action);
   if (delay < 0) {
     MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
   }
   auto do_action = MilkTea::ClosureToken<void()>::FromRawType(obj, action);
-  timer_cast(self)->Post(duration_type(delay), do_action);
+  auto future_ = timer_cast(self)->Post(duration_type(delay), do_action);
+  if (future != nullptr) {
+    *future = timer_cast(*new future_type(std::move(future_)));
+  }
 });
 
 MilkTea_IMPL(MilkTea_TimerWorker_Shutdown, (MilkTea_TimerWorker_t *self, bool *success), {

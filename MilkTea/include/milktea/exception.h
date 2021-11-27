@@ -92,7 +92,17 @@ MilkTea::Exception::ThrowFromRawType(e)
 
 class Exception final : public std::exception {
  public:
-   static MilkTea_API const char * MilkTea_CALL WhatMessage(const char *what = nullptr);
+  static MilkTea_API const char * MilkTea_CALL WhatMessage(const char *what = nullptr);
+  static std::tuple<MilkTea_Exception_t, const char *> ToRawType(std::exception *e) {
+    if (e == nullptr) {
+      return std::make_tuple(MilkTea_Exception_t::MilkTea_Exception_Nil, nullptr);
+    }
+    MilkTea::Exception *exception = dynamic_cast<MilkTea::Exception *>(e);
+    if (exception != nullptr) {
+      return std::make_tuple(exception->GetRawType(), exception->what());
+    }
+    return std::make_tuple(MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
+  }
   enum class Type {
     Unknown,
     Assertion,

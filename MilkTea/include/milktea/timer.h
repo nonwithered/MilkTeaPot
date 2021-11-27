@@ -86,7 +86,7 @@ MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkTea_TimerWorker_GetState(MilkTea_TimerWorker_t *self, MilkTea_TimerWorker_State_t *state);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkTea_TimerWorker_Post(MilkTea_TimerWorker_t *self, int64_t delay, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *action)(void *obj));
+MilkTea_TimerWorker_Post(MilkTea_TimerWorker_t *self, MilkTea_TimerFuture_t **future, int64_t delay, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *action)(void *obj));
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkTea_TimerWorker_Shutdown(MilkTea_TimerWorker_t *self, bool *success);
