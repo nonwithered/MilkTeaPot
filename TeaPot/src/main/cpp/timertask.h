@@ -1,5 +1,5 @@
-#ifndef MILKTEA_TIMERTASK_H_
-#define MILKTEA_TIMERTASK_H_
+#ifndef TEAPOT_TIMERTASK_H_
+#define TEAPOT_TIMERTASK_H_
 
 #include <functional>
 #include <exception>
@@ -8,20 +8,14 @@
 
 #include "timerfuture.h"
 
-namespace MilkTea {
+namespace TeaPot {
 
-#ifdef MilkTea_TimerTask_typedef
-#undef MilkTea_TimerTask_typedef
-#endif
-
-#define MilkTea_TimerTask_typedef \
-  using task_raw = MilkTea::TimerTaskImpl *; \
-  using task_type = std::unique_ptr<MilkTea::TimerTaskImpl>; \
-  using action_type = std::function<void()>;
+using action_type = std::function<void()>;
+class TimerTaskImpl;
+using task_type = std::unique_ptr<TimerTaskImpl>;
+using task_raw = task_type::element_type *;
 
 class TimerTaskImpl final {
-  MilkTea_TimerFuture_typedef
-  MilkTea_TimerTask_typedef
  public:
   static task_type Make(future_type future, action_type action) {
     return task_type(new TimerTaskImpl(future, action));
@@ -57,9 +51,9 @@ class TimerTaskImpl final {
   const action_type action_;
   MilkTea_NonCopy(TimerTaskImpl)
   MilkTea_NonMove(TimerTaskImpl)
-  static constexpr char TAG[] = "MilkTea#TimerTask";
+  static constexpr char TAG[] = "TeaPot#TimerTask";
 };
 
-} // namespace MilkTea
+} // namespace TeaPot
 
-#endif // ifndef MILKTEA_TIMERTASK_H_
+#endif // ifndef TEAPOT_TIMERTASK_H_

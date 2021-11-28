@@ -1,37 +1,17 @@
-#ifndef MILKTEA_TIMERWORKER_H_
-#define MILKTEA_TIMERWORKER_H_
+#ifndef TEAPOT_TIMERWORKER_H_
+#define TEAPOT_TIMERWORKER_H_
 
 #include <queue>
 #include <condition_variable>
 
-#include <milktea.h>
-
 #include "timertask.h"
 #include "timermanager.h"
 
-namespace MilkTea {
-
-#ifdef MilkTea_TimerWorker_typedef
-#undef MilkTea_TimerWorker_typedef
-#endif
-
-#define MilkTea_TimerWorker_typedef \
-  MilkTea_TimerFuture_typedef \
-  MilkTea_TimerTask_typedef \
-  MilkTea_TimerManager_typedef
+namespace TeaPot {
 
 class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImpl> {
-  MilkTea_TimerWorker_typedef
+  using State = TimerWorker::State;
  public:
-  enum class State {
-    INIT,
-    RUNNING,
-    SHUTDOWN,
-    STOP,
-    TIDYING,
-    TERMINATED,
-    CLOSED
-  };
   static worker_type Make(std::function<bool(std::exception *)> on_terminate) {
     auto worker = worker_type(new TimerWorkerImpl(on_terminate));
     worker->binder_.Bind(worker);
@@ -168,7 +148,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     }) && OnTerminate(e);
   }
   bool OnTerminate(std::exception *e) {
-    Defer defer([this]() -> void {
+    MilkTea::Defer defer([this]() -> void {
       if (!ChangeStateAnd(State::TIDYING, State::TERMINATED, [this]() -> void {
         state_cond_.notify_all();
       })) {
@@ -197,7 +177,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
         if (state_ == State::STOP) {
           MilkTea_assert("Take assert State::STOP");
         }
-        while (task_top->future()->state() == TimerFutureImpl::State::CANCELLED) {
+        while (task_top->future()->state() == TimerFuture::State::CANCELLED) {
           Poll();
         }
         duration_type delta = *task_top - CurrentTimePoint();
@@ -298,9 +278,9 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   worker_binder binder_;
   MilkTea_NonCopy(TimerWorkerImpl)
   MilkTea_NonMove(TimerWorkerImpl)
-  static constexpr char TAG[] = "MilkTea#TimerWorker";
+  static constexpr char TAG[] = "TeaPot#TimerWorker";
 };
 
-} // namespace MilkTea
+} // namespace TeaPot
 
-#endif // ifndef MILKTEA_TIMERWORKER_H_
+#endif // ifndef TEAPOT_TIMERWORKER_H_

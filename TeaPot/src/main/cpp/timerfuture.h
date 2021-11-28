@@ -1,44 +1,28 @@
-#ifndef MILKTEA_TIMERFUTURE_H_
-#define MILKTEA_TIMERFUTURE_H_
+#ifndef TEAPOT_TIMERFUTURE_H_
+#define TEAPOT_TIMERFUTURE_H_
 
 #include <chrono>
 #include <atomic>
 #include <memory>
 #include <functional>
 
-#include <milktea.h>
+#include <teapot.h>
 
-#include "exception.h"
+namespace TeaPot {
 
-namespace MilkTea {
-
-#ifdef MilkTea_TimerFuture_typedef
-#undef MilkTea_TimerFuture_typedef
-#endif
-
-#define MilkTea_TimerFuture_typedef \
-  using future_raw = MilkTea::TimerFutureImpl; \
-  using future_weak = std::weak_ptr<future_raw>; \
-  using future_type = std::shared_ptr<future_raw>; \
-  using clock_type = std::chrono::system_clock; \
-  using duration_type = std::chrono::milliseconds; \
-  using time_point_type = std::chrono::time_point<clock_type, duration_type>;
+class TimerFutureImpl;
+using future_raw = TimerFutureImpl;
+using future_weak = std::weak_ptr<future_raw>;
+using future_type = std::shared_ptr<future_raw>;
 
 class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImpl> {
   friend class TimerTaskImpl;
   friend class TimerWorkerImpl;
-  MilkTea_TimerFuture_typedef
+  using State = TimerFuture::State;
  public:
   static future_type Make(time_point_type time) {
     return future_type(new TimerFutureImpl(time));
   }
-  enum class State {
-    SCHEDULED,
-    EXECUTED,
-    CANCELLED,
-    NORMAL,
-    EXCEPTIONAL
-  };
   bool Cancel() {
     bool b = ChangeState(State::SCHEDULED, State::CANCELLED);
     if (b) {
@@ -73,9 +57,9 @@ class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImp
   std::function<void(future_type)> on_cancel_;
   MilkTea_NonCopy(TimerFutureImpl)
   MilkTea_NonMove(TimerFutureImpl)
-  static constexpr char TAG[] = "MilkTea#TimerFuture";
+  static constexpr char TAG[] = "TeaPot#TimerFuture";
 };
 
-} // namespace MilkTea
+} // namespace TeaPot
 
-#endif // ifndef MILKTEA_TIMERFUTURE_H_
+#endif // ifndef TEAPOT_TIMERFUTURE_H_

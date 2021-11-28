@@ -2,6 +2,7 @@
 #define LIB_SOYMILK_CORE_H_
 
 #include <milkpowder.h>
+#include <teapot.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +55,7 @@ typedef struct SoyMilk_Player_t SoyMilk_Player_t;
 #endif
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
-SoyMilk_Player_Create(SoyMilk_Player_t **self, MilkTea_TimerWorker_Weak_t *timer, SoyMilk_Player_Controller_t callback);
+SoyMilk_Player_Create(SoyMilk_Player_t **self, TeaPot_TimerWorker_Weak_t *timer, SoyMilk_Player_Controller_t callback);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 SoyMilk_Player_Destroy(SoyMilk_Player_t *self);

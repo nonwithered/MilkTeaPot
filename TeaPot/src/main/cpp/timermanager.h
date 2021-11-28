@@ -1,5 +1,5 @@
-#ifndef MILKTEA_TIMERMANAGER_H_
-#define MILKTEA_TIMERMANAGER_H_
+#ifndef TEAPOT_TIMERMANAGER_H_
+#define TEAPOT_TIMERMANAGER_H_
 
 #include <milktea.h>
 
@@ -10,28 +10,21 @@
 
 #include "timertask.h"
 
-namespace MilkTea {
+namespace TeaPot {
 
-class TimerWorkerImpl;
-
+class TimerManagerImpl;
+using manager_type = TimerManagerImpl;
 class TimerBinderImpl;
-
+using worker_binder = TimerBinderImpl;
+class TimerWorkerImpl;
+using worker_raw = TimerWorkerImpl;
+using worker_type = std::shared_ptr<worker_raw>;
+using worker_weak = std::weak_ptr<worker_raw>;
 struct TimerWorkerIdentity;
+using worker_identity = TimerWorkerIdentity *;
 
-#ifdef MilkTea_TimerManager_typedef
-#undef MilkTea_TimerManager_typedef
-#endif
-
-#define MilkTea_TimerManager_typedef \
-  using manager_type = MilkTea::TimerManagerImpl; \
-  using worker_binder = MilkTea::TimerBinderImpl; \
-  using worker_raw = MilkTea::TimerWorkerImpl; \
-  using worker_type = std::shared_ptr<worker_raw>; \
-  using worker_weak = std::weak_ptr<worker_raw>; \
-  using worker_identity = MilkTea::TimerWorkerIdentity *;
 class TimerManagerImpl final : public std::enable_shared_from_this<TimerManagerImpl> {
   friend class TimerBinderImpl;
-  MilkTea_TimerManager_typedef
  public:
   static manager_type &Instance();
  private:
@@ -64,7 +57,6 @@ class TimerManagerImpl final : public std::enable_shared_from_this<TimerManagerI
 
 class TimerBinderImpl final {
   friend class TimerWorkerImpl;
-  MilkTea_TimerManager_typedef
  public:
   TimerBinderImpl() = default;
  private:
@@ -94,9 +86,9 @@ class TimerBinderImpl final {
   }
   worker_weak worker_;
   std::shared_ptr<std::mutex> lock_;
-  static constexpr char TAG[] = "MilkTea#TimerHolder";
+  static constexpr char TAG[] = "TeaPot#TimerHolder";
 };
 
-} // namespace MilkTea
+} // namespace TeaPot
 
-#endif // ifndef MILKTEA_TIMERMANAGER_H_
+#endif // ifndef TEAPOT_TIMERMANAGER_H_
