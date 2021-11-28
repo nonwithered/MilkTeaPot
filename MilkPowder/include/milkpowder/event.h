@@ -2,41 +2,50 @@
 #define LIB_MILKPOWDER_EVENT_H_
 
 #ifdef __cplusplus
+
 #include <milkpowder/holder.h>
 #include <functional>
 #include <tuple>
+
 namespace MilkPowder {
-class EventRef final : public MilkPowder_HolderRef(Event) {
+
+class EventConstInterface : virtual public TypeConstInterface<TypeSet::Event> {
  public:
-  explicit EventRef(const MilkPowder_Event_t *ref) : MilkPowder_HolderRef(Event)(ref) {}
   uint8_t GetType() const {
-    uint8_t res = 0;
-    MilkTea_panic(MilkPowder_Event_GetType(get(), &res));
-    return res;
+    uint8_t result = 0;
+    MilkTea_panic(MilkPowder_Event_GetType(Self(), &result));
+    return result;
   }
   std::tuple<uint8_t, uint8_t> GetArgs() const {
-    uint8_t res[2] = {0};
-    MilkTea_panic(MilkPowder_Event_GetArgs(get(), res));
-    return std::make_tuple(res[0], res[1]);
+    uint8_t result[2] = {0};
+    MilkTea_panic(MilkPowder_Event_GetArgs(Self(), result));
+    return std::make_tuple(result[0], result[1]);
   }
 };
-class Event final : public MilkPowder_Holder(Event) {
+
+class EventConstWrapper final : virtual public EventConstInterface {
+  friend class MessageConstInterface;
+  TypeConstWrapper(Event, EventConstWrapper)
+};
+
+class EventInterface : virtual public TypeInterface<TypeSet::Event> {
  public:
-  explicit Event(MilkPowder_Event_t *ptr = nullptr) : MilkPowder_Holder(Event)(ptr) {}
-  explicit Event(const EventRef &ref) : MilkPowder_Holder(Event)(ref) {}
-  explicit Event(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) : Event() {
-    MilkTea_panic(MilkPowder_Event_Parse(reset(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke, last));
-  }
-  Event(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : Event() {
-    MilkTea_panic(MilkPowder_Event_Create(reset(), delta, type, std::get<0>(args), std::get<1>(args)));
-  }
-  uint8_t GetType() const {
-    return EventRef(get()).GetType();
-  }
-  std::tuple<uint8_t, uint8_t> GetArgs() const {
-    return EventRef(get()).GetArgs();
+  RawType *release() && {
+    return Move(std::forward<TypeInterface<TypeSet::Event>>(*this));
   }
 };
+
+class EventWrapper final : virtual public EventConstInterface, virtual public EventInterface {
+  TypeWrapper(Event, EventWrapper)
+ public:
+  explicit EventWrapper(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) : EventWrapper() {
+    MilkTea_panic(MilkPowder_Event_Parse(addr(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke, last));
+  }
+  EventWrapper(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : EventWrapper() {
+    MilkTea_panic(MilkPowder_Event_Create(addr(), delta, type, std::get<0>(args), std::get<1>(args)));
+  }
+};
+
 } // namespace MilkPowder
 #endif // ifdef __cplusplus
 

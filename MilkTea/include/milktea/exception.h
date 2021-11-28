@@ -44,7 +44,7 @@ MilkTea_API void MilkTea_CALL
 MilkTea_Exception_Throw(MilkTea_Exception_t, const char *);
 
 #define MilkTea_throw(type, what) MilkTea_block({ \
-  MilkTea_logE("%s: %s", MilkTea_Exception_Name(MilkTea_Exception_##type), what); \
+  MilkTea_logE("%s:%d %s: %s", __FILE__, __LINE__, MilkTea_Exception_Name(MilkTea_Exception_##type), what); \
   MilkTea_Exception_Throw(MilkTea_Exception_##type, what); \
 })
 

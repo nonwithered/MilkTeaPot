@@ -60,7 +60,7 @@ class Dump final : public Command {
     std::cerr << Usage() << std::endl;
     return true;
   }
-  bool EnableHex(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
+  bool EnableHex(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
     hex_ = true;
     return true;
   }
@@ -227,7 +227,7 @@ class Dump final : public Command {
     return true;
   }
   void PreviewBody(MilkPowder::FileReader &reader) {
-    MilkPowder::Midi midi(reader);
+    MilkPowder::MidiWrapper midi(reader);
     // header chunk
     std::cout << "[HEADER]" << std::endl;
     std::cout << "type=MThd" << std::endl;
@@ -244,17 +244,17 @@ class Dump final : public Command {
     std::cout << "[/HEADER]" << std::endl;
     // foreach chunk
     for (uint16_t i = 0; i != ntrks; ++i) {
-      MilkPowder::TrackRef track = midi.GetTrack(i);
+      MilkPowder::TrackConstWrapper track = midi.GetTrack(i);
       // each chunk
       std::cout << "[CHUNK]" << std::endl;
       std::cout << "type=MTrk" << std::endl;
-      std::function<void(MilkPowder::MessageRef)> callback;
+      std::function<void(MilkPowder::MessageConstWrapper)> callback;
       if (detail_ == 2) {
-        callback = [this](MilkPowder::MessageRef item) -> void {
+        callback = [this](MilkPowder::MessageConstWrapper item) -> void {
           ShowMessages(item);
         };
       } else {
-        callback = [this](MilkPowder::MessageRef item) -> void {
+        callback = [this](MilkPowder::MessageConstWrapper item) -> void {
           ShowMessagesVerbose(item);
         };
       }
@@ -262,7 +262,7 @@ class Dump final : public Command {
       std::cout << "[/CHUNK]" << std::endl;
     }
   }
-  void ShowMessages(MilkPowder::MessageRef message) {
+  void ShowMessages(MilkPowder::MessageConstWrapper message) {
     std::cout << "[EVENT]" << std::endl;
     // delta
     uint32_t delta = message.GetDelta();
@@ -272,7 +272,7 @@ class Dump final : public Command {
     std::cout << "type=" << MilkTea::ToStringHexFromU8(type) << std::endl;
     std::cout << "[/EVENT]" << std::endl;
   }
-  void ShowMessagesVerbose(MilkPowder::MessageRef message) {
+  void ShowMessagesVerbose(MilkPowder::MessageConstWrapper message) {
     std::cout << "[EVENT]" << std::endl;
     // delta
     uint32_t delta = message.GetDelta();
@@ -284,7 +284,7 @@ class Dump final : public Command {
       // event
       if (message.IsEvent()) {
         std::cout << std::endl;
-        MilkPowder::EventRef event = message.ToEvent();
+        MilkPowder::EventConstWrapper event = message.ToEvent();
         auto [arg0, arg1] = event.GetArgs();
         std::cout << "args=" << MilkTea::ToStringHexFromU8(arg0);
         if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
@@ -295,7 +295,7 @@ class Dump final : public Command {
       }
       // meta
       if (message.IsMeta()) {
-        MilkPowder::MetaRef meta = message.ToMeta();
+        MilkPowder::MetaConstWrapper meta = message.ToMeta();
         type = meta.GetType();
         std::cout << MilkTea::ToStringHexFromU8(type) << std::endl;
         const uint8_t *args = nullptr;
@@ -306,7 +306,7 @@ class Dump final : public Command {
       // sysex
       if (message.IsSysex()) {
         std::cout << std::endl;
-        MilkPowder::SysexRef sysex = message.ToSysex();
+        MilkPowder::SysexConstWrapper sysex = message.ToSysex();
         uint32_t idx = 0;
         std::function<void(uint32_t, const uint8_t *, uint32_t)> callback = [this, &idx](uint32_t delta, const uint8_t *args, uint32_t length) -> void {
           if (idx == 0) {

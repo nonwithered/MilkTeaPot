@@ -2,38 +2,50 @@
 #define LIB_MILKPOWDER_TRACK_H_
 
 #ifdef __cplusplus
+
 #include <milkpowder/message.h>
 #include <vector>
+
 namespace MilkPowder {
-class TrackRef final : public MilkPowder_HolderRef(Track) {
+
+class TrackConstInterface : virtual public TypeConstInterface<TypeSet::Track> {
  public:
-  explicit TrackRef(const MilkPowder_Track_t *ref) : MilkPowder_HolderRef(Track)(ref) {}
-  void GetMessages(std::function<void(MessageRef)> callback) const {
-    std::function<void(const MilkPowder_Message_t *)> callback_ = [callback](const MilkPowder_Message_t *obj) -> void {
-      callback(MessageRef(obj));
+  void GetMessages(std::function<void(MessageConstWrapper)> callback) const {
+    std::function<void(const RawTypeMap<TypeSet::Message>::target *)> callback_ = [callback](const RawTypeMap<TypeSet::Message>::target *message) -> void {
+      callback(MessageConstWrapper(message));
     };
-    MilkTea_panic(MilkPowder_Track_GetMessages(get(), &callback_, MilkTea::ClosureToken<decltype(callback_)>::Invoke));
+    MilkTea_panic(MilkPowder_Track_GetMessages(Self(), &callback_, MilkTea::ClosureToken<decltype(callback_)>::Invoke));
   }
 };
-class Track final : public MilkPowder_Holder(Track) {
+
+class TrackConstWrapper final : virtual public TrackConstInterface {
+  friend class MidiConstInterface;
+  TypeConstWrapper(Track, TrackConstWrapper)
+};
+
+class TrackInterface : virtual public TypeInterface<TypeSet::Track> {
  public:
-  explicit Track(MilkPowder_Track_t *ptr = nullptr) : MilkPowder_Holder(Track)(ptr) {}
-  explicit Track(const TrackRef &ref) : MilkPowder_Holder(Track)(ref) {}
-  explicit Track(std::function<bool(uint8_t *)> callback) : Track() {
-    MilkTea_panic(MilkPowder_Track_Parse(reset(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
-  }
-  Track(Message items[], uint32_t length) : Track() {
-    size_t size = static_cast<size_t>(length);
-    std::vector<MilkPowder_Message_t *> vec(size);
-    for (size_t i = 0; i != size; ++i) {
-      vec[i] = items[i].release();
-    }
-    MilkTea_panic(MilkPowder_Track_Create(reset(), vec.data(), length));
-  }
-  void GetMessages(std::function<void(MessageRef)> callback) const {
-    TrackRef(get()).GetMessages(callback);
+  RawType *release() && {
+    return Move(std::forward<TypeInterface<TypeSet::Track>>(*this));
   }
 };
+
+class TrackWrapper final : virtual public TrackConstInterface, virtual public TrackInterface {
+  TypeWrapper(Track, TrackWrapper)
+ public:
+  explicit TrackWrapper(std::function<bool(uint8_t *)> callback) : TrackWrapper() {
+    MilkTea_panic(MilkPowder_Track_Parse(addr(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  }
+  TrackWrapper(MessageWrapper items[], uint32_t length) : TrackWrapper() {
+    size_t size = static_cast<size_t>(length);
+    std::vector<RawTypeMap<TypeSet::Message>::target *> vec(size);
+    for (size_t i = 0; i != size; ++i) {
+      vec[i] = std::forward<MessageWrapper>(items[i]).release();
+    }
+    MilkTea_panic(MilkPowder_Track_Create(addr(), vec.data(), length));
+  }
+};
+
 } // namespace MilkPowder
 #endif // ifdef __cplusplus
 
