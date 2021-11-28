@@ -9,10 +9,20 @@ namespace SoyBean_Windows {
 
 class FactoryImpl final : public SoyBean::BaseFactory {
  public:
-  static std::unique_ptr<FactoryImpl> Make(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) {
-    return std::unique_ptr<FactoryImpl>(new FactoryImpl(uDeviceID, dwCallback, dwInstance, fdwOpen));
+  FactoryImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen)
+  : enable_(true), uDeviceID_(uDeviceID), dwCallback_(dwCallback), dwInstance_(dwInstance), fdwOpen_(fdwOpen) {}
+  std::unique_ptr<BaseFactory> Move() && final {
+    return std::make_unique<FactoryImpl>(std::forward<FactoryImpl>(*this));
   }
-  ~FactoryImpl() final {
+  FactoryImpl(FactoryImpl &&another) : FactoryImpl() {
+    std::swap(enable_, another.enable_);
+    std::swap(uDeviceID_, another.uDeviceID_);
+    std::swap(dwCallback_, another.dwCallback_);
+    std::swap(dwInstance_, another.dwInstance_);
+    std::swap(fdwOpen_, another.fdwOpen_);
+  }
+  ~FactoryImpl() {
+    enable_ = false;
     uDeviceID_ = 0;
     dwCallback_ = nullptr;
     dwInstance_ = nullptr;
@@ -22,18 +32,21 @@ class FactoryImpl final : public SoyBean::BaseFactory {
     delete this;
   }
   std::unique_ptr<SoyBean::BaseHandle> Create() final {
-    return HandleImpl::Make(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
+    if (!enable_) {
+      MilkTea_throw(LogicError, "Create but disable");
+    }
+    return std::make_unique<HandleImpl>(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
   }
  private:
-  FactoryImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen)
-  : uDeviceID_(uDeviceID),
-    dwCallback_(dwCallback),
-    dwInstance_(dwInstance),
-    fdwOpen_(fdwOpen) {}
+  FactoryImpl() : enable_(false), uDeviceID_(0), dwCallback_(nullptr), dwInstance_(nullptr), fdwOpen_(0) {}
+  bool enable_;
   unsigned int uDeviceID_;
   uint32_t *dwCallback_;
   uint32_t *dwInstance_;
   uint32_t fdwOpen_;
+  MilkTea_NonCopy(FactoryImpl)
+  MilkTea_NonMoveAssign(FactoryImpl)
+  static constexpr char TAG[] = "SoyBean_Windows#FactoryImpl";
 };
 
 } // namespace SoyBean_Windows

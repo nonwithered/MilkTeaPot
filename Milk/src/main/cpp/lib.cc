@@ -1,5 +1,6 @@
 #include <milk.h>
 
+#include "config.h"
 #include "launch.h"
 #include "codec.h"
 #include "dump.h"
@@ -9,41 +10,34 @@ namespace {
 
 constexpr char TAG[] = "Milk#extern";
 
-MilkTea_Logger_t MilkTea_CALL Milk_Inject_Logger_default(MilkTea_LogLevel_t level) {
-  Milk::LoggerImpl &logger_ = Milk::LoggerImpl::Instance();
-  logger_.level(MilkTea::Logger::LevelOf(level));
-  return logger_.RawLogger();
+std::list<std::string_view> Args(int argc, char *argv[]) {
+  std::list<std::string_view> args;
+  for (int i = 1; i < argc; ++i) {
+    args.emplace_back(argv[i]);
+  }
+  return args;
 }
 
-MilkTea_Exception_t MilkTea_CALL Milk_Inject_SoyBean_Factory_default(SoyBean_Factory_t *) MilkTea_with_except({
-  MilkTea_assert("Milk_Inject_SoyBean_Factory must be invoked before");
-})
+std::vector<std::unique_ptr<Milk::Command>> Cmds() {
+  std::vector<std::unique_ptr<Milk::Command>> cmds;
+  cmds.emplace_back(new Milk::Codec());
+  cmds.emplace_back(new Milk::Dump());
+  cmds.emplace_back(new Milk::Play());
+  return cmds;
+}
 
 } // namespace
 
 extern "C" {
 
-MilkTea_API void MilkTea_CALL
-Milk_Inject_Logger(MilkTea_Logger_t (MilkTea_CALL *inject)(MilkTea_LogLevel_t level)) {
-  Milk::Inject::Logger(inject);
-}
-
-MilkTea_API void MilkTea_CALL
-Milk_Inject_SoyBean_Factory(MilkTea_Exception_t (MilkTea_CALL *inject)(SoyBean_Factory_t *factory)) {
-  Milk::Inject::SoyBean_Factory(inject);
-}
+MilkTea_IMPL(Milk_Init, (Milk_Config_t config), {
+  Milk::ConfigWrapper::Instance(new Milk::ConfigWrapper(Milk::ConfigWrapper::FromRawType(std::move(config))));
+})
 
 MilkTea_API int MilkTea_CALL
 Milk_Main(int argc, char *argv[]) try {
-  std::list<std::string_view> args;
-  for (int i = 1; i < argc; ++i) {
-    args.emplace_back(argv[i]);
-  }
-  std::vector<std::unique_ptr<Milk::Command>> arr;
-  arr.emplace_back(new Milk::Codec());
-  arr.emplace_back(new Milk::Dump());
-  arr.emplace_back(new Milk::Play());
-  Milk::Command::LaunchMain(args, arr);
+  Milk::ConfigWrapper::Instance();
+  Milk::Command::LaunchMain(Args(argc, argv), Cmds());
   return 0;
 } catch (std::exception &e) {
   std::cerr << e.what() << std::endl;
@@ -54,25 +48,19 @@ Milk_Main(int argc, char *argv[]) try {
 
 namespace Milk {
 
-LoggerImpl &LoggerImpl::Instance() {
-  static Milk::LoggerImpl logger_;
-  return logger_;
-}
-
-Inject::Logger_type Inject::Logger(Logger_type inject) {
-  static Logger_type inject_ = Milk_Inject_Logger_default;
-  if (inject != nullptr) {
-    inject_ = inject;
+ConfigWrapper &ConfigWrapper::Instance(ConfigWrapper *instance) {
+  static std::unique_ptr<ConfigWrapper> instance_;
+  if (instance != nullptr) {
+    if (instance_ != nullptr) {
+      delete instance;
+      MilkTea_throw(LogicError, "Config Init again");
+    }
+    instance_ = std::unique_ptr<ConfigWrapper>(instance);
   }
-  return inject_;
-}
-
-Inject::SoyBean_Factory_type Inject::SoyBean_Factory(SoyBean_Factory_type inject) {
-  static SoyBean_Factory_type inject_ = Milk_Inject_SoyBean_Factory_default;
-  if (inject != nullptr) {
-    inject_ = inject;
+  if (instance_ == nullptr) {
+    MilkTea_throw(LogicError, "Config need Init");
   }
-  return inject_;
+  return *instance_;
 }
 
 } // namespace Milk

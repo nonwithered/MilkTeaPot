@@ -9,9 +9,13 @@ namespace SoyBean {
 
 class BaseHandle {
  public:
-  static SoyBean_Handle_t ToRawType(std::unique_ptr<BaseHandle> self) {
-    return std::forward<BaseHandle>(*self.release()).ToRawType();
+  SoyBean_Handle_t ToRawType() && {
+    return SoyBean_Handle_t{
+      .self_ = std::forward<BaseHandle>(*this).Move().release(),
+      .interface_ = &Interface(),
+    };
   }
+  virtual std::unique_ptr<BaseHandle> Move() && = 0;
   virtual ~BaseHandle() = default;
   virtual void Destroy() && = 0;
   virtual void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
@@ -22,15 +26,21 @@ class BaseHandle {
   virtual void ChannelPressure(uint8_t channel, uint8_t pressure) = 0;
   virtual void PitchBend(uint8_t channel, uint8_t low, uint8_t height) = 0;
  private:
-  MilkTea_API SoyBean_Handle_t MilkTea_CALL ToRawType() &&;
+  static MilkTea_API const SoyBean_Handle_Interface_t & MilkTea_CALL Interface();
 };
 
 class HandleWrapper final : public BaseHandle {
  public:
-  static std::unique_ptr<HandleWrapper> FromRawType(SoyBean_Handle_t &&another) {
-    auto self = std::unique_ptr<HandleWrapper>(new HandleWrapper());
-    std::swap(self->self_, another);
+  static HandleWrapper FromRawType(SoyBean_Handle_t &&another) {
+    HandleWrapper self{};
+    std::swap(self.self_, another);
     return self;
+  }
+  HandleWrapper(HandleWrapper &&another) : HandleWrapper() {
+    std::swap(self_, another.self_);
+  }
+  std::unique_ptr<BaseHandle> Move() && final {
+    return std::make_unique<HandleWrapper>(std::forward<HandleWrapper>(*this));
   }
   ~HandleWrapper() final {
     if (self_.self_ == nullptr) {
@@ -68,26 +78,37 @@ class HandleWrapper final : public BaseHandle {
   SoyBean_Handle_t self_;
   MilkTea_NonCopy(HandleWrapper)
   MilkTea_NonMoveAssign(HandleWrapper)
+  static constexpr char TAG[] = "SoyBean#HandleWrapper";
 };
 
 class BaseFactory {
  public:
-  static SoyBean_Factory_t ToRawType(std::unique_ptr<BaseFactory> self) {
-    return std::forward<BaseFactory>(*self.release()).ToRawType();
+  SoyBean_Factory_t ToRawType() && {
+    return SoyBean_Factory_t{
+      .self_ = std::forward<BaseFactory>(*this).Move().release(),
+      .interface_ = &Interface(),
+    };
   }
+  virtual std::unique_ptr<BaseFactory> Move() && = 0;
   virtual ~BaseFactory() = default;
   virtual void Destroy() && = 0;
   virtual std::unique_ptr<BaseHandle> Create() = 0;
  private:
-  MilkTea_API SoyBean_Factory_t MilkTea_CALL ToRawType() &&;
+  static MilkTea_API const SoyBean_Factory_Interface_t & MilkTea_CALL Interface();
 };
 
 class FactoryWrapper final : public BaseFactory {
  public:
-  static std::unique_ptr<FactoryWrapper> FromRawType(SoyBean_Factory_t &&another) {
-    auto self = std::unique_ptr<FactoryWrapper>(new FactoryWrapper());
-    std::swap(self->self_, another);
+  static FactoryWrapper FromRawType(SoyBean_Factory_t &&another) {
+    FactoryWrapper self{};
+    std::swap(self.self_, another);
     return self;
+  }
+  FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper() {
+    std::swap(self_, another.self_);
+  }
+  std::unique_ptr<BaseFactory> Move() && final {
+    return std::make_unique<FactoryWrapper>(std::forward<FactoryWrapper>(*this));
   }
   ~FactoryWrapper() final {
     if (self_.self_ == nullptr) {
@@ -102,13 +123,14 @@ class FactoryWrapper final : public BaseFactory {
   std::unique_ptr<BaseHandle> Create() final {
     SoyBean_Handle_t handle{};
     MilkTea_panic(SoyBean_Handle_Create(&handle, self_));
-    return HandleWrapper::FromRawType(std::forward<SoyBean_Handle_t>(handle));
+    return std::make_unique<HandleWrapper>(HandleWrapper::FromRawType(std::forward<SoyBean_Handle_t>(handle)));
   }
 private:
   FactoryWrapper() : self_{} {}
   SoyBean_Factory_t self_;
   MilkTea_NonCopy(FactoryWrapper)
   MilkTea_NonMoveAssign(FactoryWrapper)
+  static constexpr char TAG[] = "SoyBean#FactoryWrapper";
 };
 
 } // namespace SoyBean

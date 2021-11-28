@@ -11,12 +11,13 @@
 #include <milkpowder.h>
 
 #include "util.h"
+#include "config.h"
 
 namespace Milk {
 
 class Command {
  public:
-  static void LaunchMain(std::list<std::string_view> &args, const std::vector<std::unique_ptr<Milk::Command>> &arr) {
+  static void LaunchMain(std::list<std::string_view> args, const std::vector<std::unique_ptr<Milk::Command>> &arr) {
     auto itr = arr.begin();
     if (!args.empty()) {
       while (itr != arr.end()) {
@@ -64,7 +65,7 @@ class Command {
       std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
       return false;
     }
-    MilkTea_Logger_Init(Inject::Logger()(MilkTea::BaseLogger::RawLevel(level)));
+    MilkTea_Logger_Config(ConfigWrapper::Instance().Make_MilkTea_Logger(level).ToRawType());
     itr = args.erase(itr);
     return true;
   }

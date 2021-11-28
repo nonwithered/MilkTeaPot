@@ -9,8 +9,11 @@ namespace SoyBean_Windows {
 
 class HandleImpl final : public SoyBean::BaseHandle {
  public:
-  static std::unique_ptr<HandleImpl> Make(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) {
-    return std::unique_ptr<HandleImpl>(new HandleImpl(uDeviceID, dwCallback, dwInstance, fdwOpen));
+  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : HandleImpl() {
+    ThrowOrNot(Proxy_midiOutOpen(&self_, uDeviceID, dwCallback, dwInstance, fdwOpen));
+  }
+  HandleImpl(HandleImpl &&another) : HandleImpl() {
+    std::swap(self_, another.self_);
   }
   ~HandleImpl() final {
     if (self_ == nullptr) {
@@ -18,6 +21,9 @@ class HandleImpl final : public SoyBean::BaseHandle {
     }
     ThrowOrNot(Proxy_midiOutClose(self_));
     self_ = nullptr;
+  }
+  std::unique_ptr<BaseHandle> Move() && final {
+    return std::make_unique<HandleImpl>(std::forward<HandleImpl>(*this));
   }
   void Destroy() && final {
     delete this;
@@ -88,11 +94,11 @@ class HandleImpl final : public SoyBean::BaseHandle {
       MilkTea_throwf(Unknown, "MMRESULT %u", r);
     }
   }
-  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : self_(nullptr) {
-    ThrowOrNot(Proxy_midiOutOpen(&self_, uDeviceID, dwCallback, dwInstance, fdwOpen));
-  }
+  HandleImpl() : self_(nullptr) {}
   Proxy_HMIDIOUT self_;
   static constexpr char TAG[] = "handle";
+  MilkTea_NonCopy(HandleImpl)
+  MilkTea_NonMoveAssign(HandleImpl)
 };
 
 } // namespace SoyBean_Windows

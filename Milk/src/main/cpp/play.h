@@ -19,7 +19,7 @@ class Play final : public Command {
   }
  protected:
   void Launch(std::list<std::string_view> &) final {
-    auto handle = GetFactory()->Create();
+    auto handle = ConfigWrapper::Instance().Make_SoyBean_Factory().Create();
     handle->NoteOn(0, 0x45, 0x7f);
     std::this_thread::sleep_for(std::chrono::seconds(5));
   }
@@ -36,11 +36,6 @@ class Play final : public Command {
     return "play";
   }
  private:
-  static std::unique_ptr<SoyBean::FactoryWrapper> GetFactory() {
-    SoyBean_Factory_t factory{};
-    MilkTea_panic(Inject::SoyBean_Factory()(&factory));
-    return SoyBean::FactoryWrapper::FromRawType(std::move(factory));
-  }
   bool help_;
   bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
     if (help_) {

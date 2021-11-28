@@ -78,7 +78,7 @@ MilkTea_throwf(Assertion, ##__VA_ARGS__)
     block \
   } catch (MilkTea::Exception &e) { \
     MilkTea::Exception::WhatMessage(e.what()); \
-    return e.GetRawType(); \
+    return MilkTea::Exception::ToRawType(e.type()); \
   } catch (std::exception &e) { \
     MilkTea::Exception::WhatMessage(e.what()); \
     return MilkTea_Exception_t::MilkTea_Exception_Unknown; \
@@ -88,21 +88,17 @@ MilkTea_throwf(Assertion, ##__VA_ARGS__)
 }
 
 #define MilkTea_panic(e) \
-MilkTea::Exception::ThrowFromRawType(e)
+MilkTea_block({ \
+  if (e != MilkTea_Exception_t::MilkTea_Exception_Nil) { \
+    auto e_ = e; \
+    [e_]() -> void { \
+      throw MilkTea::Exception::FromRawType(e_, MilkTea::Exception::WhatMessage()); \
+    }(); \
+  } \
+})
 
 class Exception final : public std::exception {
  public:
-  static MilkTea_API const char * MilkTea_CALL WhatMessage(const char *what = nullptr);
-  static std::tuple<MilkTea_Exception_t, const char *> ToRawType(std::exception *e) {
-    if (e == nullptr) {
-      return std::make_tuple(MilkTea_Exception_t::MilkTea_Exception_Nil, nullptr);
-    }
-    MilkTea::Exception *exception = dynamic_cast<MilkTea::Exception *>(e);
-    if (exception != nullptr) {
-      return std::make_tuple(exception->GetRawType(), exception->what());
-    }
-    return std::make_tuple(MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
-  }
   enum class Type {
     Unknown,
     Assertion,
@@ -112,15 +108,23 @@ class Exception final : public std::exception {
     LogicError,
     EndOfFile
   };
-  Exception(Type type, std::string what) : type_(type), what_(what) {}
-  const char* what() const noexcept final {
-    return what_.data();
+  static MilkTea_API const char * MilkTea_CALL WhatMessage(const char *what = nullptr);
+  static Exception FromRawType(MilkTea_Exception_t type, const char *what) {
+    return Exception(FromRawType(type), what);
   }
-  Type type() const {
-    return type_;
+  static std::tuple<MilkTea_Exception_t, const char *> ToRawType(std::exception *e) {
+    if (e == nullptr) {
+      return std::make_tuple(MilkTea_Exception_t::MilkTea_Exception_Nil, "");
+    }
+    MilkTea::Exception *exception = dynamic_cast<MilkTea::Exception *>(e);
+    if (exception == nullptr) {
+      return std::make_tuple(MilkTea_Exception_t::MilkTea_Exception_Unknown, e->what());
+    }
+    return exception->ToRawType();
   }
-  MilkTea_Exception_t GetRawType() const {
-    switch (type_) {
+  static MilkTea_Exception_t ToRawType(Type type) {
+    switch (type) {
+      case Type::Unknown: return MilkTea_Exception_t::MilkTea_Exception_Unknown;
       case Type::Assertion: return MilkTea_Exception_t::MilkTea_Exception_Assertion;
       case Type::NullPointer: return MilkTea_Exception_t::MilkTea_Exception_NullPointer;
       case Type::Unsupported: return MilkTea_Exception_t::MilkTea_Exception_Unsupported;
@@ -130,15 +134,9 @@ class Exception final : public std::exception {
       default: return MilkTea_Exception_t::MilkTea_Exception_Unknown;
     }
   }
-  static void ThrowFromRawType(MilkTea_Exception_t type, const char *what = nullptr) {
-    if (type == MilkTea_Exception_Nil) {
-      return;
-    }
-    throw Exception(FromRawType(type), WhatMessage(what));
-  }
- private:
   static Type FromRawType(MilkTea_Exception_t type) {
     switch (type) {
+      case MilkTea_Exception_t::MilkTea_Exception_Unknown: return Type::Unknown;
       case MilkTea_Exception_t::MilkTea_Exception_Assertion: return Type::Assertion;
       case MilkTea_Exception_t::MilkTea_Exception_NullPointer: return Type::NullPointer;
       case MilkTea_Exception_t::MilkTea_Exception_Unsupported: return Type::Unsupported;
@@ -148,6 +146,17 @@ class Exception final : public std::exception {
       default: return Type::Unknown;
     }
   }
+  Exception(Type type, std::string what) : type_(type), what_(what) {}
+  const char* what() const noexcept final {
+    return what_.data();
+  }
+  Type type() const {
+    return type_;
+  }
+  std::tuple<MilkTea_Exception_t, const char *> ToRawType() const {
+    return std::make_tuple(ToRawType(type()), what());
+  }
+ private:
   const Type type_;
   const std::string what_;
 };

@@ -4,58 +4,74 @@ namespace {
 
 constexpr char TAG[] = "MilkTea#extern";
 
-void LogDefault(const char *, const char *) {}
-
-void MilkTea_CALL MilkTea_BaseLogger_debug(void *obj, const char *tag, const char *msg) {
-  auto &logger = *reinterpret_cast<MilkTea::BaseLogger *>(obj);
-  logger.Debug(tag, msg);
+MilkTea::BaseLogger &BaseLogger_cast(void *self) {
+  MilkTea_nonnull(self);
+  return *reinterpret_cast<MilkTea::BaseLogger *>(self);
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_info(void *obj, const char *tag, const char *msg) {
-  auto &logger = *reinterpret_cast<MilkTea::BaseLogger *>(obj);
-  logger.Info(tag, msg);
+void MilkTea_CALL MilkTea_BaseLogger_Interface_Deleter(void *self) {
+  std::move(BaseLogger_cast(self)).Destroy();
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_warn(void *obj, const char *tag, const char *msg) {
-  auto &logger = *reinterpret_cast<MilkTea::BaseLogger *>(obj);
-  logger.Warn(tag, msg);
+void MilkTea_CALL MilkTea_BaseLogger_Interface_Debug(void *self, const char *tag, const char *msg) {
+  BaseLogger_cast(self).Debug(tag, msg);
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_error(void *obj, const char *tag, const char *msg) {
-  auto &logger = *reinterpret_cast<MilkTea::BaseLogger *>(obj);
-  logger.Error(tag, msg);
+void MilkTea_CALL MilkTea_BaseLogger_Interface_Info(void *self, const char *tag, const char *msg) {
+  BaseLogger_cast(self).Info(tag, msg);
+}
+
+void MilkTea_CALL MilkTea_BaseLogger_Interface_Warn(void *self, const char *tag, const char *msg) {
+  BaseLogger_cast(self).Warn(tag, msg);
+}
+
+void MilkTea_CALL MilkTea_BaseLogger_Interface_Error(void *self, const char *tag, const char *msg) {
+  BaseLogger_cast(self).Error(tag, msg);
 }
 
 } // namespace
 
-extern "C" {
-
-const char *MilkTea_Exception_What() {
-  return MilkTea::Exception::WhatMessage();
-}
-
-void MilkTea_Logger_Init(MilkTea_Logger_t logger) {
-  MilkTea::Logger logger_(
-    MilkTea::Logger::LevelOf(logger.level),
-      [logger](const char *tag, const char *msg) -> void {
-        logger.debug(logger.obj, tag, msg);
-      },
-      [logger](const char *tag, const char *msg) -> void {
-        logger.info(logger.obj, tag, msg);
-      },
-      [logger](const char *tag, const char *msg) -> void {
-        logger.warn(logger.obj, tag, msg);
-      },
-      [logger](const char *tag, const char *msg) -> void {
-        logger.error(logger.obj, tag, msg);
-      }
-  );
-  MilkTea::Logger::Instance(&logger_);
-}
-
-} // extern "C"
-
 namespace MilkTea {
+
+namespace Logger {
+
+class DefaultImpl final : public BaseLogger {
+ public:
+  static DefaultImpl &Instance();
+  void Destroy() && final {
+    delete this;
+  }
+  std::unique_ptr<BaseLogger> Move() && final {
+    return std::make_unique<DefaultImpl>(std::forward<DefaultImpl>(*this));
+  }
+  void Debug(std::string_view, std::string_view) final {}
+  void Info(std::string_view, std::string_view) final {}
+  void Warn(std::string_view, std::string_view) final {}
+  void Error(std::string_view, std::string_view) final {}
+ private:
+  DefaultImpl() : BaseLogger(Level::ASSERT) {}
+};
+
+DefaultImpl &DefaultImpl::Instance() {
+  static DefaultImpl instance_{};
+  return instance_;
+}
+
+BaseLogger *Instance(LoggerWrapper *instance = nullptr) {
+  static auto instance_ = std::unique_ptr<BaseLogger>(nullptr);
+  if (instance != nullptr) {
+    if (instance_ != nullptr) {
+      return nullptr;
+    }
+    instance_ = std::unique_ptr<BaseLogger>(instance);
+  }
+  if (instance_ == nullptr) {
+    return &DefaultImpl::Instance();
+  }
+  return instance_.get();
+}
+
+} // namespace Logger
 
 const char *Exception::WhatMessage(const char *what) {
   thread_local static std::string what_;
@@ -65,23 +81,40 @@ const char *Exception::WhatMessage(const char *what) {
   return what_.data();
 }
 
-Logger &Logger::Instance(Logger *logger) {
-  static Logger logger_(Logger::Level::ASSERT, LogDefault, LogDefault, LogDefault, LogDefault);
-  if (logger != nullptr) {
-    logger_ = *logger;
-  }
-  return logger_;
-}
-
-MilkTea_Logger_t BaseLogger::RawLogger() {
-  return MilkTea_Logger_t{
-    .obj = reinterpret_cast<void *>(this),
-    .level = RawLevel(level()),
-    .debug = MilkTea_BaseLogger_debug,
-    .info = MilkTea_BaseLogger_info,
-    .warn = MilkTea_BaseLogger_warn,
-    .error = MilkTea_BaseLogger_error,
+const MilkTea_Logger_Interface_t &BaseLogger::Interface() {
+  static const MilkTea_Logger_Interface_t instance_{
+    .Deleter = MilkTea_BaseLogger_Interface_Deleter,
+    .Debug = MilkTea_BaseLogger_Interface_Debug,
+    .Info = MilkTea_BaseLogger_Interface_Info,
+    .Warn = MilkTea_BaseLogger_Interface_Warn,
+    .Error = MilkTea_BaseLogger_Interface_Error,
   };
+  return instance_;
 }
 
 } // namespace MilkTea
+
+extern "C" {
+
+const char *MilkTea_Exception_What() {
+  return MilkTea::Exception::WhatMessage();
+}
+
+bool MilkTea_Logger_Config(MilkTea_Logger_t logger) {
+  auto *logger_ = new MilkTea::LoggerWrapper(MilkTea::LoggerWrapper::FromRawType(std::move(logger)));
+  if (MilkTea::Logger::Instance(logger_) == nullptr) {
+    delete logger_;
+    return false;
+  }
+  return true;
+}
+
+MilkTea_Logger_Level_t MilkTea_Logger_GetLevel() {
+  return MilkTea::Logger::ToRawType(MilkTea::Logger::Instance()->level());
+}
+
+void MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *msg) {
+  MilkTea::Logger::Instance()->Print(MilkTea::Logger::FromRawType(level), tag, msg);
+}
+
+} // extern "C"
