@@ -1,5 +1,7 @@
 #include <milktea.h>
 
+#include "exception.h"
+
 namespace {
 
 constexpr char TAG[] = "MilkTea#extern";
@@ -73,12 +75,12 @@ BaseLogger *Instance(LoggerWrapper *instance = nullptr) {
 
 } // namespace Logger
 
-const char *Exception::WhatMessage(const char *what) {
+std::string_view ExceptionImpl::What(std::string_view what) {
   thread_local static std::string what_;
   if (what != nullptr) {
     what_ = what;
   }
-  return what_.data();
+  return what_;
 }
 
 const MilkTea_Logger_Interface_t &BaseLogger::Interface() {
@@ -92,12 +94,26 @@ const MilkTea_Logger_Interface_t &BaseLogger::Interface() {
   return instance_;
 }
 
+Exception::Type Exception::Unwrap(std::exception *e) {
+  if (e == nullptr) {
+    ExceptionImpl::What("");
+    return Exception::Type::Nil;
+  }
+  ExceptionImpl *e_ = dynamic_cast<ExceptionImpl *>(e);
+  if (e_ == nullptr) {
+    ExceptionImpl::What(e->what());
+    return Exception::Type::Unknown;
+  }
+  ExceptionImpl::What(e_->what());
+  return e_->type();
+}
+
 } // namespace MilkTea
 
 extern "C" {
 
 const char *MilkTea_Exception_What() {
-  return MilkTea::Exception::WhatMessage();
+  return MilkTea::ExceptionImpl::What().data();
 }
 
 bool MilkTea_Logger_Config(MilkTea_Logger_t logger) {
@@ -115,6 +131,11 @@ MilkTea_Logger_Level_t MilkTea_Logger_GetLevel() {
 
 void MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *msg) {
   MilkTea::Logger::Instance()->Print(MilkTea::Logger::FromRawType(level), tag, msg);
+}
+
+MilkTea_NORETURN
+void MilkTea_Exception_Throw(MilkTea_Exception_t type, const char *what) {
+  throw MilkTea::ExceptionImpl(MilkTea::Exception::FromRawType(type), what);
 }
 
 } // extern "C"

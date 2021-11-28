@@ -84,6 +84,13 @@ section list { \
 #include <stdint.h>
 #include <inttypes.h>
 #include <ctype.h>
+#include <stdnoreturn.h>
+#endif // ifdef __cplusplus
+
+#ifdef __cplusplus
+#define MilkTea_NORETURN [[noreturn]]
+#else // ifdef __cplusplus
+#define MilkTea_NORETURN noreturn
 #endif // ifdef __cplusplus
 
 #endif // ifndef LIB_MILKTEA_UTIL_H_

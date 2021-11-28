@@ -18,8 +18,15 @@ class TimerWorker final {
   };
   explicit TimerWorker(std::function<bool(std::exception *)> on_terminate) : TimerWorker() {
     std::function<bool(MilkTea_Exception_t, const char *)> do_terminate = [on_terminate](MilkTea_Exception_t type, const char *what) -> bool {
-      Exception e = Exception::FromRawType(type, what);
-      return on_terminate(&e);
+      if (type == MilkTea_Exception_Nil) {
+        return on_terminate(nullptr);
+      }
+      try {
+        MilkTea_Exception_Throw(type, what);
+      }  catch (std::exception &e) {
+        return on_terminate(&e);
+      }
+      return false;
     };
     MilkTea_TimerWorker_t *self = nullptr;
     MilkTea_panic(MilkTea_TimerWorker_Create(&self, ClosureToken<decltype(do_terminate)>::ToRawType(do_terminate), ClosureToken<decltype(do_terminate)>::Invoke));

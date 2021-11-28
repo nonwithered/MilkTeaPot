@@ -8,6 +8,8 @@
 
 #include <milktea.h>
 
+#include "exception.h"
+
 namespace MilkTea {
 
 #ifdef MilkTea_TimerFuture_typedef

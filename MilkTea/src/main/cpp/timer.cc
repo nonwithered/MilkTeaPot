@@ -132,8 +132,9 @@ MilkTea_IMPL(MilkTea_TimerWorker_Create, (MilkTea_TimerWorker_t **self, MilkTea_
   MilkTea_nonnull(on_terminate);
   auto do_terminate = MilkTea::ClosureToken<bool(MilkTea_Exception_t, const char *)>::FromRawType(obj, on_terminate);
   auto worker = MilkTea::TimerWorkerImpl::Make([do_terminate](std::exception *e) -> bool {
-    auto [type, what] = MilkTea::Exception::ToRawType(e);
-    return do_terminate(type, what);
+    auto type = MilkTea::Exception::Unwrap(e);
+    auto what = MilkTea::Exception::What();
+    return do_terminate(MilkTea::Exception::ToRawType(type), what.data());
   });
   *self = timer_cast(*new worker_type(std::move(worker)));
 })
