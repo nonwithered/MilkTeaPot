@@ -8,17 +8,21 @@
 
 namespace MilkPowder {
 
-class MetaConstInterface : virtual public TypeConstInterface<TypeSet::Meta> {
+template<>
+class ConstInterface<TypeSet::Meta> {
+  using RawType = typename RawTypeMap<TypeSet::Meta>::target;
+ public:;
+  virtual const RawType *get() const = 0;
  public:
   uint8_t GetType() const {
     uint8_t res = 0;
-    MilkTea_panic(MilkPowder_Meta_GetType(Self(), &res));
+    MilkTea_panic(MilkPowder_Meta_GetType(get(), &res));
     return res;
   }
   uint32_t GetArgs(const uint8_t **args) const {
     uint32_t res = 0;
     const uint8_t *ptr = nullptr;
-    MilkTea_panic(MilkPowder_Meta_GetArgs(Self(), &ptr, &res));
+    MilkTea_panic(MilkPowder_Meta_GetArgs(get(), &ptr, &res));
     if (args != nullptr) {
       *args = ptr;
     }
@@ -26,28 +30,29 @@ class MetaConstInterface : virtual public TypeConstInterface<TypeSet::Meta> {
   }
 };
 
-class MetaConstWrapper final : virtual public MetaConstInterface {
-  friend class MessageConstInterface;
-  TypeConstWrapper(Meta, MetaConstWrapper)
+using MetaConstWrapper = ConstWrapper<TypeSet::Meta>;
+
+template<>
+class MutableInterface<TypeSet::Meta> {
+  using RawType = typename RawTypeMap<TypeSet::Meta>::target;
+ public:;
+  virtual RawType *get() = 0;
+ public:
+  static MutableWrapper<TypeSet::Meta> Parse(std::function<bool(uint8_t *)> callback) {
+    RawType *self = nullptr;
+    MilkTea_panic(RawParseMap<TypeSet::Meta>::target(&self, &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    return self;
+  }
+  static MutableWrapper<TypeSet::Meta> Make(uint32_t delta, uint8_t type, std::vector<uint8_t> args) {
+    uint32_t argc = static_cast<uint32_t>(args.size());
+    uint8_t *argv = args.data();
+    RawType *self = nullptr;
+    MilkTea_panic(RawCreateMap<TypeSet::Meta>::target(&self, delta, type, argv, argc));
+    return self;
+  }
 };
 
-class MetaInterface : virtual public TypeInterface<TypeSet::Meta> {
- public:
-  RawType *release() && {
-    return Move(std::forward<TypeInterface<TypeSet::Meta>>(*this));
-  }
-};
-
-class MetaWrapper final : virtual public MetaConstInterface, virtual public MetaInterface {
-  TypeWrapper(Meta, MetaWrapper)
- public:
-  explicit MetaWrapper(std::function<bool(uint8_t *)> callback) : MetaWrapper() {
-    MilkTea_panic(MilkPowder_Meta_Parse(addr(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
-  }
-  MetaWrapper(uint32_t delta, uint8_t type, const uint8_t args[], uint32_t length) : MetaWrapper() {
-    MilkTea_panic(MilkPowder_Meta_Create(addr(), delta, type, args, length));
-  }
-};
+using MetaMutableWrapper = MutableWrapper<TypeSet::Meta>;
 
 } // namespace MilkPowder
 #endif // ifdef __cplusplus

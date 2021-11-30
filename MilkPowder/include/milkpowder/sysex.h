@@ -5,38 +5,56 @@
 
 #include <milkpowder/holder.h>
 #include <functional>
+#include <tuple>
 
 namespace MilkPowder {
 
-class SysexConstInterface : virtual public TypeConstInterface<TypeSet::Sysex> {
+template<>
+class ConstInterface<TypeSet::Sysex> {
+  using RawType = typename RawTypeMap<TypeSet::Sysex>::target;
+ public:;
+  virtual const RawType *get() const = 0;
  public:
-  void GetArgs(std::function<void(uint32_t, const uint8_t *, uint32_t)> callback) const {
-    MilkTea_panic(MilkPowder_Sysex_GetArgs(Self(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> GetArgs() const {
+    std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> result;
+    std::function<void(uint32_t, const uint8_t *, uint32_t)> callback = [&result](uint32_t delta, const uint8_t *argv, uint32_t argc) -> void {
+      result.push_back(std::make_tuple(delta, std::vector<uint8_t>(argv, argv + argc)));
+    };
+    MilkTea_panic(MilkPowder_Sysex_GetArgs(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    return result;
   }
 };
 
-class SysexConstWrapper final : virtual public SysexConstInterface {
-  friend class MessageConstInterface;
-  TypeConstWrapper(Sysex, SysexConstWrapper)
+using SysexConstWrapper = ConstWrapper<TypeSet::Sysex>;
+
+template<>
+class MutableInterface<TypeSet::Sysex> {
+  using RawType = typename RawTypeMap<TypeSet::Sysex>::target;
+ public:;
+  virtual RawType *get() = 0;
+ public:
+  static MutableWrapper<TypeSet::Sysex> Parse(std::function<bool(uint8_t *)> callback) {
+    RawType *self = nullptr;
+    MilkTea_panic(RawParseMap<TypeSet::Sysex>::target(&self, &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    return self;
+  }
+  static MutableWrapper<TypeSet::Sysex> Make(std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> vec) {
+    RawType *self = nullptr;
+    uint32_t size = vec.size();
+    std::vector<uint32_t> delta(size);
+    std::vector<const uint8_t *> args(size);
+    std::vector<uint32_t> length(size);
+    for (uint32_t i = 0; i != size; ++i) {
+      delta[i] = std::get<0>(vec[i]);
+      args[i] = std::get<1>(vec[i]).data();
+      length[i] = std::get<1>(vec[i]).size();
+    }
+    MilkTea_panic(RawCreateMap<TypeSet::Sysex>::target(&self, delta.data(), args.data(), length.data(), size));
+    return self;
+  }
 };
 
-class SysexInterface : virtual public TypeInterface<TypeSet::Sysex> {
- public:
-  RawType *release() && {
-    return Move(std::forward<TypeInterface<TypeSet::Sysex>>(*this));
-  }
-};
-
-class SysexWrapper final : virtual public SysexConstInterface, virtual public SysexInterface {
-  TypeWrapper(Sysex, SysexWrapper)
- public:
-  explicit SysexWrapper(std::function<bool(uint8_t *)> callback) : SysexWrapper() {
-    MilkTea_panic(MilkPowder_Sysex_Parse(addr(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
-  }
-  SysexWrapper(uint32_t delta[], const uint8_t *const args[], uint32_t const length[], uint32_t size) : SysexWrapper() {
-    MilkTea_panic(MilkPowder_Sysex_Create(addr(), delta, args, length, size));
-  }
-};
+using SysexMutableWrapper = MutableWrapper<TypeSet::Sysex>;
 
 } // namespace MilkPowder
 #endif // ifdef __cplusplus

@@ -7,52 +7,60 @@
 
 namespace MilkPowder {
 
-class MidiConstInterface : virtual public TypeConstInterface<TypeSet::Midi> {
+template<>
+class ConstInterface<TypeSet::Midi> {
+  using RawType = typename RawTypeMap<TypeSet::Midi>::target;
+ public:;
+  virtual const RawType *get() const = 0;
  public:
   uint16_t GetFormat() const {
     uint16_t result = 0;
-    MilkTea_panic(MilkPowder_Midi_GetFormat(Self(), &result));
+    MilkTea_panic(MilkPowder_Midi_GetFormat(get(), &result));
     return result;
   }
   uint16_t GetNtrks() const {
     uint16_t result = 0;
-    MilkTea_panic(MilkPowder_Midi_GetNtrks(Self(), &result));
+    MilkTea_panic(MilkPowder_Midi_GetNtrks(get(), &result));
     return result;
   }
   uint16_t GetDivision() const {
     uint16_t result = 0;
-    MilkTea_panic(MilkPowder_Midi_GetDivision(Self(), &result));
+    MilkTea_panic(MilkPowder_Midi_GetDivision(get(), &result));
     return result;
   }
-  TrackConstWrapper GetTrack(uint16_t index) const {
+  ConstWrapper<TypeSet::Track> GetTrack(uint16_t index) const {
     const RawTypeMap<TypeSet::Track>::target *result = nullptr;
-    MilkTea_panic(MilkPowder_Midi_GetTrack(Self(), index, &result));
-    return TrackConstWrapper(result);
+    MilkTea_panic(MilkPowder_Midi_GetTrack(get(), index, &result));
+    return result;
   }
 };
 
-class MidiConstWrapper final : virtual public MidiConstInterface {
-  TypeConstWrapper(Midi, MidiConstWrapper)
-};
+using MidiConstWrapper = ConstWrapper<TypeSet::Midi>;
 
-class MidiInterface : virtual public TypeInterface<TypeSet::Midi> {
-};
-
-class MidiWrapper final : virtual public MidiConstInterface, virtual public MidiInterface {
-  TypeWrapper(Midi, MidiWrapper)
+template<>
+class MutableInterface<TypeSet::Midi> {
+  using RawType = typename RawTypeMap<TypeSet::Midi>::target;
+ public:;
+  virtual RawType *get() = 0;
  public:
-  explicit MidiWrapper(std::function<bool(uint8_t *)> callback) : MidiWrapper() {
-    MilkTea_panic(MilkPowder_Midi_Parse(addr(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  static MutableWrapper<TypeSet::Midi> Parse(std::function<bool(uint8_t *)> callback) {
+    RawType *self = nullptr;
+    MilkTea_panic(RawParseMap<TypeSet::Midi>::target(&self, &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    return self;
   }
-  MidiWrapper(uint16_t format, uint16_t ntrks, uint16_t division, TrackWrapper items[]) : MidiWrapper() {
-    size_t size = static_cast<size_t>(ntrks);
-    std::vector<RawTypeMap<TypeSet::Track>::target *> vec(size);
-    for (size_t i = 0; i != size; ++i) {
-      vec[i] = std::forward<TrackWrapper>(items[i]).release();
+  static MutableWrapper<TypeSet::Midi> Make(uint16_t format, uint16_t division, std::vector<MutableWrapper<TypeSet::Track>> tracks) {
+    RawType *self = nullptr;
+    uint16_t ntrks = tracks.size();
+    std::vector<RawTypeMap<TypeSet::Track>::target *> vec(ntrks);
+    for (uint16_t i = 0; i != ntrks; ++i) {
+      vec[i] = tracks[i].release();
     }
-    MilkTea_panic(MilkPowder_Midi_Create(addr(), format, ntrks, division, vec.data()));
+    MilkTea_panic(RawCreateMap<TypeSet::Midi>::target(&self, format, ntrks, division, vec.data()));
+    return self;
   }
 };
+
+using MidiMutableWrapper = MutableWrapper<TypeSet::Midi>;
 
 } // namespace MilkPowder
 #endif // ifdef __cplusplus

@@ -93,6 +93,9 @@ MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Message_GetType(const MilkPowder_Message_t *self, uint8_t *type);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkPowder_Message_Dump(const MilkPowder_Message_t *self, void *obj, void (MilkTea_CALL *callback)(void *obj, const uint8_t *bytes, size_t len));
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Message_FromEvent(MilkPowder_Message_t **self, MilkPowder_Event_t *item);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
@@ -119,9 +122,6 @@ MilkPowder_Message_ToMeta(const MilkPowder_Message_t *self, const MilkPowder_Met
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Message_ToSysex(const MilkPowder_Message_t *self, const MilkPowder_Sysex_t **item);
 
-MilkTea_API MilkTea_Exception_t MilkTea_CALL
-MilkPowder_Message_Dump(const MilkPowder_Message_t *self, void *obj, void (MilkTea_CALL *callback)(void *obj, const uint8_t *bytes, size_t len));
-
 // Event
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
@@ -144,6 +144,12 @@ MilkPowder_Event_GetArgs(const MilkPowder_Event_t *self, uint8_t *args);
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Event_Dump(const MilkPowder_Event_t *self, void *obj, void (MilkTea_CALL *callback)(void *obj, const uint8_t *bytes, size_t len));
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkPowder_Event_FromMessage(MilkPowder_Event_t **self, MilkPowder_Message_t *item);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkPowder_Event_ToMessage(const MilkPowder_Event_t *self, const MilkPowder_Message_t **item);
 
 // Meta
 
@@ -168,6 +174,12 @@ MilkPowder_Meta_GetArgs(const MilkPowder_Meta_t *self, const uint8_t **args, uin
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Meta_Dump(const MilkPowder_Meta_t *self, void *obj, void (MilkTea_CALL *callback)(void *obj, const uint8_t *bytes, size_t len));
 
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkPowder_Meta_FromMessage(MilkPowder_Meta_t **self, MilkPowder_Message_t *item);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkPowder_Meta_ToMessage(const MilkPowder_Meta_t *self, const MilkPowder_Message_t **item);
+
 // Sysex
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
@@ -187,6 +199,12 @@ MilkPowder_Sysex_GetArgs(const MilkPowder_Sysex_t *self, void *obj, void (MilkTe
 
 MilkTea_API MilkTea_Exception_t MilkTea_CALL
 MilkPowder_Sysex_Dump(const MilkPowder_Sysex_t *self, void *obj, void (MilkTea_CALL *callback)(void *obj, const uint8_t *bytes, size_t len));
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkPowder_Sysex_FromMessage(MilkPowder_Sysex_t **self, MilkPowder_Message_t *item);
+
+MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkPowder_Sysex_ToMessage(const MilkPowder_Sysex_t *self, const MilkPowder_Message_t **item);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -227,7 +227,7 @@ class Dump final : public Command {
     return true;
   }
   void PreviewBody(MilkPowder::FileReader &reader) {
-    MilkPowder::MidiWrapper midi(reader);
+    auto midi = MilkPowder::MidiMutableWrapper::Parse(reader);
     // header chunk
     std::cout << "[HEADER]" << std::endl;
     std::cout << "type=MThd" << std::endl;
@@ -258,7 +258,8 @@ class Dump final : public Command {
           ShowMessagesVerbose(item);
         };
       }
-      track.GetMessages(callback);
+      auto messages = track.GetMessages();
+      std::for_each(messages.begin(), messages.end(), callback);
       std::cout << "[/CHUNK]" << std::endl;
     }
   }
@@ -308,7 +309,10 @@ class Dump final : public Command {
         std::cout << std::endl;
         MilkPowder::SysexConstWrapper sysex = message.ToSysex();
         uint32_t idx = 0;
-        std::function<void(uint32_t, const uint8_t *, uint32_t)> callback = [this, &idx](uint32_t delta, const uint8_t *args, uint32_t length) -> void {
+        std::function<void(const std::tuple<uint32_t, std::vector<uint8_t>> &)> callback = [this, &idx](const std::tuple<uint32_t, std::vector<uint8_t>> &vec) -> void {
+          uint32_t delta = std::get<0>(vec);
+          const uint8_t *args = std::get<1>(vec).data();
+          uint32_t length = std::get<1>(vec).size();
           if (idx == 0) {
             std::cout << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << std::endl;
             return;
@@ -316,7 +320,8 @@ class Dump final : public Command {
             std::cout << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << ", delta=" << MilkTea::ToStringHexFromVarLen(delta) << std::endl;
           }
         };
-        sysex.GetArgs(callback);
+        auto args = sysex.GetArgs();
+        std::for_each(args.begin(), args.end(), callback);
         break;
       }
       // assert

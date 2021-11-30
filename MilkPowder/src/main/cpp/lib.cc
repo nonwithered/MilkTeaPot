@@ -248,6 +248,10 @@ MilkTea_IMPL(MilkPowder_Message_GetType, (const MilkPowder_Message_t *self, uint
   *type = milkpowder_cast(self)->type();
 })
 
+MilkTea_IMPL(MilkPowder_Message_Dump, (const MilkPowder_Message_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
+  MilkPowder_Dump(self, obj, callback);
+})
+
 MilkTea_IMPL(MilkPowder_Message_FromEvent, (MilkPowder_Message_t **self, MilkPowder_Event_t *item), {
   MilkPowder_Message_From(self, item);
 })
@@ -282,10 +286,6 @@ MilkTea_IMPL(MilkPowder_Message_ToMeta, (const MilkPowder_Message_t *self, const
 
 MilkTea_IMPL(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, const MilkPowder_Sysex_t **item), {
   MilkPowder_Message_To<&milkpowder_cast_map<decltype(self)>::target::IsSysex>(self, item);
-})
-
-MilkTea_IMPL(MilkPowder_Message_Dump, (const MilkPowder_Message_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
-  MilkPowder_Dump(self, obj, callback);
 })
 
 // Event
@@ -334,6 +334,21 @@ MilkTea_IMPL(MilkPowder_Event_Dump, (const MilkPowder_Event_t *self, void *obj, 
   MilkPowder_Dump(self, obj, callback);
 })
 
+MilkTea_IMPL(MilkPowder_Event_FromMessage, (MilkPowder_Event_t **self, MilkPowder_Message_t *item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  if (!milkpowder_cast(item)->IsEvent()) {
+    MilkTea_throw(LogicError, "must ensure the type is matched");
+  }
+  *self = milkpowder_cast(dynamic_cast<MilkPowder::EventImpl *>(milkpowder_cast(item)));
+})
+
+MilkTea_IMPL(MilkPowder_Event_ToMessage, (const MilkPowder_Event_t *self, const MilkPowder_Message_t **item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl *>(milkpowder_cast(self)));
+})
+
 // Meta
 
 MilkTea_IMPL(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
@@ -380,6 +395,21 @@ MilkTea_IMPL(MilkPowder_Meta_Dump, (const MilkPowder_Meta_t *self, void *obj, vo
   MilkPowder_Dump(self, obj, callback);
 })
 
+MilkTea_IMPL(MilkPowder_Meta_FromMessage, (MilkPowder_Meta_t **self, MilkPowder_Message_t *item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  if (!milkpowder_cast(item)->IsMeta()) {
+    MilkTea_throw(LogicError, "must ensure the type is matched");
+  }
+  *self = milkpowder_cast(dynamic_cast<MilkPowder::MetaImpl *>(milkpowder_cast(item)));
+})
+
+MilkTea_IMPL(MilkPowder_Meta_ToMessage, (const MilkPowder_Meta_t *self, const MilkPowder_Message_t **item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl *>(milkpowder_cast(self)));
+})
+
 // Sysex
 
 MilkTea_IMPL(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
@@ -421,6 +451,21 @@ MilkTea_IMPL(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *ob
 
 MilkTea_IMPL(MilkPowder_Sysex_Dump, (const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
   MilkPowder_Dump(self, obj, callback);
+})
+
+MilkTea_IMPL(MilkPowder_Sysex_FromMessage, (MilkPowder_Sysex_t **self, MilkPowder_Message_t *item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  if (!milkpowder_cast(item)->IsSysex()) {
+    MilkTea_throw(LogicError, "must ensure the type is matched");
+  }
+  *self = milkpowder_cast(dynamic_cast<MilkPowder::SysexImpl *>(milkpowder_cast(item)));
+})
+
+MilkTea_IMPL(MilkPowder_Sysex_ToMessage, (const MilkPowder_Sysex_t *self, const MilkPowder_Message_t **item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl *>(milkpowder_cast(self)));
 })
 
 } // extern "C"

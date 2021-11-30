@@ -20,7 +20,7 @@ void MilkTea_CALL SoyMilk_BaseController_OnSubmit(void *self, MilkTea_ClosureTok
   });
 }
 void MilkTea_CALL SoyMilk_BaseController_OnPlay(void *self, int64_t time, uint16_t ntrk, MilkPowder_Message_t *message) {
-  BaseController_cast(self).OnPlay(SoyMilk::BaseController::duration_type(time), ntrk, MilkPowder::MessageWrapper(message));
+  BaseController_cast(self).OnPlay(SoyMilk::BaseController::duration_type(time), ntrk, MilkPowder::MessageMutableWrapper(message));
 }
 void MilkTea_CALL SoyMilk_BaseController_OnPrepare(void *self, int64_t time) {
   BaseController_cast(self).OnPrepare(SoyMilk::BaseController::duration_type(time));

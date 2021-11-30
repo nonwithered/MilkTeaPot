@@ -8,43 +8,48 @@
 
 namespace MilkPowder {
 
-class TrackConstInterface : virtual public TypeConstInterface<TypeSet::Track> {
+template<>
+class ConstInterface<TypeSet::Track> {
+  using RawType = typename RawTypeMap<TypeSet::Track>::target;
+ public:;
+  virtual const RawType *get() const = 0;
  public:
-  void GetMessages(std::function<void(MessageConstWrapper)> callback) const {
-    std::function<void(const RawTypeMap<TypeSet::Message>::target *)> callback_ = [callback](const RawTypeMap<TypeSet::Message>::target *message) -> void {
-      callback(MessageConstWrapper(message));
+  std::vector<ConstWrapper<TypeSet::Message>> GetMessages() const {
+    std::vector<ConstWrapper<TypeSet::Message>> result;
+    std::function<void(const RawTypeMap<TypeSet::Message>::target *)> callback = [&result](const RawTypeMap<TypeSet::Message>::target *message) -> void {
+      result.emplace_back(message);
     };
-    MilkTea_panic(MilkPowder_Track_GetMessages(Self(), &callback_, MilkTea::ClosureToken<decltype(callback_)>::Invoke));
+    MilkTea_panic(MilkPowder_Track_GetMessages(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    return result;
   }
 };
 
-class TrackConstWrapper final : virtual public TrackConstInterface {
-  friend class MidiConstInterface;
-  TypeConstWrapper(Track, TrackConstWrapper)
-};
+using TrackConstWrapper = ConstWrapper<TypeSet::Track>;
 
-class TrackInterface : virtual public TypeInterface<TypeSet::Track> {
+template<>
+class MutableInterface<TypeSet::Track> {
+  using RawType = typename RawTypeMap<TypeSet::Track>::target;
+ public:;
+  virtual RawType *get() = 0;
  public:
-  RawType *release() && {
-    return Move(std::forward<TypeInterface<TypeSet::Track>>(*this));
+  static MutableWrapper<TypeSet::Track> Parse(std::function<bool(uint8_t *)> callback) {
+    RawType *self = nullptr;
+    MilkTea_panic(RawParseMap<TypeSet::Track>::target(&self, &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    return self;
   }
-};
-
-class TrackWrapper final : virtual public TrackConstInterface, virtual public TrackInterface {
-  TypeWrapper(Track, TrackWrapper)
- public:
-  explicit TrackWrapper(std::function<bool(uint8_t *)> callback) : TrackWrapper() {
-    MilkTea_panic(MilkPowder_Track_Parse(addr(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
-  }
-  TrackWrapper(MessageWrapper items[], uint32_t length) : TrackWrapper() {
-    size_t size = static_cast<size_t>(length);
-    std::vector<RawTypeMap<TypeSet::Message>::target *> vec(size);
-    for (size_t i = 0; i != size; ++i) {
-      vec[i] = std::forward<MessageWrapper>(items[i]).release();
+  static MutableWrapper<TypeSet::Track> Make(std::vector<MutableWrapper<TypeSet::Message>> messages) {
+    RawType *self = nullptr;
+    uint32_t length = messages.size();
+    std::vector<RawTypeMap<TypeSet::Message>::target *> vec(length);
+    for (uint32_t i = 0; i != length; ++i) {
+      vec[i] = messages[i].release();
     }
-    MilkTea_panic(MilkPowder_Track_Create(addr(), vec.data(), length));
+    MilkTea_panic(RawCreateMap<TypeSet::Track>::target(&self, vec.data(), length));
+    return self;
   }
 };
+
+using TrackMutableWrapper = MutableWrapper<TypeSet::Track>;
 
 } // namespace MilkPowder
 #endif // ifdef __cplusplus

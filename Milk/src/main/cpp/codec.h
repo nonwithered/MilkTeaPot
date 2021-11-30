@@ -111,14 +111,14 @@ class Codec final : public Command {
   }
   void TornApart(const std::list<std::string_view> &filenames) {
     for (auto filename : filenames) {
-      MilkPowder::MidiWrapper midi;
+      MilkPowder::MidiMutableWrapper midi(nullptr);
       {
         MilkPowder::FileReader reader(filename);
         if (reader.NonOpen()) {
           std::cerr << "Failed to open: " << filename << std::endl;
           return;
         }
-        midi = MilkPowder::MidiWrapper(reader);
+        midi = MilkPowder::MidiMutableWrapper::Parse(reader);
       }
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
@@ -127,8 +127,8 @@ class Codec final : public Command {
         format = static_cast<uint16_t>(format_);
       }
       for (uint16_t idx = 0; idx != ntrks; ++idx) {
-        MilkPowder::TrackWrapper tracks[1] = { MilkPowder::TrackWrapper(midi.GetTrack(idx)) };
-        MilkPowder::MidiWrapper target(format, 1, division, tracks);
+        std::vector<MilkPowder::TrackMutableWrapper> tracks = { midi.GetTrack(idx) };
+        auto target = MilkPowder::MidiMutableWrapper::Make(format, division, std::move(tracks));
         MilkPowder::FileWriter writer(std::string(filename) + "." + MilkTea::ToStringHexFromU16(idx) + ".mid");
         if (writer.NonOpen()) {
           std::cerr << "Failed to open: " << filename << std::endl;
@@ -141,16 +141,16 @@ class Codec final : public Command {
   void GenTarget(const std::list<std::string_view> &filenames, std::string_view name) {
     int32_t f = format_;
     int32_t d = -1;
-    std::vector<MilkPowder::TrackWrapper> tracks;
+    std::vector<MilkPowder::TrackMutableWrapper> tracks;
     for (auto filename : filenames) {
-      MilkPowder::MidiWrapper midi;
+      MilkPowder::MidiMutableWrapper midi(nullptr);
       {
         MilkPowder::FileReader reader(filename);
         if (reader.NonOpen()) {
           std::cerr << "Failed to open: " << filename << std::endl;
           return;
         }
-        midi = MilkPowder::MidiWrapper(reader);
+        midi = MilkPowder::MidiMutableWrapper::Parse(reader);
       }
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
@@ -168,7 +168,7 @@ class Codec final : public Command {
     if (f == 0) {
       MergeTracks(tracks);
     }
-    MilkPowder::MidiWrapper target = MilkPowder::MidiWrapper(static_cast<uint16_t>(f), static_cast<uint16_t>(tracks.size()), static_cast<uint16_t>(d), tracks.data());
+    auto target = MilkPowder::MidiMutableWrapper::Make(static_cast<uint16_t>(f), static_cast<uint16_t>(d), std::move(tracks));
     MilkPowder::FileWriter writer(name);
     if (writer.NonOpen()) {
       std::cerr << "Failed to open: " << name << std::endl;
@@ -176,12 +176,10 @@ class Codec final : public Command {
     }
     target.Dump(writer);
   }
-  static void MergeTracks(std::vector<MilkPowder::TrackWrapper> &tracks) {
-    std::vector<MilkPowder::MessageWrapper> messages = MergeMsgs(GetMsgs(tracks));
-    tracks.clear();
-    tracks.emplace_back(messages.data(), static_cast<uint32_t>(messages.size()));
+  static void MergeTracks(std::vector<MilkPowder::TrackMutableWrapper> &tracks) {
+    tracks = { MilkPowder::TrackMutableWrapper::Make(MergeMsgs(GetMsgs(tracks))) };
   }
-  static std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> GetMsgs(const std::vector<MilkPowder::TrackWrapper> &tracks) {
+  static std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> GetMsgs(const std::vector<MilkPowder::TrackMutableWrapper> &tracks) {
     const size_t size = tracks.size();
     std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> message_vec(size);
     std::vector<uint64_t> delta_vec(size);
@@ -192,16 +190,17 @@ class Codec final : public Command {
         delta += item.GetDelta();
         messages.push_back(std::make_tuple(delta, item));
       };
-      tracks[i].GetMessages([&delta, &messages](MilkPowder::MessageConstWrapper item) -> void {
+      auto vec = tracks[i].GetMessages();
+      std::for_each(vec.begin(), vec.end(), [&delta, &messages](MilkPowder::MessageConstWrapper item) -> void {
         delta += item.GetDelta();
         messages.push_back(std::make_tuple(delta, item));
       });
     }
     return message_vec;
   }
-  static std::vector<MilkPowder::MessageWrapper> MergeMsgs(const std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> &messages) {
+  static std::vector<MilkPowder::MessageMutableWrapper> MergeMsgs(const std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> &messages) {
     const size_t size = messages.size();
-    std::vector<MilkPowder::MessageWrapper> messages_vec;
+    std::vector<MilkPowder::MessageMutableWrapper> messages_vec;
     std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>::const_iterator> itrs_vec(size);
     for (size_t i = 0; i != size; ++i) {
       itrs_vec[i] = messages[i].begin();
@@ -227,7 +226,7 @@ class Codec final : public Command {
         break;
       }
       const std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>::const_iterator itr = itrs_vec[idx - 1]++;
-      MilkPowder::MessageWrapper message(std::get<1>(*itr));
+      MilkPowder::MessageMutableWrapper message(std::get<1>(*itr));
       message.SetDelta(static_cast<uint32_t>(std::get<0>(*itr) - delta));
       messages_vec.emplace_back(std::move(message));
       delta = std::get<0>(*itr);

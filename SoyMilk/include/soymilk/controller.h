@@ -17,7 +17,7 @@ class BaseController {
   virtual ~BaseController() = default;
   virtual void Destroy() && = 0;
   virtual void OnSubmit(std::function<void()>) = 0;
-  virtual void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::MessageWrapper message) = 0;
+  virtual void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::MessageMutableWrapper message) = 0;
   virtual void OnPrepare(duration_type time) = 0;
   virtual void OnStart() = 0;
   virtual void OnPause(duration_type time) = 0;
@@ -50,8 +50,8 @@ class ControllerWrapper final : public BaseController {
   void OnSubmit(std::function<void()> submit) final {
     GetInterface().OnSubmit(GetObj(), MilkTea::ClosureToken<decltype(submit)>::ToRawType(submit), MilkTea::ClosureToken<decltype(submit)>::Invoke);
   };
-  void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::MessageWrapper message) final {
-    GetInterface().OnPlay(GetObj(), time.count(), ntrk, std::forward<MilkPowder::MessageWrapper>(message).release());
+  void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::MessageMutableWrapper message) final {
+    GetInterface().OnPlay(GetObj(), time.count(), ntrk, message.release());
   }
   void OnPrepare(duration_type time) final {
     GetInterface().OnPrepare(GetObj(), time.count());

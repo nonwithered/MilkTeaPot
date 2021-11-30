@@ -45,6 +45,29 @@ struct RawTypeMap<TypeSet::Sysex> {
 };
 
 template<TypeSet T>
+struct RawCreateMap;
+template<>
+struct RawCreateMap<TypeSet::Midi> {
+  static constexpr auto target = MilkPowder_Midi_Create;
+};
+template<>
+struct RawCreateMap<TypeSet::Track> {
+  static constexpr auto target = MilkPowder_Track_Create;
+};
+template<>
+struct RawCreateMap<TypeSet::Event> {
+  static constexpr auto target = MilkPowder_Event_Create;
+};
+template<>
+struct RawCreateMap<TypeSet::Meta> {
+  static constexpr auto target = MilkPowder_Meta_Create;
+};
+template<>
+struct RawCreateMap<TypeSet::Sysex> {
+  static constexpr auto target = MilkPowder_Sysex_Create;
+};
+
+template<TypeSet T>
 struct RawDestroyMap;
 template<>
 struct RawDestroyMap<TypeSet::Midi> {
@@ -126,104 +149,133 @@ struct RawDumpMap<TypeSet::Sysex> {
 };
 
 template<TypeSet T>
-class TypeConstInterface {
- protected:
+struct RawParseMap;
+template<>
+struct RawParseMap<TypeSet::Midi> {
+  static constexpr auto target = MilkPowder_Midi_Parse;
+};
+template<>
+struct RawParseMap<TypeSet::Track> {
+  static constexpr auto target = MilkPowder_Track_Parse;
+};
+template<>
+struct RawParseMap<TypeSet::Message> {
+  static constexpr auto target = MilkPowder_Message_Parse;
+};
+template<>
+struct RawParseMap<TypeSet::Event> {
+  static constexpr auto target = MilkPowder_Event_Parse;
+};
+template<>
+struct RawParseMap<TypeSet::Meta> {
+  static constexpr auto target = MilkPowder_Meta_Parse;
+};
+template<>
+struct RawParseMap<TypeSet::Sysex> {
+  static constexpr auto target = MilkPowder_Sysex_Parse;
+};
+
+template<TypeSet T>
+class ConstInterface {
   using RawType = typename RawTypeMap<T>::target;
-  virtual const RawType *Self() const = 0;
+ public:;
+  virtual const RawType *get() const = 0;
  public:
-  virtual ~TypeConstInterface() = default;
-  void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
-    MilkTea_panic(RawDumpMap<T>::target(Self(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  virtual ~ConstInterface() = default;
+};
+
+template<TypeSet T>
+class ConstWrapper final : public ConstInterface<T> {
+  using RawType = typename RawTypeMap<T>::target;
+ private:
+  const RawType *const self_;
+ public:
+  const RawType *get() const final {
+    return self_;
   }
- protected:
-  static RawType *Copy(const TypeConstInterface<T> &it) {
-    const RawType *another = it.Self();
-    if (another == nullptr) {
-      return nullptr;
-    }
-    RawType *addr = nullptr;
-    MilkTea::Defer defer([&addr]() -> void {
-      if (addr == nullptr) {
-        return;
-      }
-      MilkTea_panic(RawDestroyMap<T>::target(addr));
-    });
-    MilkTea_panic(RawCloneMap<T>::target(another, &addr));
-    RawType *result = nullptr;
-    std::swap(result, addr);
-    return result;
+ public:
+  ConstWrapper(const RawType *self) : self_(self) {}
+  void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
+    MilkTea_panic(RawDumpMap<T>::target(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
   }
 };
 
 template<TypeSet T>
-class TypeInterface : virtual public TypeConstInterface<T> {
- protected:
+class MutableInterface {
   using RawType = typename RawTypeMap<T>::target;
-  virtual RawType *Self() = 0;
-  virtual void Self(RawType *) = 0;
+ public:;
+  virtual RawType *get() = 0;
  public:
-  virtual ~TypeInterface() = default;
- protected:
-  void Delete() {
-    RawType *self = Self();
+  virtual ~MutableInterface() = default;
+};
+
+template<TypeSet T>
+class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T> {
+  using RawType = typename RawTypeMap<T>::target;
+ private:
+  RawType *self_;
+ public:
+  const RawType *get() const final {
+    return self_;
+  }
+  RawType *get() final {
+    return self_;
+  }
+ public:
+  MutableWrapper(RawType *self) : self_(self) {}
+  ~MutableWrapper() {
+    RawType *self = nullptr;
+    std::swap(self_, self);
     if (self == nullptr) {
       return;
     }
     MilkTea_panic(RawDestroyMap<T>::target(self));
-    Self(nullptr);
   }
-  static RawType *Move(TypeInterface<T> &&it) {
-    RawType *result = it.Self();
-    it.Self(nullptr);
-    return result;
+  MutableWrapper(const ConstWrapper<T> &another) : MutableWrapper(nullptr) {
+    const RawType *another_ = another.get();
+    if (another_ == nullptr) {
+      return;
+    }
+    RawType *self = nullptr;
+    MilkTea_panic(RawCloneMap<T>::target(another_, &self));
+    std::swap(self_, self);
+  }
+  MutableWrapper(const MutableWrapper<T> &another) : MutableWrapper(nullptr) {
+    const RawType *another_ = another.get();
+    if (another_ == nullptr) {
+      return;
+    }
+    RawType *self = nullptr;
+    MilkTea_panic(RawCloneMap<T>::target(another_, &self));
+    std::swap(self_, self);
+  }
+  MutableWrapper(MutableWrapper<T> &&another) : MutableWrapper(nullptr) {
+    std::swap(self_, another.self_);
+  }
+  void operator=(const ConstWrapper<T> &another) {
+    this->~MutableWrapper<T>();
+    new (this) MutableWrapper<T>(another);
+  }
+  void operator=(const MutableWrapper<T> &another) {
+    this->~MutableWrapper<T>();
+    new (this) MutableWrapper<T>(another);
+  }
+  void operator=(MutableWrapper<T> &&another) {
+    this->~MutableWrapper<T>();
+    new (this) MutableWrapper<T>(std::forward<MutableWrapper<T>>(another));
+  }
+  RawType *release() {
+    RawType *self = nullptr;
+    std::swap(self_, self);
+    return self;
+  }
+  void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
+    MilkTea_panic(RawDumpMap<T>::target(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
   }
 };
 
-#define TypeConstWrapper(T, C) \
- protected: \
-  using RawType = typename RawTypeMap<TypeSet::T>::target; \
-  const RawType *Self() const final { \
-    return self_; \
-  } \
- private: \
-  explicit C(const RawType *self) : self_(self) {} \
-  const RawType *self_;
-
-#define TypeWrapper(T, C) \
- protected: \
-  using RawType = typename RawTypeMap<TypeSet::T>::target; \
-  const RawType *Self() const final { \
-    return self_; \
-  } \
-  RawType *Self() final { \
-    return self_; \
-  } \
-  void Self(RawType *self) final { \
-    self_ = self; \
-  } \
- private: \
-  RawType *self_; \
- public: \
-  explicit C(RawType *self = nullptr) : self_(self) {} \
-  ~C() final { \
-    Delete(); \
-  } \
-  C(const TypeConstInterface<TypeSet::T> &another) : C(Copy(another)) {} \
-  C(TypeInterface<TypeSet::T> &&another) : C(Move(std::forward<TypeInterface<TypeSet::T>>(another))) {} \
-  void operator=(const TypeConstInterface<TypeSet::T> &another) { \
-    Delete(); \
-    Self(Copy(another)); \
-  } \
-  void operator=(TypeInterface<TypeSet::T> &&another) { \
-    Delete(); \
-    Self(Move(std::forward<TypeInterface<TypeSet::T>>(another))); \
-  } \
- private: \
-  RawType **addr() { \
-    return &self_; \
-  }
-
 } // namespace MilkPowder
+
 #endif // ifdef __cplusplus
 
 #endif // ifndef LIB_MILKPOWDER_HOLDER_H_

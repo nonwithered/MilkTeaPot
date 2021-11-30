@@ -6,45 +6,49 @@
 #include <milkpowder/holder.h>
 #include <functional>
 #include <tuple>
+#include <array>
 
 namespace MilkPowder {
 
-class EventConstInterface : virtual public TypeConstInterface<TypeSet::Event> {
+template<>
+class ConstInterface<TypeSet::Event> {
+  using RawType = typename RawTypeMap<TypeSet::Event>::target;
+ public:;
+  virtual const RawType *get() const = 0;
  public:
   uint8_t GetType() const {
     uint8_t result = 0;
-    MilkTea_panic(MilkPowder_Event_GetType(Self(), &result));
+    MilkTea_panic(MilkPowder_Event_GetType(get(), &result));
     return result;
   }
-  std::tuple<uint8_t, uint8_t> GetArgs() const {
-    uint8_t result[2] = {0};
-    MilkTea_panic(MilkPowder_Event_GetArgs(Self(), result));
-    return std::make_tuple(result[0], result[1]);
+  std::array<uint8_t, 2> GetArgs() const {
+    std::array<uint8_t, 2> result{};
+    MilkTea_panic(MilkPowder_Event_GetArgs(get(), result.data()));
+    return result;
   }
 };
 
-class EventConstWrapper final : virtual public EventConstInterface {
-  friend class MessageConstInterface;
-  TypeConstWrapper(Event, EventConstWrapper)
-};
+using EventConstWrapper = ConstWrapper<TypeSet::Event>;
 
-class EventInterface : virtual public TypeInterface<TypeSet::Event> {
+template<>
+class MutableInterface<TypeSet::Event> {
+  using RawType = typename RawTypeMap<TypeSet::Event>::target;
+ public:;
+  virtual RawType *get() = 0;
  public:
-  RawType *release() && {
-    return Move(std::forward<TypeInterface<TypeSet::Event>>(*this));
+  static MutableWrapper<TypeSet::Event> Parse(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) {
+    RawType *self = nullptr;
+    MilkTea_panic(RawParseMap<TypeSet::Event>::target(&self, &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke, last));
+    return self;
+  }
+  static MutableWrapper<TypeSet::Event> Make(uint32_t delta, uint8_t type, std::array<uint8_t, 2> args) {
+    RawType *self = nullptr;
+    MilkTea_panic(RawCreateMap<TypeSet::Event>::target(&self, delta, type, args[0], args[1]));
+    return self;
   }
 };
 
-class EventWrapper final : virtual public EventConstInterface, virtual public EventInterface {
-  TypeWrapper(Event, EventWrapper)
- public:
-  explicit EventWrapper(std::function<bool(uint8_t *)> callback, uint8_t last = 0xff) : EventWrapper() {
-    MilkTea_panic(MilkPowder_Event_Parse(addr(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke, last));
-  }
-  EventWrapper(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : EventWrapper() {
-    MilkTea_panic(MilkPowder_Event_Create(addr(), delta, type, std::get<0>(args), std::get<1>(args)));
-  }
-};
+using EventMutableWrapper = MutableWrapper<TypeSet::Event>;
 
 } // namespace MilkPowder
 #endif // ifdef __cplusplus
