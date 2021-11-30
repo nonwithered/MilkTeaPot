@@ -36,11 +36,11 @@ inline const char *MilkTea_Exception_Name(MilkTea_Exception_t type) {
   }
 }
 
-MilkTea_API const char * MilkTea_CALL
+MilkTea_api const char * MilkTea_call
 MilkTea_Exception_What();
 
 MilkTea_NORETURN
-MilkTea_API void MilkTea_CALL
+MilkTea_api void MilkTea_call
 MilkTea_Exception_Throw(MilkTea_Exception_t, const char *);
 
 #define MilkTea_throw(type, what) MilkTea_block({ \
@@ -131,7 +131,7 @@ inline void Throw(Type type, std::string_view what) {
   MilkTea_Exception_Throw(ToRawType(type), what.data());
 }
 
-MilkTea_API Type MilkTea_CALL
+MilkTea_api Type MilkTea_call
 Unwrap(std::exception *e);
 
 } // namespace Exception

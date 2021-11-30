@@ -26,7 +26,7 @@ class BaseHandle {
   virtual void ChannelPressure(uint8_t channel, uint8_t pressure) = 0;
   virtual void PitchBend(uint8_t channel, uint8_t low, uint8_t height) = 0;
  private:
-  static MilkTea_API const SoyBean_Handle_Interface_t & MilkTea_CALL Interface();
+  static MilkTea_api const SoyBean_Handle_Interface_t & MilkTea_call Interface();
 };
 
 class HandleWrapper final : public BaseHandle {
@@ -94,7 +94,7 @@ class BaseFactory {
   virtual void Destroy() && = 0;
   virtual std::unique_ptr<BaseHandle> Create() = 0;
  private:
-  static MilkTea_API const SoyBean_Factory_Interface_t & MilkTea_CALL Interface();
+  static MilkTea_api const SoyBean_Factory_Interface_t & MilkTea_call Interface();
 };
 
 class FactoryWrapper final : public BaseFactory {

@@ -11,23 +11,23 @@ MilkTea::BaseLogger &BaseLogger_cast(void *self) {
   return *reinterpret_cast<MilkTea::BaseLogger *>(self);
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_Interface_Deleter(void *self) {
+void MilkTea_call MilkTea_BaseLogger_Interface_Deleter(void *self) {
   std::move(BaseLogger_cast(self)).Destroy();
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_Interface_Debug(void *self, const char *tag, const char *msg) {
+void MilkTea_call MilkTea_BaseLogger_Interface_Debug(void *self, const char *tag, const char *msg) {
   BaseLogger_cast(self).Debug(tag, msg);
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_Interface_Info(void *self, const char *tag, const char *msg) {
+void MilkTea_call MilkTea_BaseLogger_Interface_Info(void *self, const char *tag, const char *msg) {
   BaseLogger_cast(self).Info(tag, msg);
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_Interface_Warn(void *self, const char *tag, const char *msg) {
+void MilkTea_call MilkTea_BaseLogger_Interface_Warn(void *self, const char *tag, const char *msg) {
   BaseLogger_cast(self).Warn(tag, msg);
 }
 
-void MilkTea_CALL MilkTea_BaseLogger_Interface_Error(void *self, const char *tag, const char *msg) {
+void MilkTea_call MilkTea_BaseLogger_Interface_Error(void *self, const char *tag, const char *msg) {
   BaseLogger_cast(self).Error(tag, msg);
 }
 

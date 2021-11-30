@@ -9,18 +9,18 @@ extern "C" {
 #endif
 
 struct Milk_Config_t {
-  MilkTea_Logger_t (MilkTea_CALL *Make_MilkTea_Logger_)(MilkTea_Logger_Level_t level);
-  MilkTea_Exception_t (MilkTea_CALL *Make_SoyBean_Factory_)(SoyBean_Factory_t *factory);
+  MilkTea_Logger_t (MilkTea_call *Make_MilkTea_Logger_)(MilkTea_Logger_Level_t level);
+  MilkTea_Exception_t (MilkTea_call *Make_SoyBean_Factory_)(SoyBean_Factory_t *factory);
 };
 
 #ifndef __cplusplus
 typedef struct Milk_Config_t Milk_Config_t;
 #endif
 
-MilkTea_API MilkTea_Exception_t MilkTea_CALL
+MilkTea_api MilkTea_Exception_t MilkTea_call
 Milk_Init(Milk_Config_t);
 
-MilkTea_API int MilkTea_CALL
+MilkTea_api int MilkTea_call
 Milk_Main(int argc, char *argv[]);
 
 #ifdef __cplusplus

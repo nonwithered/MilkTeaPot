@@ -5,42 +5,42 @@
 #define MilkTea_WIN
 #endif
 
-#ifndef MilkTea_API
+#ifndef MilkTea_api
   #ifdef MilkTea_WIN
     #ifdef MilkTea_dynlink
-      #define MilkTea_API __declspec(dllimport)
+      #define MilkTea_api __declspec(dllimport)
     #else // ifdef MilkTea_dynlink
-      #define MilkTea_API __declspec(dllexport)
+      #define MilkTea_api __declspec(dllexport)
     #endif // ifdef MilkTea_dynlink
   #endif // ifdef MilkTea_WIN
-#endif // ifndef MilkTea_API
+#endif // ifndef MilkTea_api
 
-#ifndef MilkTea_API
+#ifndef MilkTea_api
   #ifdef __GNUC__
-    #define MilkTea_API __attribute__((visibility("default")))
+    #define MilkTea_api __attribute__((visibility("default")))
   #endif // ifdef __GNUC__
-#endif // ifndef MilkTea_API
+#endif // ifndef MilkTea_api
 
-#ifndef MilkTea_API
-#define MilkTea_API
+#ifndef MilkTea_api
+#define MilkTea_api
 #endif
 
-#ifndef MilkTea_CALL
+#ifndef MilkTea_call
   #ifdef MilkTea_WIN
-    #define MilkTea_CALL __stdcall
+    #define MilkTea_call __stdcall
   #endif // ifdef MilkTea_WIN
-#endif // ifndef MilkTea_CALL
+#endif // ifndef MilkTea_call
 
-#ifndef MilkTea_CALL
+#ifndef MilkTea_call
   #ifdef __GNUC__
     #ifdef __i386__
-      #define MilkTea_CALL __attribute__((__stdcall__))
+      #define MilkTea_call __attribute__((__stdcall__))
     #endif // ifdef __i386__
   #endif // ifdef __GNUC__
-#endif // ifndef MilkTea_CALL
+#endif // ifndef MilkTea_call
 
-#ifndef MilkTea_CALL
-#define MilkTea_CALL
+#ifndef MilkTea_call
+#define MilkTea_call
 #endif
 
 #ifdef MilkTea_WIN
@@ -51,7 +51,7 @@
 
 #ifdef __cplusplus
 
-#define MilkTea_IMPL(section, list, block) \
+#define MilkTea_extern(section, list, block) \
 MilkTea_Exception_t \
 section list { \
   MilkTea_logD("begin " #section); \

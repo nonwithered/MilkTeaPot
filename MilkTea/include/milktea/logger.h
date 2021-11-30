@@ -20,11 +20,11 @@ typedef enum MilkTea_Logger_Level_t MilkTea_Logger_Level_t;
 #endif // ifndef __cplusplus
 
 struct MilkTea_Logger_Interface_t {
-  void (MilkTea_CALL *Deleter)(void *self);
-  void (MilkTea_CALL *Debug)(void *self, const char *tag, const char *msg);
-  void (MilkTea_CALL *Info)(void *self, const char *tag, const char *msg);
-  void (MilkTea_CALL *Warn)(void *self, const char *tag, const char *msg);
-  void (MilkTea_CALL *Error)(void *self, const char *tag, const char *msg);
+  void (MilkTea_call *Deleter)(void *self);
+  void (MilkTea_call *Debug)(void *self, const char *tag, const char *msg);
+  void (MilkTea_call *Info)(void *self, const char *tag, const char *msg);
+  void (MilkTea_call *Warn)(void *self, const char *tag, const char *msg);
+  void (MilkTea_call *Error)(void *self, const char *tag, const char *msg);
 };
 
 #ifndef __cplusplus
@@ -41,13 +41,13 @@ struct MilkTea_Logger_t {
 typedef struct MilkTea_Logger_t MilkTea_Logger_t;
 #endif // ifndef __cplusplus
 
-MilkTea_API bool MilkTea_CALL
+MilkTea_api bool MilkTea_call
 MilkTea_Logger_Config(MilkTea_Logger_t logger);
 
-MilkTea_API MilkTea_Logger_Level_t MilkTea_CALL
+MilkTea_api MilkTea_Logger_Level_t MilkTea_call
 MilkTea_Logger_GetLevel();
 
-MilkTea_API void MilkTea_CALL
+MilkTea_api void MilkTea_call
 MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *msg);
 
 #ifdef __cplusplus
@@ -159,7 +159,7 @@ class BaseLogger {
     return level_;
   }
  private:
-  static MilkTea_API const MilkTea_Logger_Interface_t & MilkTea_CALL Interface();
+  static MilkTea_api const MilkTea_Logger_Interface_t & MilkTea_call Interface();
   Logger::Level level_;
 };
 

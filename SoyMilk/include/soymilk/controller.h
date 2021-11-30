@@ -28,7 +28,7 @@ class BaseController {
   virtual void OnComplete() = 0;
   virtual void OnReset() = 0;
  private:
-  MilkTea_API SoyMilk_Player_Controller_t MilkTea_CALL ToRawType() &&;
+  MilkTea_api SoyMilk_Player_Controller_t MilkTea_call ToRawType() &&;
 };
 class ControllerWrapper final : public BaseController {
  public:

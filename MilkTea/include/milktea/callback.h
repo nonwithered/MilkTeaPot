@@ -5,7 +5,7 @@
 
 struct MilkTea_ClosureToken_t {
   void *self_;
-  void (MilkTea_CALL *deleter_)(void *);
+  void (MilkTea_call *deleter_)(void *);
 };
 
 #ifndef __cplusplus
@@ -21,7 +21,7 @@ namespace MilkTea {
 template<typename Res, typename... Args>
 class ClosureToken {
  public:
-  static Res MilkTea_CALL Invoke(void *self, Args... args) {
+  static Res MilkTea_call Invoke(void *self, Args... args) {
     std::function<Res(Args...)> &callback_ = *reinterpret_cast<std::function<Res(Args...)> *>(self);
     return callback_(args...);
   }
@@ -40,7 +40,7 @@ class ClosureToken {
     };
   }
  private:
-  static void MilkTea_CALL Deteler(void *self) {
+  static void MilkTea_call Deteler(void *self) {
     delete reinterpret_cast<std::function<Res(Args...)> *>(self);
   }
   static constexpr char TAG[] = "MilkTea#ClosureToken";

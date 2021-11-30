@@ -30,11 +30,11 @@ std::vector<std::unique_ptr<Milk::Command>> Cmds() {
 
 extern "C" {
 
-MilkTea_IMPL(Milk_Init, (Milk_Config_t config), {
+MilkTea_extern(Milk_Init, (Milk_Config_t config), {
   Milk::ConfigWrapper::Instance(new Milk::ConfigWrapper(Milk::ConfigWrapper::FromRawType(std::move(config))));
 })
 
-MilkTea_API int MilkTea_CALL
+MilkTea_api int MilkTea_call
 Milk_Main(int argc, char *argv[]) try {
   Milk::ConfigWrapper::Instance();
   Milk::Command::LaunchMain(Args(argc, argv), Cmds());

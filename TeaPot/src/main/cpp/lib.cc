@@ -63,46 +63,46 @@ typename timer_cast_map<T>::target *timer_cast(T &self) {
 
 extern "C" {
 
-MilkTea_IMPL(TeaPot_TimerFuture_Destroy, (TeaPot_TimerFuture_t *self), {
+MilkTea_extern(TeaPot_TimerFuture_Destroy, (TeaPot_TimerFuture_t *self), {
   MilkTea_nonnull(self);
   delete &timer_cast(self);
 });
 
-MilkTea_IMPL(TeaPot_TimerFuture_Cancel, (TeaPot_TimerFuture_t *self, bool *success), {
+MilkTea_extern(TeaPot_TimerFuture_Cancel, (TeaPot_TimerFuture_t *self, bool *success), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
   *success = timer_cast(self)->Cancel();
 });
 
-MilkTea_IMPL(TeaPot_TimerFuture_GetState, (TeaPot_TimerFuture_t *self, TeaPot_TimerFuture_State_t *state), {
+MilkTea_extern(TeaPot_TimerFuture_GetState, (TeaPot_TimerFuture_t *self, TeaPot_TimerFuture_State_t *state), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(state);
   *state = TeaPot::TimerFuture::ToRawType(timer_cast(self)->state());
 });
 
-MilkTea_IMPL(TeaPot_TimerFuture_GetTime, (TeaPot_TimerFuture_t *self, int64_t *time), {
+MilkTea_extern(TeaPot_TimerFuture_GetTime, (TeaPot_TimerFuture_t *self, int64_t *time), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(time);
   *time = timer_cast(self)->time().time_since_epoch().count();
 });
 
-MilkTea_IMPL(TeaPot_TimerTask_Destroy, (TeaPot_TimerTask_t *self), {
+MilkTea_extern(TeaPot_TimerTask_Destroy, (TeaPot_TimerTask_t *self), {
   MilkTea_nonnull(self);
   delete &timer_cast(self);
 });
 
-MilkTea_IMPL(TeaPot_TimerTask_GetFuture, (TeaPot_TimerTask_t *self, TeaPot_TimerFuture_t **future), {
+MilkTea_extern(TeaPot_TimerTask_GetFuture, (TeaPot_TimerTask_t *self, TeaPot_TimerFuture_t **future), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(future);
   *future = timer_cast(*new TeaPot::future_type(timer_cast(self)->future()));
 });
 
-MilkTea_IMPL(TeaPot_TimerTask_Run, (TeaPot_TimerTask_t *self), {
+MilkTea_extern(TeaPot_TimerTask_Run, (TeaPot_TimerTask_t *self), {
   MilkTea_nonnull(self);
   timer_cast(self)->Run();
 });
 
-MilkTea_IMPL(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, MilkTea_ClosureToken_t obj, bool (MilkTea_CALL *on_terminate)(void *obj, MilkTea_Exception_t exception, const char *what)), {
+MilkTea_extern(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, MilkTea_ClosureToken_t obj, bool (MilkTea_call *on_terminate)(void *obj, MilkTea_Exception_t exception, const char *what)), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(on_terminate);
   auto do_terminate = MilkTea::ClosureToken<bool(MilkTea_Exception_t, const char *)>::FromRawType(obj, on_terminate);
@@ -114,25 +114,25 @@ MilkTea_IMPL(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, MilkTea_Cl
   *self = timer_cast(*new TeaPot::worker_type(std::move(worker)));
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_Destroy, (TeaPot_TimerWorker_t *self), {
+MilkTea_extern(TeaPot_TimerWorker_Destroy, (TeaPot_TimerWorker_t *self), {
   MilkTea_nonnull(self);
   auto worker = std::move(timer_cast(self));
   delete &timer_cast(self);
   TeaPot::worker_raw::Close(std::move(worker));
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_Start, (TeaPot_TimerWorker_t *self), {
+MilkTea_extern(TeaPot_TimerWorker_Start, (TeaPot_TimerWorker_t *self), {
   MilkTea_nonnull(self);
   timer_cast(self)->Start();
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_GetState, (TeaPot_TimerWorker_t *self, TeaPot_TimerWorker_State_t *state), {
+MilkTea_extern(TeaPot_TimerWorker_GetState, (TeaPot_TimerWorker_t *self, TeaPot_TimerWorker_State_t *state), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(state);
   *state = TeaPot::TimerWorker::ToRawType(timer_cast(self)->state());
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_Post, (TeaPot_TimerWorker_t *self, TeaPot_TimerFuture_t **future, int64_t delay, MilkTea_ClosureToken_t obj, void (MilkTea_CALL *action)(void *obj)), {
+MilkTea_extern(TeaPot_TimerWorker_Post, (TeaPot_TimerWorker_t *self, TeaPot_TimerFuture_t **future, int64_t delay, MilkTea_ClosureToken_t obj, void (MilkTea_call *action)(void *obj)), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(action);
   if (delay < 0) {
@@ -145,13 +145,13 @@ MilkTea_IMPL(TeaPot_TimerWorker_Post, (TeaPot_TimerWorker_t *self, TeaPot_TimerF
   }
 });
 
-MilkTea_IMPL(TeaPot_TimerWorker_Shutdown, (TeaPot_TimerWorker_t *self, bool *success), {
+MilkTea_extern(TeaPot_TimerWorker_Shutdown, (TeaPot_TimerWorker_t *self, bool *success), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
   *success = timer_cast(self)->Shutdown();
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, void *obj, void (MilkTea_CALL *callback)(void *obj, uint32_t size, TeaPot_TimerTask_t **tasks)), {
+MilkTea_extern(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, void *obj, void (MilkTea_call *callback)(void *obj, uint32_t size, TeaPot_TimerTask_t **tasks)), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(callback);
   bool success;
@@ -167,7 +167,7 @@ MilkTea_IMPL(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, void *
   }
 });
 
-MilkTea_IMPL(TeaPot_TimerWorker_AwaitTermination, (TeaPot_TimerWorker_t *self, int64_t delay, bool *success), {
+MilkTea_extern(TeaPot_TimerWorker_AwaitTermination, (TeaPot_TimerWorker_t *self, int64_t delay, bool *success), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
   if (delay < 0) {
@@ -181,18 +181,18 @@ MilkTea_IMPL(TeaPot_TimerWorker_AwaitTermination, (TeaPot_TimerWorker_t *self, i
   }
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_Weak_Create, (TeaPot_TimerWorker_Weak_t **self, TeaPot_TimerWorker_t *target), {
+MilkTea_extern(TeaPot_TimerWorker_Weak_Create, (TeaPot_TimerWorker_Weak_t **self, TeaPot_TimerWorker_t *target), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(target);
   *self = timer_cast(*new TeaPot::worker_weak(timer_cast(target)));
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_Weak_Destroy, (TeaPot_TimerWorker_Weak_t *self), {
+MilkTea_extern(TeaPot_TimerWorker_Weak_Destroy, (TeaPot_TimerWorker_Weak_t *self), {
   MilkTea_nonnull(self);
   delete &timer_cast(self);
 })
 
-MilkTea_IMPL(TeaPot_TimerWorker_Weak_Try, (TeaPot_TimerWorker_Weak_t *self, TeaPot_TimerWorker_t **target), {
+MilkTea_extern(TeaPot_TimerWorker_Weak_Try, (TeaPot_TimerWorker_Weak_t *self, TeaPot_TimerWorker_t **target), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(target);
   auto strong = timer_cast(self).lock();
