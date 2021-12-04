@@ -1,4 +1,4 @@
-#include <soymilk.h>
+#include <soymilk/wrapper/controller.h>
 
 namespace {
 
@@ -50,7 +50,11 @@ void MilkTea_call SoyMilk_BaseController_OnReset(void *self) {
   BaseController_cast(self).OnReset();
 }
 
-const SoyMilk_Player_Controller_Interface_t &SoyMilk_BaseController_Interface_Instance() {
+} // namespace
+
+namespace SoyMilk {
+
+const SoyMilk_Player_Controller_Interface_t &BaseController::Interface() {
   static const SoyMilk_Player_Controller_Interface_t interface_{
     .Deleter = SoyMilk_BaseController_Deleter,
     .OnSubmit = SoyMilk_BaseController_OnSubmit,
@@ -66,17 +70,6 @@ const SoyMilk_Player_Controller_Interface_t &SoyMilk_BaseController_Interface_In
     .OnReset = SoyMilk_BaseController_OnReset,
   };
   return interface_;
-}
-
-} // namespace
-
-namespace SoyMilk {
-
-SoyMilk_Player_Controller_t BaseController::ToRawType() && {
-  return SoyMilk_Player_Controller_t{
-    .self_ = this,
-    .interface_ = &SoyMilk_BaseController_Interface_Instance(),
-  };
 }
 
 } // namespace SoyMilk

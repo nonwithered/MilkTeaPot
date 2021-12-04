@@ -9,7 +9,7 @@ class PlayerImpl final {
  public:
   ~PlayerImpl();
  private:
-  static constexpr char TAG[] = "SoyMilk#Player";
+  static constexpr char TAG[] = "SoyMilk::PlayerImpl";
 };
 
 } // namespace SoyBean_Windows

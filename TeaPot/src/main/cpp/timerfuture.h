@@ -6,7 +6,7 @@
 #include <memory>
 #include <functional>
 
-#include <teapot.h>
+#include <teapot/common.h>
 
 namespace TeaPot {
 
@@ -19,6 +19,7 @@ class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImp
   friend class TimerTaskImpl;
   friend class TimerWorkerImpl;
   using State = TimerFuture::State;
+  using time_point_type = TimerUnit::time_point_type;
  public:
   static future_type Make(time_point_type time) {
     return future_type(new TimerFutureImpl(time));
@@ -57,7 +58,7 @@ class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImp
   std::function<void(future_type)> on_cancel_;
   MilkTea_NonCopy(TimerFutureImpl)
   MilkTea_NonMove(TimerFutureImpl)
-  static constexpr char TAG[] = "TeaPot#TimerFuture";
+  static constexpr char TAG[] = "TeaPot::TimerFutureImpl";
 };
 
 } // namespace TeaPot

@@ -3,7 +3,7 @@
 
 #include <soybean.h>
 
-#include "wrapper.h"
+#include "proxy.h"
 
 namespace SoyBean_Windows {
 
@@ -22,8 +22,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
     ThrowOrNot(Proxy_midiOutClose(self_));
     self_ = nullptr;
   }
-  std::unique_ptr<BaseHandle> Move() && final {
-    return std::make_unique<HandleImpl>(std::forward<HandleImpl>(*this));
+  BaseHandle *Move() && final {
+    return new HandleImpl(std::forward<HandleImpl>(*this));
   }
   void Destroy() && final {
     delete this;
@@ -96,7 +96,7 @@ class HandleImpl final : public SoyBean::BaseHandle {
   }
   HandleImpl() : self_(nullptr) {}
   Proxy_HMIDIOUT self_;
-  static constexpr char TAG[] = "handle";
+  static constexpr char TAG[] = "SoyBean_Windows::HandleImpl";
   MilkTea_NonCopy(HandleImpl)
   MilkTea_NonMoveAssign(HandleImpl)
 };

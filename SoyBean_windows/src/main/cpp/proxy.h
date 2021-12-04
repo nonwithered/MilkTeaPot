@@ -1,5 +1,5 @@
-#ifndef SOYBEAN_WINDOWS_WRAPPER_H_
-#define SOYBEAN_WINDOWS_WRAPPER_H_
+#ifndef SOYBEAN_WINDOWS_PROXY_H_
+#define SOYBEAN_WINDOWS_PROXY_H_
 
 #include <cstdint>
 
@@ -7,7 +7,6 @@ namespace SoyBean_Windows {
 
 struct Proxy_HMIDIOUT_t;
 using Proxy_HMIDIOUT = Proxy_HMIDIOUT_t *;
-
 using Proxy_MMRESULT = unsigned int;
 
 Proxy_MMRESULT Proxy_midiOutOpen(Proxy_HMIDIOUT *p, unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen);
@@ -24,7 +23,8 @@ constexpr Proxy_MMRESULT Proxy_MIDIERR_INVALIDSETUP = Proxy_MIDIERR_BASE + 5;
 constexpr Proxy_MMRESULT Proxy_MIDIERR_BADOPENMODE = Proxy_MIDIERR_BASE + 6;
 constexpr Proxy_MMRESULT Proxy_MIDIERR_DONT_CONTINUE = Proxy_MIDIERR_BASE + 7;
 
-inline const char *Proxy_MMRESULT_What(Proxy_MMRESULT result) {
+inline
+const char *Proxy_MMRESULT_What(Proxy_MMRESULT result) {
   switch (result) {
     case Proxy_MIDIERR_UNPREPARED: return "MIDIERR_UNPREPARED";
     case Proxy_MIDIERR_STILLPLAYING: return "MIDIERR_STILLPLAYING";
@@ -40,4 +40,4 @@ inline const char *Proxy_MMRESULT_What(Proxy_MMRESULT result) {
 
 } // namespace SoyBean_Windows
 
-#endif // ifndef SOYBEAN_WINDOWS_WRAPPER_H_
+#endif // ifndef SOYBEAN_WINDOWS_PROXY_H_

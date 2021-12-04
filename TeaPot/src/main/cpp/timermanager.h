@@ -52,7 +52,7 @@ class TimerManagerImpl final : public std::enable_shared_from_this<TimerManagerI
   std::mutex lock_;
   MilkTea_NonCopy(TimerManagerImpl)
   MilkTea_NonMove(TimerManagerImpl)
-  static constexpr char TAG[] = "MilkTea#TimerManager";
+  static constexpr char TAG[] = "MilkTea::TimerManagerImpl";
 };
 
 class TimerBinderImpl final {
@@ -86,7 +86,7 @@ class TimerBinderImpl final {
   }
   worker_weak worker_;
   std::shared_ptr<std::mutex> lock_;
-  static constexpr char TAG[] = "TeaPot#TimerHolder";
+  static constexpr char TAG[] = "TeaPot::TimerBinderImpl";
 };
 
 } // namespace TeaPot

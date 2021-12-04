@@ -2,6 +2,7 @@
 #define LIB_SOYMILK_H_
 
 #include <soymilk/core.h>
-#include <soymilk/controller.h>
+#include <soymilk/common.h>
+#include <soymilk/wrapper.h>
 
 #endif // ifndef LIB_SOYMILK_H_

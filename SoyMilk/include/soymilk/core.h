@@ -45,7 +45,7 @@ struct SoyMilk_Player_Controller_t {
 };
 
 #ifndef __cplusplus
-typedef struct SoyMilk_Player_Callback_t SoyMilk_Player_Callback_t;
+typedef struct SoyMilk_Player_Controller_t SoyMilk_Player_Controller_t;
 #endif
 
 struct SoyMilk_Player_t;

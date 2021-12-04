@@ -1,10 +1,10 @@
-#include <milktea.h>
-
 #include "timerworker.h"
+
+using duration_type = TeaPot::TimerUnit::duration_type;
 
 namespace {
 
-constexpr char TAG[] = "TeaPot#extern";
+constexpr char TAG[] = "TeaPot";
 
 template<typename T>
 struct timer_cast_map;
@@ -139,7 +139,7 @@ MilkTea_extern(TeaPot_TimerWorker_Post, (TeaPot_TimerWorker_t *self, TeaPot_Time
     MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
   }
   auto do_action = MilkTea::ClosureToken<void()>::FromRawType(obj, action);
-  auto future_ = timer_cast(self)->Post(TeaPot::duration_type(delay), do_action);
+  auto future_ = timer_cast(self)->Post(duration_type(delay), do_action);
   if (future != nullptr) {
     *future = timer_cast(*new TeaPot::future_type(std::move(future_)));
   }
@@ -174,7 +174,7 @@ MilkTea_extern(TeaPot_TimerWorker_AwaitTermination, (TeaPot_TimerWorker_t *self,
     MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
   }
   if (delay > 0) {
-    *success = timer_cast(self)->AwaitTermination(TeaPot::duration_type(delay));
+    *success = timer_cast(self)->AwaitTermination(duration_type(delay));
   } else {
     timer_cast(self)->AwaitTermination();
     *success = true;

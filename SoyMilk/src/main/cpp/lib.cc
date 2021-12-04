@@ -1,10 +1,10 @@
-#include <soymilk.h>
+#include <soymilk/common.h>
 
 #include "player.h"
 
 namespace {
 
-constexpr char TAG[] = "SoyMilk#extern";
+constexpr char TAG[] = "SoyMilk";
 
 } // namespace
 

@@ -27,18 +27,4 @@ Milk_Main(int argc, char *argv[]);
 } // extern "C"
 #endif
 
-#ifdef __cplusplus
-namespace Milk {
-
-inline void Init(Milk_Config_t config) {
-  MilkTea_panic(Milk_Init(config));
-}
-
-inline int Main(int argc, char *argv[]) {
-  return Milk_Main(argc, argv);
-}
-
-} // namespace Milk
-#endif // ifdef __cplusplus
-
 #endif // ifndef LIB_MILK_CORE_H_

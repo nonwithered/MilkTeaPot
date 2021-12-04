@@ -11,9 +11,6 @@ class FactoryImpl final : public SoyBean::BaseFactory {
  public:
   FactoryImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen)
   : enable_(true), uDeviceID_(uDeviceID), dwCallback_(dwCallback), dwInstance_(dwInstance), fdwOpen_(fdwOpen) {}
-  std::unique_ptr<BaseFactory> Move() && final {
-    return std::make_unique<FactoryImpl>(std::forward<FactoryImpl>(*this));
-  }
   FactoryImpl(FactoryImpl &&another) : FactoryImpl() {
     std::swap(enable_, another.enable_);
     std::swap(uDeviceID_, another.uDeviceID_);
@@ -27,6 +24,9 @@ class FactoryImpl final : public SoyBean::BaseFactory {
     dwCallback_ = nullptr;
     dwInstance_ = nullptr;
     fdwOpen_ = 0;
+  }
+  BaseFactory *Move() && final {
+    return new FactoryImpl(std::forward<FactoryImpl>(*this));
   }
   void Destroy() && final {
     delete this;
@@ -46,7 +46,7 @@ class FactoryImpl final : public SoyBean::BaseFactory {
   uint32_t fdwOpen_;
   MilkTea_NonCopy(FactoryImpl)
   MilkTea_NonMoveAssign(FactoryImpl)
-  static constexpr char TAG[] = "SoyBean_Windows#FactoryImpl";
+  static constexpr char TAG[] = "SoyBean_Windows::FactoryImpl";
 };
 
 } // namespace SoyBean_Windows

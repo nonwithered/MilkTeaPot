@@ -4,8 +4,6 @@
 #include <functional>
 #include <exception>
 
-#include <milktea.h>
-
 #include "timerfuture.h"
 
 namespace TeaPot {
@@ -16,6 +14,8 @@ using task_type = std::unique_ptr<TimerTaskImpl>;
 using task_raw = task_type::element_type *;
 
 class TimerTaskImpl final {
+  using duration_type = TimerUnit::duration_type;
+  using time_point_type = TimerUnit::time_point_type;
  public:
   static task_type Make(future_type future, action_type action) {
     return task_type(new TimerTaskImpl(future, action));
@@ -51,7 +51,7 @@ class TimerTaskImpl final {
   const action_type action_;
   MilkTea_NonCopy(TimerTaskImpl)
   MilkTea_NonMove(TimerTaskImpl)
-  static constexpr char TAG[] = "TeaPot#TimerTask";
+  static constexpr char TAG[] = "TeaPot::TimerTaskImpl";
 };
 
 } // namespace TeaPot

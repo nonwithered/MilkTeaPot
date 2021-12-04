@@ -115,18 +115,4 @@ TeaPot_TimerWorker_Weak_Try(TeaPot_TimerWorker_Weak_t *self, TeaPot_TimerWorker_
 } // extern "C"
 #endif
 
-#ifdef __cplusplus
-
-#include <chrono>
-
-namespace TeaPot {
-
-using clock_type = std::chrono::system_clock;
-using duration_type = std::chrono::milliseconds;
-using time_point_type = std::chrono::time_point<clock_type, duration_type>;
-
-} // namespace TeaPot
-
-#endif // ifdef __cplusplus
-
 #endif // ifndef LIB_TEAPOT_CORE_H_

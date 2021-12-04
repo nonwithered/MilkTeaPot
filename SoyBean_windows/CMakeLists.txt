@@ -2,7 +2,7 @@ project(soybean_windows)
 
 set(src_files
     "lib.cc"
-    "wrapper.cc"
+    "proxy.cc"
 )
 
 set(src_dir

@@ -1,8 +1,6 @@
 #ifndef LIB_SOYBEAN_WINDOWS_CORE_H_
 #define LIB_SOYBEAN_WINDOWS_CORE_H_
 
-#include <milktea.h>
-
 #include <soybean.h>
 
 #ifdef __cplusplus

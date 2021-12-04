@@ -11,6 +11,9 @@ namespace TeaPot {
 
 class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImpl> {
   using State = TimerWorker::State;
+  using duration_type = TimerUnit::duration_type;
+  using time_point_type = TimerUnit::time_point_type;
+  using clock_type = TimerUnit::clock_type;
  public:
   static worker_type Make(std::function<bool(std::exception *)> on_terminate) {
     auto worker = worker_type(new TimerWorkerImpl(on_terminate));
@@ -278,7 +281,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   worker_binder binder_;
   MilkTea_NonCopy(TimerWorkerImpl)
   MilkTea_NonMove(TimerWorkerImpl)
-  static constexpr char TAG[] = "TeaPot#TimerWorker";
+  static constexpr char TAG[] = "TeaPot::TimerWorkerImpl";
 };
 
 } // namespace TeaPot

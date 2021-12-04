@@ -1,20 +1,24 @@
-#ifndef LIB_SOYMILK_CALLBACK_H_
-#define LIB_SOYMILK_CALLBACK_H_
-
-#include <soymilk/core.h>
+#ifndef LIB_SOYMILK_WRAPPER_CONTROLLER_H_
+#define LIB_SOYMILK_WRAPPER_CONTROLLER_H_
 
 #include <chrono>
 #include <functional>
 
-#ifdef __cplusplus
+#include <soymilk/common.h>
+
 namespace SoyMilk {
+
 class BaseController {
  public:
   using duration_type = std::chrono::milliseconds;
-  static SoyMilk_Player_Controller_t ToRawType(std::unique_ptr<BaseController> self) {
-    return std::forward<BaseController>(*self.release()).ToRawType();
+  SoyMilk_Player_Controller_t ToRawType() && {
+    return SoyMilk_Player_Controller_t{
+      .self_ = std::forward<BaseController>(*this).Move(),
+      .interface_ = &Interface(),
+    };
   }
   virtual ~BaseController() = default;
+  virtual BaseController *Move() && = 0;
   virtual void Destroy() && = 0;
   virtual void OnSubmit(std::function<void()>) = 0;
   virtual void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::MessageMutableWrapper message) = 0;
@@ -28,14 +32,14 @@ class BaseController {
   virtual void OnComplete() = 0;
   virtual void OnReset() = 0;
  private:
-  MilkTea_api SoyMilk_Player_Controller_t MilkTea_call ToRawType() &&;
+  static MilkTea_api const SoyMilk_Player_Controller_Interface_t & MilkTea_call Interface();
 };
+
 class ControllerWrapper final : public BaseController {
  public:
-  static std::unique_ptr<ControllerWrapper> FromRawType(SoyMilk_Player_Controller_t &&another) {
-    auto self = std::unique_ptr<ControllerWrapper>(new ControllerWrapper());
-    std::swap(self->self_, another);
-    return self;
+  ControllerWrapper(SoyMilk_Player_Controller_t another = {}) : self_(another) {}
+  ControllerWrapper(ControllerWrapper &&another) : ControllerWrapper() {
+    std::swap(self_, another.self_);
   }
   ~ControllerWrapper() final {
     if (GetObj() == nullptr) {
@@ -43,6 +47,9 @@ class ControllerWrapper final : public BaseController {
     }
     GetInterface().Deleter(GetObj());
     self_ = {};
+  }
+  BaseController *Move() && final {
+    return new ControllerWrapper(std::forward<ControllerWrapper>(*this));
   }
   void Destroy() && final {
     delete this;
@@ -87,12 +94,11 @@ class ControllerWrapper final : public BaseController {
   const SoyMilk_Player_Controller_Interface_t &GetInterface() const {
     return *self_.interface_;
   }
-  ControllerWrapper() : self_{} {}
   SoyMilk_Player_Controller_t self_;
   MilkTea_NonCopy(ControllerWrapper)
   MilkTea_NonMoveAssign(ControllerWrapper)
 };
-} // namespace SoyMilk
-#endif
 
-#endif // ifndef LIB_SOYMILK_CALLBACK_H_
+} // namespace SoyMilk
+
+#endif // ifndef LIB_SOYMILK_WRAPPER_CONTROLLER_H_

@@ -23,7 +23,7 @@ class ConfigWrapper {
     MilkTea_nonnull(Make_SoyBean_Factory_);
     SoyBean_Factory_t factory{};
     MilkTea_panic(Make_SoyBean_Factory_(&factory));
-    return SoyBean::FactoryWrapper::FromRawType(std::move(factory));
+    return SoyBean::FactoryWrapper(factory);
   }
  private:
   Milk_Config_t self_;
