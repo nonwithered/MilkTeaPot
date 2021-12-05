@@ -3,7 +3,7 @@
 
 #include <functional>
 
-#include <milkpowder/wrapper/holder.h>
+#include <milkpowder/wrapper/message.h>
 
 namespace MilkPowder {
 
@@ -14,6 +14,11 @@ class ConstInterface<Mapping::Event> {
  public:;
   virtual const raw_type *get() const = 0;
  public:
+  static ConstWrapper<mapping> From(ConstWrapper<Mapping::Message> another) {
+    const raw_type *self = nullptr;
+    MilkTea_panic(mapping::raw_message_to(another.get(), &self));
+    return self;
+  }
   uint8_t GetType() const {
     uint8_t result = 0;
     MilkTea_panic(mapping::raw_get_type(get(), &result));
@@ -43,6 +48,12 @@ class MutableInterface<Mapping::Event> {
   static MutableWrapper<mapping> Make(uint32_t delta, uint8_t type, std::array<uint8_t, 2> args) {
     raw_type *self = nullptr;
     MilkTea_panic(mapping::raw_create(&self, delta, type, args[0], args[1]));
+    return self;
+  }
+  static MutableWrapper<mapping> From(MutableWrapper<Mapping::Message> &&another) {
+    raw_type *self = nullptr;
+    MilkTea_panic(mapping::raw_from_message(&self, another.get()));
+    another.release();
     return self;
   }
 };

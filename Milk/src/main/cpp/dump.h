@@ -286,7 +286,7 @@ class Dump final : public Command {
       // event
       if (message.IsEvent()) {
         std::cout << std::endl;
-        MilkPowder::EventConstWrapper event = message.ToEvent();
+        auto event = MilkPowder::EventConstWrapper::From(message);
         auto [arg0, arg1] = event.GetArgs();
         std::cout << "args=" << MilkTea::ToStringHexFromU8(arg0);
         if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
@@ -297,7 +297,7 @@ class Dump final : public Command {
       }
       // meta
       if (message.IsMeta()) {
-        MilkPowder::MetaConstWrapper meta = message.ToMeta();
+        auto meta = MilkPowder::MetaConstWrapper::From(message);
         type = meta.GetType();
         std::cout << MilkTea::ToStringHexFromU8(type) << std::endl;
         const uint8_t *args = nullptr;
@@ -308,7 +308,7 @@ class Dump final : public Command {
       // sysex
       if (message.IsSysex()) {
         std::cout << std::endl;
-        MilkPowder::SysexConstWrapper sysex = message.ToSysex();
+        auto sysex = MilkPowder::SysexConstWrapper::From(message);
         uint32_t idx = 0;
         std::function<void(const std::tuple<uint32_t, std::vector<uint8_t>> &)> callback = [this, &idx](const std::tuple<uint32_t, std::vector<uint8_t>> &vec) -> void {
           uint32_t delta = std::get<0>(vec);

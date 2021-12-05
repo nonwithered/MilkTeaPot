@@ -4,7 +4,7 @@
 #include <functional>
 #include <tuple>
 
-#include <milkpowder/wrapper/holder.h>
+#include <milkpowder/wrapper/message.h>
 
 namespace MilkPowder {
 
@@ -15,6 +15,11 @@ class ConstInterface<Mapping::Sysex> {
  public:;
   virtual const raw_type *get() const = 0;
  public:
+  static ConstWrapper<mapping> From(ConstWrapper<Mapping::Message> another) {
+    const raw_type *self = nullptr;
+    MilkTea_panic(mapping::raw_message_to(another.get(), &self));
+    return self;
+  }
   std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> GetArgs() const {
     std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> result;
     std::function<void(uint32_t, const uint8_t *, uint32_t)> callback = [&result](uint32_t delta, const uint8_t *argv, uint32_t argc) -> void {
@@ -51,6 +56,12 @@ class MutableInterface<Mapping::Sysex> {
       length[i] = std::get<1>(vec[i]).size();
     }
     MilkTea_panic(mapping::raw_create(&self, delta.data(), args.data(), length.data(), size));
+    return self;
+  }
+  static MutableWrapper<mapping> From(MutableWrapper<Mapping::Message> &&another) {
+    raw_type *self = nullptr;
+    MilkTea_panic(mapping::raw_from_message(&self, another.get()));
+    another.release();
     return self;
   }
 };

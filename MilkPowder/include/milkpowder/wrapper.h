@@ -6,12 +6,12 @@
 #ifdef __cplusplus
 
 #include <milkpowder/wrapper/holder.h>
-#include <milkpowder/wrapper/midi.h>
-#include <milkpowder/wrapper/track.h>
-#include <milkpowder/wrapper/message.h>
 #include <milkpowder/wrapper/event.h>
 #include <milkpowder/wrapper/meta.h>
 #include <milkpowder/wrapper/sysex.h>
+#include <milkpowder/wrapper/message.h>
+#include <milkpowder/wrapper/track.h>
+#include <milkpowder/wrapper/midi.h>
 #include <milkpowder/wrapper/reader.h>
 #include <milkpowder/wrapper/writer.h>
 

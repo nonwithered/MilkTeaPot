@@ -50,6 +50,8 @@ struct Event {
   static constexpr auto raw_dump = MilkPowder_Event_Dump;
   static constexpr auto raw_get_type = MilkPowder_Event_GetType;
   static constexpr auto raw_get_args = MilkPowder_Event_GetArgs;
+  static constexpr auto raw_from_message = MilkPowder_Event_FromMessage;
+  static constexpr auto raw_to_message = MilkPowder_Event_ToMessage;
   static constexpr auto raw_message_from = MilkPowder_Message_FromEvent;
   static constexpr auto raw_message_is = MilkPowder_Message_IsEvent;
   static constexpr auto raw_message_to = MilkPowder_Message_ToEvent;
@@ -64,6 +66,8 @@ struct Meta {
   static constexpr auto raw_dump = MilkPowder_Meta_Dump;
   static constexpr auto raw_get_type = MilkPowder_Meta_GetType;
   static constexpr auto raw_get_args = MilkPowder_Meta_GetArgs;
+  static constexpr auto raw_from_message = MilkPowder_Meta_FromMessage;
+  static constexpr auto raw_to_message = MilkPowder_Meta_ToMessage;
   static constexpr auto raw_message_from = MilkPowder_Message_FromMeta;
   static constexpr auto raw_message_is = MilkPowder_Message_IsMeta;
   static constexpr auto raw_message_to = MilkPowder_Message_ToMeta;
@@ -77,6 +81,8 @@ struct Sysex {
   static constexpr auto raw_parse = MilkPowder_Sysex_Parse;
   static constexpr auto raw_dump = MilkPowder_Sysex_Dump;
   static constexpr auto raw_get_args = MilkPowder_Sysex_GetArgs;
+  static constexpr auto raw_from_message = MilkPowder_Sysex_FromMessage;
+  static constexpr auto raw_to_message = MilkPowder_Sysex_ToMessage;
   static constexpr auto raw_message_from = MilkPowder_Message_FromSysex;
   static constexpr auto raw_message_is = MilkPowder_Message_IsSysex;
   static constexpr auto raw_message_to = MilkPowder_Message_ToSysex;

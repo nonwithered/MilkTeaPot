@@ -1,9 +1,7 @@
 #ifndef LIB_MILKPOWDER_WRAPPER_MESSAGE_H_
 #define LIB_MILKPOWDER_WRAPPER_MESSAGE_H_
 
-#include <milkpowder/wrapper/event.h>
-#include <milkpowder/wrapper/meta.h>
-#include <milkpowder/wrapper/sysex.h>
+#include <milkpowder/wrapper/holder.h>
 
 namespace MilkPowder {
 
@@ -40,19 +38,10 @@ class ConstInterface<Mapping::Message> {
     return Is<Mapping::Sysex>();
   }
   template<typename T>
-  ConstWrapper<T> To() const {
-    const typename T::raw_type *result = nullptr;
-    MilkTea_panic(T::raw_message_to(get(), &result));
-    return ConstWrapper<T>(result);
-  }
-  ConstWrapper<Mapping::Event> ToEvent() const {
-    return To<Mapping::Event>();
-  }
-  ConstWrapper<Mapping::Meta> ToMeta() const {
-    return To<Mapping::Meta>();
-  }
-  ConstWrapper<Mapping::Sysex> ToSysex() const {
-    return To<Mapping::Sysex>();
+  static ConstWrapper<Mapping::Message> From(ConstWrapper<T> &&another) {
+    const raw_type *self = nullptr;
+    MilkTea_panic(T::raw_to_message(another.get(), &self));
+    return self;
   }
 };
 
@@ -76,7 +65,8 @@ class MutableInterface<Mapping::Message> {
   template<typename T>
   static MutableWrapper<Mapping::Message> From(MutableWrapper<T> &&another) {
     raw_type *self = nullptr;
-    MilkTea_panic(T::raw_message_from(&self, another.release()));
+    MilkTea_panic(T::raw_message_from(&self, another.get()));
+    another.release();
     return self;
   }
 };
