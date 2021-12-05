@@ -8,6 +8,7 @@
 namespace MilkPowder {
 
 class EventImpl final : public MessageImpl {
+  static constexpr char TAG[] = "MilkPowder::EventImpl";
  public:
   static std::unique_ptr<EventImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
   void Dump(std::vector<uint8_t> &) const final;
@@ -25,7 +26,6 @@ class EventImpl final : public MessageImpl {
   std::tuple<uint8_t, uint8_t> args() const { return args_; }
  private:
   const std::tuple<uint8_t, uint8_t> args_;
-  static constexpr char TAG[] = "MilkPowder#Event";
 };
 
 } // namespace MilkPowder

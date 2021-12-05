@@ -10,7 +10,7 @@
 
 namespace {
 
-constexpr char TAG[] = "MilkPowder#Parse";
+constexpr char TAG[] = "MilkPowder::Parse";
 
 uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
   auto ret = callback();
@@ -63,7 +63,6 @@ std::vector<uint8_t> ParseArgs(std::function<std::tuple<uint8_t, bool>()> callba
 }
 
 std::unique_ptr<MilkPowder::EventImpl> ParseEvent(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
-//  MilkTea_logD("ParseEvent");
   if (type < 0x80 || type >= 0xf0) {
     type = ParseU8(callback);
     if (type < 0x80 || type >= 0xf0) {
@@ -78,7 +77,6 @@ std::unique_ptr<MilkPowder::EventImpl> ParseEvent(std::function<std::tuple<uint8
 }
 
 std::unique_ptr<MilkPowder::MetaImpl> ParseMeta(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
-//  MilkTea_logD("ParseMeta");
   if (type != 0xff) {
     type = ParseU8(callback);
     if (type != 0xff) {
@@ -94,7 +92,6 @@ std::unique_ptr<MilkPowder::MetaImpl> ParseMeta(std::function<std::tuple<uint8_t
 }
 
 std::unique_ptr<MilkPowder::SysexImpl> ParseSysex(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
-//  MilkTea_logD("ParseSysex");
   if (type != 0xf0) {
     type = ParseU8(callback);
     if (type != 0xf0) {
@@ -123,7 +120,6 @@ std::unique_ptr<MilkPowder::SysexImpl> ParseSysex(std::function<std::tuple<uint8
 namespace MilkPowder {
 
 std::unique_ptr<MidiImpl> MidiImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  MilkTea_logD("Midi::Parse");
   std::vector<uint8_t> head = ParseVecN(callback, 4);
   if (memcmp(head.data(), "MThd", 4) != 0) {
     head.push_back(0);
@@ -144,7 +140,6 @@ std::unique_ptr<MidiImpl> MidiImpl::Parse(std::function<std::tuple<uint8_t, bool
 }
   
 std::unique_ptr<TrackImpl> TrackImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  MilkTea_logD("Track::Parse");
   std::vector<uint8_t> head = ParseVecN(callback, 4);
   if (memcmp(head.data(), "MTrk", 4) != 0) {
     head.push_back(0);
@@ -176,7 +171,6 @@ std::unique_ptr<TrackImpl> TrackImpl::Parse(std::function<std::tuple<uint8_t, bo
 }
 
 std::unique_ptr<MessageImpl> MessageImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last) {
-//  MilkTea_logD("Message::Parse");
   uint32_t delta = ParseUsize(callback);
   uint8_t type = ParseU8(callback);
   if (type >= 0x80 && type < 0xf0) {
@@ -201,19 +195,16 @@ std::unique_ptr<MessageImpl> MessageImpl::Parse(std::function<std::tuple<uint8_t
 }
   
 std::unique_ptr<EventImpl> EventImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last) {
-//  MilkTea_logD("Event::Parse");
   uint32_t delta = ParseUsize(callback);
   return ParseEvent(callback, delta, last);
 }
   
 std::unique_ptr<MetaImpl> MetaImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-//  MilkTea_logD("Meta::Parse");
   uint32_t delta = ParseUsize(callback);
   return ParseMeta(callback, delta, 0);
 }
   
 std::unique_ptr<SysexImpl> SysexImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-//  MilkTea_logD("Sysex::Parse");
   uint32_t delta = ParseUsize(callback);
   return ParseSysex(callback, delta, 0);
 }

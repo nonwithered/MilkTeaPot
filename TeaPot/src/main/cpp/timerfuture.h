@@ -16,6 +16,7 @@ using future_weak = std::weak_ptr<future_raw>;
 using future_type = std::shared_ptr<future_raw>;
 
 class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImpl> {
+  static constexpr char TAG[] = "TeaPot::TimerFutureImpl";
   friend class TimerTaskImpl;
   friend class TimerWorkerImpl;
   using State = TimerFuture::State;
@@ -58,7 +59,6 @@ class TimerFutureImpl final : public std::enable_shared_from_this<TimerFutureImp
   std::function<void(future_type)> on_cancel_;
   MilkTea_NonCopy(TimerFutureImpl)
   MilkTea_NonMove(TimerFutureImpl)
-  static constexpr char TAG[] = "TeaPot::TimerFutureImpl";
 };
 
 } // namespace TeaPot

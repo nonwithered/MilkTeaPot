@@ -7,6 +7,7 @@
 namespace TeaPot {
 
 class TimerTaskWrapper final {
+  static constexpr char TAG[] = "TeaPot::TimerTaskWrapper";
   friend class TimerWorkerWrapper;
  public:
   TimerTaskWrapper(TeaPot_TimerTask_t *self = nullptr) : self_(self) {}
@@ -32,7 +33,6 @@ class TimerTaskWrapper final {
   TeaPot_TimerTask_t *self_;
   MilkTea_NonCopy(TimerTaskWrapper)
   MilkTea_NonMoveAssign(TimerTaskWrapper)
-  static constexpr char TAG[] = "TeaPot::TimerTaskWrapper";
 };
 
 } // namespace TeaPot

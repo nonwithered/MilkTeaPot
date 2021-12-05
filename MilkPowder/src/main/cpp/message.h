@@ -11,6 +11,7 @@
 namespace MilkPowder {
 
 class MessageImpl {
+  static constexpr char TAG[] = "MilkPowder::MessageImpl";
  public:
   static std::unique_ptr<MessageImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
   virtual void Dump(std::vector<uint8_t> &) const = 0;
@@ -45,7 +46,6 @@ class MessageImpl {
       MilkTea_throwf(InvalidParam, "delta: %08" PRIx32, delta);
     }
   }
-  static constexpr char TAG[] = "MilkPowder#Message";
 };
 
 } // namespace MilkPowder

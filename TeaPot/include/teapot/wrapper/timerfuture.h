@@ -6,6 +6,7 @@
 namespace TeaPot {
 
 class TimerFutureWrapper final {
+  static constexpr char TAG[] = "TeaPot::TimerFutureWrapper";
   friend class TimerTaskWrapper;
   friend class TimerWorkerWrapper;
   using State = TeaPot::TimerFuture::State;
@@ -42,7 +43,6 @@ class TimerFutureWrapper final {
   TeaPot_TimerFuture_t *self_;
   MilkTea_NonCopy(TimerFutureWrapper)
   MilkTea_NonMoveAssign(TimerFutureWrapper)
-  static constexpr char TAG[] = "TeaPot::TimerFutureWrapper";
 };
 
 } // namespace TeaPot

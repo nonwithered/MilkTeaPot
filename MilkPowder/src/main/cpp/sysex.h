@@ -9,6 +9,7 @@
 namespace MilkPowder {
 
 class SysexImpl final : public MessageImpl {
+  static constexpr char TAG[] = "MilkPowder::SysexImpl";
  public:
   static std::unique_ptr<SysexImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const final;
@@ -33,7 +34,6 @@ class SysexImpl final : public MessageImpl {
   const std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> &items() const { return items_; }
  private:
   const std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items_;
-  static constexpr char TAG[] = "MilkPowder#Sysex";
 };
 
 } // namespace MilkPowder

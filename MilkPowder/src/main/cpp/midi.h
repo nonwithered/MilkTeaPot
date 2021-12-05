@@ -8,6 +8,7 @@
 namespace MilkPowder {
 
 class MidiImpl final {
+  static constexpr char TAG[] = "MilkPowder::MidiImpl";
  public:
   static std::unique_ptr<MidiImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const;
@@ -34,7 +35,6 @@ class MidiImpl final {
     }
     return std::move(items);
   }
-  static constexpr char TAG[] = "MilkPowder#Midi";
 };
 
 } // namespace MilkPowder

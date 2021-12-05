@@ -10,6 +10,7 @@
 namespace TeaPot {
 
 class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImpl> {
+  static constexpr char TAG[] = "TeaPot::TimerWorkerImpl";
   using State = TimerWorker::State;
   using duration_type = TimerUnit::duration_type;
   using time_point_type = TimerUnit::time_point_type;
@@ -281,7 +282,6 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   worker_binder binder_;
   MilkTea_NonCopy(TimerWorkerImpl)
   MilkTea_NonMove(TimerWorkerImpl)
-  static constexpr char TAG[] = "TeaPot::TimerWorkerImpl";
 };
 
 } // namespace TeaPot

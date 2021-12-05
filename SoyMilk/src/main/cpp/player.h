@@ -6,10 +6,10 @@
 namespace SoyMilk {
 
 class PlayerImpl final {
+  static constexpr char TAG[] = "SoyMilk::PlayerImpl";
  public:
   ~PlayerImpl();
  private:
-  static constexpr char TAG[] = "SoyMilk::PlayerImpl";
 };
 
 } // namespace SoyBean_Windows

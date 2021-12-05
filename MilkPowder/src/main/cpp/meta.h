@@ -6,6 +6,7 @@
 namespace MilkPowder {
 
 class MetaImpl final : public MessageImpl {
+  static constexpr char TAG[] = "MilkPowder::MetaImpl";
  public:
   static std::unique_ptr<MetaImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const final;
@@ -22,7 +23,6 @@ class MetaImpl final : public MessageImpl {
  private:
   const uint8_t type_;
   const std::vector<uint8_t> args_;
-  static constexpr char TAG[] = "MilkPowder#Meta";
 };
 
 } // namespace MilkPowder

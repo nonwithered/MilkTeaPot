@@ -12,6 +12,7 @@
 namespace TeaPot {
 
 class TimerWorkerWrapper final {
+  static constexpr char TAG[] = "TeaPot::TimerWorkerWrapper";
   using State = TeaPot::TimerWorker::State;
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
@@ -81,7 +82,6 @@ class TimerWorkerWrapper final {
   TeaPot_TimerWorker_t *self_;
   MilkTea_NonCopy(TimerWorkerWrapper)
   MilkTea_NonMoveAssign(TimerWorkerWrapper)
-  static constexpr char TAG[] = "TeaPot::TimerWorkerWrapper";
 };
 
 } // namespace TeaPot

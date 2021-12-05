@@ -8,7 +8,7 @@
 
 namespace {
 
-constexpr char TAG[] = "Milk#extern";
+constexpr char TAG[] = "Milk";
 
 std::list<std::string_view> Args(int argc, char *argv[]) {
   std::list<std::string_view> args;

@@ -8,6 +8,7 @@
 namespace MilkPowder {
 
 class TrackImpl final {
+  static constexpr char TAG[] = "MilkPowder::TrackImpl";
  public:
   static std::unique_ptr<TrackImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
   void Dump(std::vector<uint8_t> &) const;
@@ -27,7 +28,6 @@ class TrackImpl final {
     }
     return std::move(items);
   }
-  static constexpr char TAG[] = "MilkPowder#Track";
 };
 
 } // namespace MilkPowder

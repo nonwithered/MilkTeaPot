@@ -24,6 +24,7 @@ struct TimerWorkerIdentity;
 using worker_identity = TimerWorkerIdentity *;
 
 class TimerManagerImpl final : public std::enable_shared_from_this<TimerManagerImpl> {
+  static constexpr char TAG[] = "MilkTea::TimerManagerImpl";
   friend class TimerBinderImpl;
  public:
   static manager_type &Instance();
@@ -52,10 +53,10 @@ class TimerManagerImpl final : public std::enable_shared_from_this<TimerManagerI
   std::mutex lock_;
   MilkTea_NonCopy(TimerManagerImpl)
   MilkTea_NonMove(TimerManagerImpl)
-  static constexpr char TAG[] = "MilkTea::TimerManagerImpl";
 };
 
 class TimerBinderImpl final {
+  static constexpr char TAG[] = "TeaPot::TimerBinderImpl";
   friend class TimerWorkerImpl;
  public:
   TimerBinderImpl() = default;
@@ -86,7 +87,6 @@ class TimerBinderImpl final {
   }
   worker_weak worker_;
   std::shared_ptr<std::mutex> lock_;
-  static constexpr char TAG[] = "TeaPot::TimerBinderImpl";
 };
 
 } // namespace TeaPot

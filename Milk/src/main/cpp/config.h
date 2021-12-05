@@ -6,6 +6,7 @@
 namespace Milk {
 
 class ConfigWrapper {
+  static constexpr char TAG[] = "Milk::ConfigWrapper";
  public:
   static ConfigWrapper &Instance(ConfigWrapper *instance = nullptr);
   ConfigWrapper(Milk_Config_t another) : self_(another) {}
@@ -23,7 +24,6 @@ class ConfigWrapper {
   }
  private:
   Milk_Config_t self_;
-  static constexpr char TAG[] = "Milk#Config";
 };
 
 

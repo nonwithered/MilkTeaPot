@@ -9,7 +9,7 @@
 
 namespace {
 
-constexpr char TAG[] = "MilkPowder#extern";
+constexpr char TAG[] = "MilkPowder";
 
 template<typename T>
 struct milkpowder_cast_map;

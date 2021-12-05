@@ -10,6 +10,7 @@
 namespace Milk {
 
 class Dump final : public Command {
+  static constexpr char TAG[] = "Milk::Dump";
  public:
   Dump() : Command(),
       callbacks_(),
@@ -360,7 +361,6 @@ class Dump final : public Command {
   static uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
     return (bytes[0] << 010) | bytes[1];
   }
-  static constexpr char TAG[] = "Milk#Dump";
 };
 
 } // namespace Milk

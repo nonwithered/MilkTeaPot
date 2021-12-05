@@ -22,6 +22,7 @@ class BaseFactory {
 };
 
 class FactoryWrapper final : public BaseFactory {
+  static constexpr char TAG[] = "SoyBean::FactoryWrapper";
  public:
   SoyBean_Factory_t ToRawType() && {
     return release();
@@ -60,7 +61,6 @@ private:
   SoyBean_Factory_t self_;
   MilkTea_NonCopy(FactoryWrapper)
   MilkTea_NonMoveAssign(FactoryWrapper)
-  static constexpr char TAG[] = "SoyBean::FactoryWrapper";
 };
 
 } // namespace SoyBean

@@ -11,6 +11,7 @@
 namespace Milk {
 
 class Play final : public Command {
+  static constexpr char TAG[] = "Milk::Play";
  public:
   Play() : Command() {
     Callback("-h", &Play::ShowHelp);
@@ -46,7 +47,6 @@ class Play final : public Command {
     std::cerr << Usage() << std::endl;
     return true;
   }
-  static constexpr char TAG[] = "Milk#Play";
 };
 
 } // namespace Milk

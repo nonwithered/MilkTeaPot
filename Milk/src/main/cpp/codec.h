@@ -11,6 +11,7 @@
 namespace Milk {
 
 class Codec final : public Command {
+  static constexpr char TAG[] = "Milk::Codec";
  public:
   Codec() : Command(),
       callbacks_(),
@@ -233,7 +234,6 @@ class Codec final : public Command {
     }
     return messages_vec;
   }
-  static constexpr char TAG[] = "Milk#Codec";
 };
 
 } // namespace Milk

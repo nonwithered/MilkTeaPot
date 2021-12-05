@@ -16,6 +16,7 @@
 namespace Milk {
 
 class Command {
+  static constexpr char TAG[] = "Milk::Command";
  public:
   static void LaunchMain(std::list<std::string_view> args, const std::vector<std::unique_ptr<Milk::Command>> &arr) {
     auto itr = arr.begin();
@@ -100,7 +101,6 @@ class Command {
   }
   std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   std::function<void()> show_help_;
-  static constexpr char TAG[] = "Milk#Command";
 };
 
 } // namespace Milk

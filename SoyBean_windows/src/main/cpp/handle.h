@@ -8,6 +8,7 @@
 namespace SoyBean_Windows {
 
 class HandleImpl final : public SoyBean::BaseHandle {
+  static constexpr char TAG[] = "SoyBean_Windows::HandleImpl";
  public:
   HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : HandleImpl() {
     ThrowOrNot(Proxy_midiOutOpen(&self_, uDeviceID, dwCallback, dwInstance, fdwOpen));
@@ -96,7 +97,6 @@ class HandleImpl final : public SoyBean::BaseHandle {
   }
   HandleImpl() : self_(nullptr) {}
   Proxy_HMIDIOUT self_;
-  static constexpr char TAG[] = "SoyBean_Windows::HandleImpl";
   MilkTea_NonCopy(HandleImpl)
   MilkTea_NonMoveAssign(HandleImpl)
 };

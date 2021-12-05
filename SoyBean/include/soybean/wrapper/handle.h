@@ -28,6 +28,7 @@ class BaseHandle {
 };
 
 class HandleWrapper final : public BaseHandle {
+  static constexpr char TAG[] = "SoyBean::HandleWrapper";
  public:
   SoyBean_Handle_t ToRawType() && {
     return release();
@@ -79,7 +80,6 @@ class HandleWrapper final : public BaseHandle {
   SoyBean_Handle_t self_;
   MilkTea_NonCopy(HandleWrapper)
   MilkTea_NonMoveAssign(HandleWrapper)
-  static constexpr char TAG[] = "SoyBean::HandleWrapper";
 };
 
 } // namespace SoyBean
