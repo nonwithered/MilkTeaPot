@@ -61,8 +61,6 @@ typename timer_cast_map<T>::target *timer_cast(T &self) {
 
 } // namespace
 
-extern "C" {
-
 MilkTea_extern(TeaPot_TimerFuture_Destroy, (TeaPot_TimerFuture_t *self), {
   MilkTea_nonnull(self);
   delete &timer_cast(self);
@@ -202,8 +200,6 @@ MilkTea_extern(TeaPot_TimerWorker_Weak_Try, (TeaPot_TimerWorker_Weak_t *self, Te
     *target = nullptr;
   }
 })
-
-} // extern "C"
 
 namespace TeaPot {
 

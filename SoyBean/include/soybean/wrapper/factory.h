@@ -7,7 +7,7 @@ namespace SoyBean {
 
 class BaseFactory {
  public:
-  SoyBean_Factory_t ToRawType() && {
+  virtual SoyBean_Factory_t ToRawType() && {
     return SoyBean_Factory_t{
       .self_ = &std::forward<BaseFactory>(*this).Move(),
       .interface_ = &Interface(),
@@ -18,13 +18,13 @@ class BaseFactory {
   virtual void Destroy() && = 0;
   virtual BaseHandle &Create() = 0;
  private:
-  static MilkTea_api const SoyBean_Factory_Interface_t & MilkTea_call Interface();
+  static MilkTea_decl(const SoyBean_Factory_Interface_t &) Interface();
 };
 
 class FactoryWrapper final : public BaseFactory {
   static constexpr char TAG[] = "SoyBean::FactoryWrapper";
  public:
-  SoyBean_Factory_t ToRawType() && {
+  SoyBean_Factory_t ToRawType() && final {
     return release();
   }
   FactoryWrapper(SoyBean_Factory_t another = {}) : self_(another) {}

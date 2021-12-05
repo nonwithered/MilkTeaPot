@@ -1,10 +1,10 @@
 #ifndef MILKTEA_EXCEPTION_H_
 #define MILKTEA_EXCEPTION_H_
 
-#include <milktea.h>
-
 #include <string>
 #include <string_view>
+
+#include <milktea/common.h>
 
 namespace MilkTea {
 

@@ -54,31 +54,31 @@ struct SoyMilk_Player_t;
 typedef struct SoyMilk_Player_t SoyMilk_Player_t;
 #endif
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Create(SoyMilk_Player_t **self, TeaPot_TimerWorker_Weak_t *timer, SoyMilk_Player_Controller_t callback);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Destroy(SoyMilk_Player_t *self);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Prepare(SoyMilk_Player_t *self, const MilkPowder_Midi_t *midi);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Start(SoyMilk_Player_t *self);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Pause(SoyMilk_Player_t *self);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Seek(SoyMilk_Player_t *self, int64_t time);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Resume(SoyMilk_Player_t *self);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Stop(SoyMilk_Player_t *self);
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 SoyMilk_Player_Reset(SoyMilk_Player_t *self);
 
 #ifdef __cplusplus

@@ -7,7 +7,7 @@ namespace SoyBean {
 
 class BaseHandle {
  public:
-  SoyBean_Handle_t ToRawType() && {
+  virtual SoyBean_Handle_t ToRawType() && {
     return SoyBean_Handle_t{
       .self_ = &std::forward<BaseHandle>(*this).Move(),
       .interface_ = &Interface(),
@@ -24,13 +24,13 @@ class BaseHandle {
   virtual void ChannelPressure(uint8_t channel, uint8_t pressure) = 0;
   virtual void PitchBend(uint8_t channel, uint8_t low, uint8_t height) = 0;
  private:
-  static MilkTea_api const SoyBean_Handle_Interface_t & MilkTea_call Interface();
+  static MilkTea_decl(const SoyBean_Handle_Interface_t &) Interface();
 };
 
 class HandleWrapper final : public BaseHandle {
   static constexpr char TAG[] = "SoyBean::HandleWrapper";
  public:
-  SoyBean_Handle_t ToRawType() && {
+  SoyBean_Handle_t ToRawType() && final {
     return release();
   }
   HandleWrapper(SoyBean_Handle_t another = {}) : self_(another) {}

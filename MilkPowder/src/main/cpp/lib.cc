@@ -141,8 +141,6 @@ void MilkPowder_To_Message(const T *self, const MilkPowder_Message_t **item) {
 
 } // namespace
 
-extern "C" {
-
 // Midi
 
 MilkTea_extern(MilkPowder_Midi_Parse, (MilkPowder_Midi_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
@@ -479,5 +477,3 @@ MilkTea_extern(MilkPowder_Sysex_FromMessage, (MilkPowder_Sysex_t **self, MilkPow
 MilkTea_extern(MilkPowder_Sysex_ToMessage, (const MilkPowder_Sysex_t *self, const MilkPowder_Message_t **item), {
   MilkPowder_To_Message(self, item);
 })
-
-} // extern "C"

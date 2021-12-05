@@ -66,7 +66,7 @@ class Command {
       std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
       return false;
     }
-    MilkTea_Logger_Config(ConfigWrapper::Instance().make_logger(level).ToRawType());
+    MilkTea::Logger::Config(ConfigWrapper::Instance().make_logger(level));
     itr = args.erase(itr);
     return true;
   }

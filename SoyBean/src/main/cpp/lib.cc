@@ -6,8 +6,6 @@ constexpr char TAG[] = "SoyBean";
 
 } // namespace
 
-extern "C" {
-
 MilkTea_extern(SoyBean_Handle_Create, (SoyBean_Handle_t *self, SoyBean_Factory_t factory), {
   MilkTea_nonnull(self);
   factory.interface_->Create(factory.self_, self);
@@ -48,5 +46,3 @@ MilkTea_extern(SoyBean_Handle_PitchBend, (SoyBean_Handle_t self, uint8_t channel
 MilkTea_extern(SoyBean_Factory_Destroy, (SoyBean_Factory_t self), {
   self.interface_->Deleter(self.self_);
 })
-
-} // extern "C"

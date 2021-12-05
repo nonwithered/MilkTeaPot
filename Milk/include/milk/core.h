@@ -17,10 +17,10 @@ struct Milk_Config_t {
 typedef struct Milk_Config_t Milk_Config_t;
 #endif
 
-MilkTea_api MilkTea_Exception_t MilkTea_call
+MilkTea_api
 Milk_Init(Milk_Config_t);
 
-MilkTea_api int MilkTea_call
+MilkTea_decl(int)
 Milk_Main(int argc, char *argv[]);
 
 #ifdef __cplusplus

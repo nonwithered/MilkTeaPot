@@ -28,13 +28,11 @@ std::vector<std::unique_ptr<Milk::Command>> Cmds() {
 
 } // namespace
 
-extern "C" {
-
 MilkTea_extern(Milk_Init, (Milk_Config_t config), {
   Milk::ConfigWrapper::Instance(new Milk::ConfigWrapper(config));
 })
 
-MilkTea_api int MilkTea_call
+MilkTea_decl(int)
 Milk_Main(int argc, char *argv[]) try {
   Milk::ConfigWrapper::Instance();
   Milk::Command::LaunchMain(Args(argc, argv), Cmds());
@@ -43,8 +41,6 @@ Milk_Main(int argc, char *argv[]) try {
   std::cerr << e.what() << std::endl;
   throw e;
 }
-
-} // extern "C"
 
 namespace Milk {
 

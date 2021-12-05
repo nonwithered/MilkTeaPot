@@ -1,10 +1,10 @@
-#ifndef LIB_MILKTEA_DEFER_H_
-#define LIB_MILKTEA_DEFER_H_
+#ifndef LIB_MILKTEA_COMMON_DEFER_H_
+#define LIB_MILKTEA_COMMON_DEFER_H_
 
-#include <milktea/util.h>
 #include <functional>
 
-#ifdef __cplusplus
+#include <milktea/common/macro.h>
+
 namespace MilkTea {
 
 class Defer final {
@@ -12,7 +12,7 @@ class Defer final {
   ~Defer() {
     defer_();
   }
-  explicit Defer(std::function<void()> defer) : defer_(defer) {
+  Defer(std::function<void()> defer) : defer_(defer) {
   }
  private:
   const std::function<void()> defer_;
@@ -21,6 +21,5 @@ class Defer final {
 };
 
 } // namespace MilkTea
-#endif // ifdef __cplusplus
 
-#endif // ifndef LIB_MILKTEA_DEFER_H_
+#endif // ifndef LIB_MILKTEA_COMMON_DEFER_H_

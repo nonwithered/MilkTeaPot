@@ -11,7 +11,7 @@ namespace SoyMilk {
 class BaseController {
  public:
   using duration_type = std::chrono::milliseconds;
-  SoyMilk_Player_Controller_t ToRawType() && {
+  virtual SoyMilk_Player_Controller_t ToRawType() && {
     return SoyMilk_Player_Controller_t{
       .self_ = std::forward<BaseController>(*this).Move(),
       .interface_ = &Interface(),
@@ -32,7 +32,7 @@ class BaseController {
   virtual void OnComplete() = 0;
   virtual void OnReset() = 0;
  private:
-  static MilkTea_api const SoyMilk_Player_Controller_Interface_t & MilkTea_call Interface();
+  static MilkTea_decl(const SoyMilk_Player_Controller_Interface_t &) Interface();
 };
 
 class ControllerWrapper final : public BaseController {
