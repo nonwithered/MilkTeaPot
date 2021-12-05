@@ -114,20 +114,22 @@ template<typename T>
 void MilkPowder_Message_To(const MilkPowder_Message_t *self, const T **item) {
   MilkTea_nonnull(self);
   MilkTea_nonnull(item);
-  if (!FromRawType<T>::target::message_is(milkpowder_cast(self))) {
+  const auto *p = dynamic_cast<const typename FromRawType<T>::target *>(&milkpowder_cast(self));
+  if (p == nullptr) {
     MilkTea_throw(LogicError, "must ensure the type is matched");
   }
-  *item = milkpowder_cast(dynamic_cast<const typename FromRawType<T>::target &>(milkpowder_cast(self)));
+  *item = milkpowder_cast(*p);
 }
 
 template<typename T>
 void MilkPowder_From_Message(T **self, MilkPowder_Message_t *item) {
   MilkTea_nonnull(self);
   MilkTea_nonnull(item);
-  if (!FromRawType<T>::target::message_is(milkpowder_cast(item))) {
+  auto *p = dynamic_cast<typename FromRawType<T>::target *>(&milkpowder_cast(item));
+  if (p == nullptr) {
     MilkTea_throw(LogicError, "must ensure the type is matched");
   }
-  *self = milkpowder_cast(dynamic_cast<typename FromRawType<T>::target &>(milkpowder_cast(item)));
+  *self = milkpowder_cast(*p);
 }
 
 template<typename T>
