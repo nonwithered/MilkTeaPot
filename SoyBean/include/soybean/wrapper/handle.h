@@ -1,22 +1,20 @@
-#ifndef LIB_SOYBEAN_FACTORY_H_
-#define LIB_SOYBEAN_FACTORY_H_
+#ifndef LIB_SOYBEAN_WRAPPER_HANDLE_H_
+#define LIB_SOYBEAN_WRAPPER_HANDLE_H_
 
-#ifdef __cplusplus
-#include <soybean/core.h>
-#include <functional>
-#include <memory>
+#include <soybean/common.h>
+
 namespace SoyBean {
 
 class BaseHandle {
  public:
   SoyBean_Handle_t ToRawType() && {
     return SoyBean_Handle_t{
-      .self_ = std::forward<BaseHandle>(*this).Move(),
+      .self_ = &std::forward<BaseHandle>(*this).Move(),
       .interface_ = &Interface(),
     };
   }
   virtual ~BaseHandle() = default;
-  virtual BaseHandle *Move() && = 0;
+  virtual BaseHandle &Move() && = 0;
   virtual void Destroy() && = 0;
   virtual void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
   virtual void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) = 0;
@@ -45,8 +43,8 @@ class HandleWrapper final : public BaseHandle {
     MilkTea_panic(SoyBean_Handle_Destroy(self_));
     self_ = {};
   }
-  BaseHandle *Move() && final {
-    return new HandleWrapper(std::forward<HandleWrapper>(*this));
+  BaseHandle &Move() && final {
+    return *new HandleWrapper(std::forward<HandleWrapper>(*this));
   }
   void Destroy() && final {
     delete this;
@@ -81,65 +79,9 @@ class HandleWrapper final : public BaseHandle {
   SoyBean_Handle_t self_;
   MilkTea_NonCopy(HandleWrapper)
   MilkTea_NonMoveAssign(HandleWrapper)
-  static constexpr char TAG[] = "SoyBean#HandleWrapper";
-};
-
-class BaseFactory {
- public:
-  SoyBean_Factory_t ToRawType() && {
-    return SoyBean_Factory_t{
-      .self_ = std::forward<BaseFactory>(*this).Move(),
-      .interface_ = &Interface(),
-    };
-  }
-  virtual ~BaseFactory() = default;
-  virtual BaseFactory *Move() && = 0;
-  virtual void Destroy() && = 0;
-  virtual std::unique_ptr<BaseHandle> Create() = 0;
- private:
-  static MilkTea_api const SoyBean_Factory_Interface_t & MilkTea_call Interface();
-};
-
-class FactoryWrapper final : public BaseFactory {
- public:
-  SoyBean_Factory_t ToRawType() && {
-    return release();
-  }
-  FactoryWrapper(SoyBean_Factory_t another = {}) : self_(another) {}
-  FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper() {
-    std::swap(self_, another.self_);
-  }
-  ~FactoryWrapper() final {
-    if (self_.self_ == nullptr) {
-      return;
-    }
-    MilkTea_panic(SoyBean_Factory_Destroy(self_));
-    self_ = {};
-  }
-  BaseFactory *Move() && final {
-    return new FactoryWrapper(std::forward<FactoryWrapper>(*this));
-  }
-  void Destroy() && final {
-    delete this;
-  }
-  std::unique_ptr<BaseHandle> Create() final {
-    SoyBean_Handle_t handle{};
-    MilkTea_panic(SoyBean_Handle_Create(&handle, self_));
-    return std::make_unique<HandleWrapper>(handle);
-  }
-  SoyBean_Factory_t release() {
-    SoyBean_Factory_t self = self_;
-    self_ = {};
-    return self;
-  }
-private:
-  SoyBean_Factory_t self_;
-  MilkTea_NonCopy(FactoryWrapper)
-  MilkTea_NonMoveAssign(FactoryWrapper)
-  static constexpr char TAG[] = "SoyBean#FactoryWrapper";
+  static constexpr char TAG[] = "SoyBean::HandleWrapper";
 };
 
 } // namespace SoyBean
-#endif // ifdef __cplusplus
 
-#endif // ifndef LIB_SOYBEAN_FACTORY_H_
+#endif // ifndef LIB_SOYBEAN_WRAPPER_HANDLE_H_

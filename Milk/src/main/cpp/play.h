@@ -19,8 +19,8 @@ class Play final : public Command {
   }
  protected:
   void Launch(std::list<std::string_view> &) final {
-    auto handle = ConfigWrapper::Instance().Make_SoyBean_Factory().Create();
-    handle->NoteOn(0, 0x45, 0x7f);
+    auto handle = ConfigWrapper::Instance().make_soybean_factory().make_handle();
+    handle.NoteOn(0, 0x45, 0x7f);
     std::this_thread::sleep_for(std::chrono::seconds(5));
   }
   std::string_view Usage() const final {

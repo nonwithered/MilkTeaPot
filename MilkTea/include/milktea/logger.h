@@ -131,16 +131,16 @@ class BaseLogger {
   MilkTea_Logger_t ToRawType() && {
     auto level_ = Logger::ToRawType(level());
     return MilkTea_Logger_t{
-      .self_ = std::forward<BaseLogger>(*this).Move().release(),
+      .self_ = &std::forward<BaseLogger>(*this).Move(),
       .level_ = level_,
       .interface_ = &Interface(),
     };
   }
   BaseLogger(Logger::Level level) : level_(level) {}
-  virtual std::unique_ptr<BaseLogger> Move() && = 0;
   virtual ~BaseLogger() {
     level_ = Logger::Level::ASSERT;
   }
+  virtual BaseLogger &Move() && = 0;
   virtual void Destroy() && = 0;
   virtual void Debug(std::string_view tag, std::string_view msg) = 0;
   virtual void Info(std::string_view tag, std::string_view msg) = 0;
@@ -165,17 +165,13 @@ class BaseLogger {
 
 class LoggerWrapper final : public BaseLogger {
  public:
-  static LoggerWrapper FromRawType(MilkTea_Logger_t &&another) {
-    LoggerWrapper self(Logger::FromRawType(another.level_));
-    std::swap(self.self_, another);
-    return self;
+  MilkTea_Logger_t ToRawType() && {
+    return release();
   }
+  LoggerWrapper(MilkTea_Logger_t another) : BaseLogger(Logger::FromRawType(another.level_)), self_(another) {}
   LoggerWrapper(LoggerWrapper &&another) : LoggerWrapper(another.level()) {
     std::swap(self_, another.self_);
     another.~LoggerWrapper();
-  }
-  std::unique_ptr<BaseLogger> Move() && final {
-    return std::make_unique<LoggerWrapper>(std::forward<LoggerWrapper>(*this));
   }
   ~LoggerWrapper() final {
     if (Self() == nullptr) {
@@ -184,20 +180,28 @@ class LoggerWrapper final : public BaseLogger {
     Interface().Deleter(Self());
     self_ = {};
   }
+  BaseLogger &Move() && final {
+    return *new LoggerWrapper(std::forward<LoggerWrapper>(*this));
+  }
   void Destroy() && final {
     delete this;
   }
   void Debug(std::string_view tag, std::string_view msg) final {
-    Interface().Debug(Self(), msg.data(), tag.data());
+    Interface().Debug(Self(), tag.data(), msg.data());
   }
   void Info(std::string_view tag, std::string_view msg) final {
-    Interface().Info(Self(), msg.data(), tag.data());
+    Interface().Info(Self(), tag.data(), msg.data());
   }
   void Warn(std::string_view tag, std::string_view msg) final {
-    Interface().Warn(Self(), msg.data(), tag.data());
+    Interface().Warn(Self(), tag.data(), msg.data());
   }
   void Error(std::string_view tag, std::string_view msg) final {
-    Interface().Error(Self(), msg.data(), tag.data());
+    Interface().Error(Self(), tag.data(), msg.data());
+  }
+  MilkTea_Logger_t release() {
+    MilkTea_Logger_t self = self_;
+    self_ = {};
+    return self;
   }
  private:
   void *Self() const {

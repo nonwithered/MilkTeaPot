@@ -14,8 +14,8 @@ namespace Milk {
 class LoggerImpl : public MilkTea::BaseLogger {
  public:
   LoggerImpl(MilkTea::Logger::Level level) : MilkTea::BaseLogger(level) {}
-  std::unique_ptr<BaseLogger> Move() && final {
-    return std::make_unique<LoggerImpl>(std::forward<LoggerImpl>(*this));
+  BaseLogger &Move() && final {
+    return *new LoggerImpl(std::forward<LoggerImpl>(*this));
   }
   void Destroy() && final {
     delete this;

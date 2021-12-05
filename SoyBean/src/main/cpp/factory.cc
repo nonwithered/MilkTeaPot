@@ -2,7 +2,7 @@
 
 namespace {
 
-constexpr char TAG[] = "SoyBean#extern";
+constexpr char TAG[] = "SoyBean";
 
 SoyBean::BaseHandle &BaseHandle_cast(void *self) {
   MilkTea_nonnull(self);
@@ -51,7 +51,10 @@ MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Deleter(void *sel
 })
 
 MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Create(void *self, SoyBean_Handle_t *handle) MilkTea_with_except({
-  auto handle_ = BaseFactory_cast(self).Create();
+  auto *handle_ = &BaseFactory_cast(self).Create();
+  MilkTea::Defer defer([handle_]() {
+    std::move(*handle_).Destroy();
+  });
   *handle = std::move(*handle_).ToRawType();
 })
 

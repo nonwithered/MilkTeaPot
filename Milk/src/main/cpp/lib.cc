@@ -31,7 +31,7 @@ std::vector<std::unique_ptr<Milk::Command>> Cmds() {
 extern "C" {
 
 MilkTea_extern(Milk_Init, (Milk_Config_t config), {
-  Milk::ConfigWrapper::Instance(new Milk::ConfigWrapper(Milk::ConfigWrapper::FromRawType(std::move(config))));
+  Milk::ConfigWrapper::Instance(new Milk::ConfigWrapper(config));
 })
 
 MilkTea_api int MilkTea_call

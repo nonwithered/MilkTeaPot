@@ -5,11 +5,11 @@
 namespace {
 
 struct ConfigImpl {
-  static Milk::LoggerImpl MakeMilkTeaLogger(MilkTea::Logger::Level level) {
+  static Milk::LoggerImpl make_logger(MilkTea::Logger::Level level) {
     return Milk::LoggerImpl(level);
   }
-  static SoyBean::FactoryWrapper MakeSoyBeanFactory() {
-    return SoyBean_Windows::CreateFactory(0, nullptr, nullptr, 0);
+  static SoyBean::FactoryWrapper make_soybean_factory() {
+    return SoyBean_Windows::make_factory(0, nullptr, nullptr, 0);
   }
 };
 

@@ -22,8 +22,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
     ThrowOrNot(Proxy_midiOutClose(self_));
     self_ = nullptr;
   }
-  BaseHandle *Move() && final {
-    return new HandleImpl(std::forward<HandleImpl>(*this));
+  BaseHandle &Move() && final {
+    return *new HandleImpl(std::forward<HandleImpl>(*this));
   }
   void Destroy() && final {
     delete this;

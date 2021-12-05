@@ -1,8 +1,8 @@
-#include <soybean.h>
+#include <soybean/common.h>
 
 namespace {
 
-constexpr char TAG[] = "SoyBean#extern";
+constexpr char TAG[] = "SoyBean";
 
 } // namespace
 

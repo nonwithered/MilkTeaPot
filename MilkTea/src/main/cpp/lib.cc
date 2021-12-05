@@ -43,8 +43,8 @@ class DefaultImpl final : public BaseLogger {
   void Destroy() && final {
     delete this;
   }
-  std::unique_ptr<BaseLogger> Move() && final {
-    return std::make_unique<DefaultImpl>(std::forward<DefaultImpl>(*this));
+  BaseLogger &Move() && final {
+    return *new DefaultImpl(std::forward<DefaultImpl>(*this));
   }
   void Debug(std::string_view, std::string_view) final {}
   void Info(std::string_view, std::string_view) final {}
@@ -117,7 +117,7 @@ const char *MilkTea_Exception_What() {
 }
 
 bool MilkTea_Logger_Config(MilkTea_Logger_t logger) {
-  auto *logger_ = new MilkTea::LoggerWrapper(MilkTea::LoggerWrapper::FromRawType(std::move(logger)));
+  auto *logger_ = new MilkTea::LoggerWrapper(logger);
   if (MilkTea::Logger::Instance(logger_) == nullptr) {
     delete logger_;
     return false;

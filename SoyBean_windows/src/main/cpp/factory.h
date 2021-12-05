@@ -25,17 +25,17 @@ class FactoryImpl final : public SoyBean::BaseFactory {
     dwInstance_ = nullptr;
     fdwOpen_ = 0;
   }
-  BaseFactory *Move() && final {
-    return new FactoryImpl(std::forward<FactoryImpl>(*this));
+  BaseFactory &Move() && final {
+    return *new FactoryImpl(std::forward<FactoryImpl>(*this));
   }
   void Destroy() && final {
     delete this;
   }
-  std::unique_ptr<SoyBean::BaseHandle> Create() final {
+  SoyBean::BaseHandle &Create() final {
     if (!enable_) {
       MilkTea_throw(LogicError, "Create but disable");
     }
-    return std::make_unique<HandleImpl>(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
+    return *new HandleImpl(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
   }
  private:
   FactoryImpl() : enable_(false), uDeviceID_(0), dwCallback_(nullptr), dwInstance_(nullptr), fdwOpen_(0) {}

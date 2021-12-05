@@ -55,7 +55,7 @@
 MilkTea_Exception_t \
 section list { \
   MilkTea_logD("begin " #section); \
-  MilkTea::Defer defer_([]() -> void { MilkTea_logD("end " #section); }); \
+  MilkTea::Defer defer_([]() { MilkTea_logD("end " #section); }); \
   MilkTea_with_except(block) \
 }
 

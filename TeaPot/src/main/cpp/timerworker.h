@@ -151,7 +151,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     }) && OnTerminate(e);
   }
   bool OnTerminate(std::exception *e) {
-    MilkTea::Defer defer([this]() -> void {
+    MilkTea::Defer defer([this]() {
       if (!ChangeStateAnd(State::TIDYING, State::TERMINATED, [this]() -> void {
         state_cond_.notify_all();
       })) {
