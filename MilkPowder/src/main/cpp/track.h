@@ -10,8 +10,9 @@ namespace MilkPowder {
 class TrackImpl final {
   static constexpr char TAG[] = "MilkPowder::TrackImpl";
  public:
-  static std::unique_ptr<TrackImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
-  void Dump(std::vector<uint8_t> &) const;
+  using mapping = Mapping::Track;
+  static TrackImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback);
+  std::vector<uint8_t> Dump() const;
   TrackImpl(std::vector<std::unique_ptr<MessageImpl>> items) : items_(std::move(items)) {
     MilkTea_logI("ctor size=%" PRIu32, static_cast<uint32_t>(items_.size()));
   }
@@ -24,9 +25,9 @@ class TrackImpl final {
   static std::vector<std::unique_ptr<MessageImpl>> Clone(const std::vector<std::unique_ptr<MessageImpl>> &another) {
     std::vector<std::unique_ptr<MessageImpl>> items;
     for (const auto &it : another) {
-      items.emplace_back(it->Clone());
+      items.emplace_back(&it->Clone());
     }
-    return std::move(items);
+    return items;
   }
 };
 

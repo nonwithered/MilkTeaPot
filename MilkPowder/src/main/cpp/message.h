@@ -1,21 +1,22 @@
 #ifndef MILKPOWDER_MESSAGE_H_
 #define MILKPOWDER_MESSAGE_H_
 
-#include <milktea.h>
-
 #include <cstdint>
 #include <vector>
 #include <memory>
 #include <functional>
+
+#include <milkpowder/common.h>
 
 namespace MilkPowder {
 
 class MessageImpl {
   static constexpr char TAG[] = "MilkPowder::MessageImpl";
  public:
-  static std::unique_ptr<MessageImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
-  virtual void Dump(std::vector<uint8_t> &) const = 0;
-  virtual std::unique_ptr<MessageImpl> Clone() const = 0;
+  using mapping = Mapping::Message;
+  static MessageImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
+  virtual std::vector<uint8_t> Dump() const = 0;
+  virtual MessageImpl &Clone() const = 0;
   virtual ~MessageImpl() = default;
   MessageImpl(uint32_t delta, uint8_t type) : delta_(delta), type_(type) {
     CheckDelta(delta);

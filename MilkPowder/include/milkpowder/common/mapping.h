@@ -82,39 +82,6 @@ struct Sysex {
   static constexpr auto raw_message_to = MilkPowder_Message_ToSysex;
 };
 
-template<typename T>
-struct FromRawType;
-
-template<>
-struct FromRawType<MilkPowder_Midi_t> {
-  using target = Midi;
-};
-
-template<>
-struct FromRawType<MilkPowder_Track_t> {
-  using target = Track;
-};
-
-template<>
-struct FromRawType<MilkPowder_Message_t> {
-  using target = Message;
-};
-
-template<>
-struct FromRawType<MilkPowder_Event_t> {
-  using target = Event;
-};
-
-template<>
-struct FromRawType<MilkPowder_Meta_t> {
-  using target = Meta;
-};
-
-template<>
-struct FromRawType<MilkPowder_Sysex_t> {
-  using target = Sysex;
-};
-
 } // namespace Mapping
 } // namespace MilkPowder
 

@@ -10,8 +10,9 @@ namespace MilkPowder {
 class MidiImpl final {
   static constexpr char TAG[] = "MilkPowder::MidiImpl";
  public:
-  static std::unique_ptr<MidiImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
-  void Dump(std::vector<uint8_t> &) const;
+  using mapping = Mapping::Midi;
+  static MidiImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback);
+  std::vector<uint8_t> Dump() const;
   MidiImpl(uint16_t format, uint16_t division, std::vector<std::unique_ptr<TrackImpl>> items) : format_(format), division_(division), items_(std::move(items)) {
     MilkTea_logI("ctor format=%" PRIu16 ", division=%" PRIu16 ", ntrks=%" PRIu16, format_, division_, static_cast<uint16_t>(items_.size()));
     if (format > static_cast<uint16_t>(0x0002)) {
@@ -33,7 +34,7 @@ class MidiImpl final {
     for (const auto &it : another) {
       items.emplace_back(new TrackImpl(*it));
     }
-    return std::move(items);
+    return items;
   }
 };
 

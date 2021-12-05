@@ -11,10 +11,14 @@ namespace MilkPowder {
 class SysexImpl final : public MessageImpl {
   static constexpr char TAG[] = "MilkPowder::SysexImpl";
  public:
-  static std::unique_ptr<SysexImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
-  void Dump(std::vector<uint8_t> &) const final;
-  std::unique_ptr<MessageImpl> Clone() const final {
-    return std::make_unique<SysexImpl>(*this);
+  using mapping = Mapping::Sysex;
+  static bool message_is(const MessageImpl &it) {
+    return it.IsSysex();
+  }
+  static SysexImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback);
+  std::vector<uint8_t> Dump() const final;
+  MessageImpl &Clone() const final {
+    return *new SysexImpl(*this);
   }
   SysexImpl(std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items) : MessageImpl(std::get<0>(items.front()), 0xf0), items_(std::move(items)) {
     if (items_.size() == 0) {

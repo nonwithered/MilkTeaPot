@@ -1,4 +1,4 @@
-#include <milkpowder.h>
+#include <milkpowder/common.h>
 
 #include "midi.h"
 #include "track.h"
@@ -12,98 +12,129 @@ namespace {
 constexpr char TAG[] = "MilkPowder";
 
 template<typename T>
-struct milkpowder_cast_map;
+struct FromRawType;
+
+template<>
+struct FromRawType<MilkPowder_Midi_t> {
+  using target = MilkPowder::MidiImpl;
+};
+
+template<>
+struct FromRawType<MilkPowder_Track_t> {
+  using target = MilkPowder::TrackImpl;
+};
+
+template<>
+struct FromRawType<MilkPowder_Message_t> {
+  using target = MilkPowder::MessageImpl;
+};
+
+template<>
+struct FromRawType<MilkPowder_Event_t> {
+  using target = MilkPowder::EventImpl;
+};
+
+template<>
+struct FromRawType<MilkPowder_Meta_t> {
+  using target = MilkPowder::MetaImpl;
+};
+
+template<>
+struct FromRawType<MilkPowder_Sysex_t> {
+  using target = MilkPowder::SysexImpl;
+};
 
 template<typename T>
-struct milkpowder_cast_map<T *> {
-  using target = typename milkpowder_cast_map<T>::target;
-};
+typename FromRawType<T>::target &milkpowder_cast(T *it) {
+  return *reinterpret_cast<typename FromRawType<T>::target *>(it);
+}
 
-#define milkpowder_cast_map_(T) \
-template<> \
-struct milkpowder_cast_map<const MilkPowder_##T##_t> { \
-  using target = const MilkPowder::T##Impl; \
-}; \
-template<> \
-struct milkpowder_cast_map<MilkPowder_##T##_t> { \
-  using target = MilkPowder::T##Impl; \
-}; \
-template<> \
-struct milkpowder_cast_map<const MilkPowder::T##Impl> { \
-  using target = const MilkPowder_##T##_t; \
-}; \
-template<> \
-struct milkpowder_cast_map<MilkPowder::T##Impl> { \
-  using target = MilkPowder_##T##_t; \
-};
-milkpowder_cast_map_(Midi)
-milkpowder_cast_map_(Track)
-milkpowder_cast_map_(Message)
-milkpowder_cast_map_(Event)
-milkpowder_cast_map_(Meta)
-milkpowder_cast_map_(Sysex)
-#undef milkpowder_cast_map_
+template<typename T>
+const typename FromRawType<T>::target &milkpowder_cast(const T *it) {
+  return *reinterpret_cast<const typename FromRawType<T>::target *>(it);
+}
 
-template<typename From, typename To = typename milkpowder_cast_map<From>::target>
-To *milkpowder_cast(From *it) {
-  return reinterpret_cast<To *>(it);
+template<typename T>
+typename T::mapping::raw_type *milkpowder_cast(T &it) {
+  return reinterpret_cast<typename T::mapping::raw_type *>(&it);
+}
+
+template<typename T>
+const typename T::mapping::raw_type *milkpowder_cast(const T &it) {
+  return reinterpret_cast<const typename T::mapping::raw_type *>(&it);
 }
 
 template<typename T>
 void MilkPowder_Parse(T **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)) {
   MilkTea_nonnull(self);
   MilkTea_nonnull(callback);
-  *self = milkpowder_cast(milkpowder_cast_map<T>::target::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+  *self = milkpowder_cast(FromRawType<T>::target::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
     bool ret = callback(obj, &byte);
     return std::make_tuple(byte, ret);
-  }).release());
+  }));
 }
 
 template<typename T>
 void MilkPowder_Dump(const T *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)) {
   MilkTea_nonnull(self);
   MilkTea_nonnull(callback);
-  std::vector<uint8_t> vec;
-  milkpowder_cast(self)->Dump(vec);
+  auto vec = milkpowder_cast(self).Dump();
   callback(obj, vec.data(), static_cast<size_t>(vec.size()));
 }
 
 template<typename T>
 void MilkPowder_Destroy(T *self) {
   MilkTea_nonnull(self);
-  delete milkpowder_cast(self);
-}
-
-template<typename T>
-void MilkPowder_Message_From(MilkPowder_Message_t **self, T *item) {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  *self = milkpowder_cast(dynamic_cast<milkpowder_cast_map<decltype(self)>::target *>(milkpowder_cast(item)));
-}
-
-template<bool (MilkPowder::MessageImpl::* Is)() const>
-void MilkPowder_Message_Is(const MilkPowder_Message_t *self, bool *item) {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  *item = (milkpowder_cast(self)->*Is)();
-}
-
-template<bool (MilkPowder::MessageImpl::* Is)() const, typename T>
-void MilkPowder_Message_To(const MilkPowder_Message_t *self, T **item) {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  if (!(milkpowder_cast(self)->*Is)()) {
-    MilkTea_throw(LogicError, "must ensure the type is matched");
-  }
-  *item = milkpowder_cast(dynamic_cast<typename milkpowder_cast_map<T>::target *>(milkpowder_cast(self)));
+  delete &milkpowder_cast(self);
 }
 
 template<typename T>
 void MilkPowder_Clone(const T *self, T **another) {
   MilkTea_nonnull(self);
   MilkTea_nonnull(another);
-  *another = milkpowder_cast(new typename milkpowder_cast_map<T>::target(*milkpowder_cast(self)));
+  *another = milkpowder_cast(*new typename FromRawType<T>::target(milkpowder_cast(self)));
+}
+
+template<typename T>
+void MilkPowder_Message_From(MilkPowder_Message_t **self, T *item) {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  *self = milkpowder_cast(dynamic_cast<MilkPowder::MessageImpl &>(milkpowder_cast(item)));
+}
+
+template<typename T>
+void MilkPowder_Message_Is(const MilkPowder_Message_t *self, bool *item) {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  *item = T::message_is(milkpowder_cast(self));
+}
+
+template<typename T>
+void MilkPowder_Message_To(const MilkPowder_Message_t *self, const T **item) {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  if (!FromRawType<T>::target::message_is(milkpowder_cast(self))) {
+    MilkTea_throw(LogicError, "must ensure the type is matched");
+  }
+  *item = milkpowder_cast(dynamic_cast<const typename FromRawType<T>::target &>(milkpowder_cast(self)));
+}
+
+template<typename T>
+void MilkPowder_From_Message(T **self, MilkPowder_Message_t *item) {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  if (!FromRawType<T>::target::message_is(milkpowder_cast(item))) {
+    MilkTea_throw(LogicError, "must ensure the type is matched");
+  }
+  *self = milkpowder_cast(dynamic_cast<typename FromRawType<T>::target &>(milkpowder_cast(item)));
+}
+
+template<typename T>
+void MilkPowder_To_Message(const T *self, const MilkPowder_Message_t **item) {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl &>(milkpowder_cast(self)));
 }
 
 } // namespace
@@ -123,11 +154,11 @@ MilkTea_extern(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t forma
   } else {
     MilkTea_logW("MilkPowder_Midi_Create: ntrks equals 0");
   }
-  std::vector<std::unique_ptr<milkpowder_cast_map<decltype(items)>::target>> vec;
+  std::vector<std::unique_ptr<MilkPowder::TrackImpl>> vec;
   for (uint16_t i = 0; i < ntrks; ++i) {
-    vec.emplace_back(milkpowder_cast(items[i]));
+    vec.emplace_back(&milkpowder_cast(items[i]));
   }
-  *self = milkpowder_cast(new milkpowder_cast_map<decltype(self)>::target(format, division, std::move(vec)));
+  *self = milkpowder_cast(*new MilkPowder::MidiImpl(format, division, std::move(vec)));
 })
 
 MilkTea_extern(MilkPowder_Midi_Clone, (const MilkPowder_Midi_t *self, MilkPowder_Midi_t **another), {
@@ -141,28 +172,28 @@ MilkTea_extern(MilkPowder_Midi_Destroy, (MilkPowder_Midi_t *self), {
 MilkTea_extern(MilkPowder_Midi_GetFormat, (const MilkPowder_Midi_t *self, uint16_t *format), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(format);
-  *format = milkpowder_cast(self)->format();
+  *format = milkpowder_cast(self).format();
 })
 
 MilkTea_extern(MilkPowder_Midi_GetNtrks, (const MilkPowder_Midi_t *self, uint16_t *ntrks), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(ntrks);
-  *ntrks = static_cast<uint16_t>(milkpowder_cast(self)->items().size());
+  *ntrks = static_cast<uint16_t>(milkpowder_cast(self).items().size());
 })
 
 MilkTea_extern(MilkPowder_Midi_GetDivision, (const MilkPowder_Midi_t *self, uint16_t *division), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(division);
-  *division = milkpowder_cast(self)->division();
+  *division = milkpowder_cast(self).division();
 })
 
 MilkTea_extern(MilkPowder_Midi_GetTrack, (const MilkPowder_Midi_t *self, uint16_t index, const MilkPowder_Track_t **item), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(item);
-  if (index >= static_cast<uint16_t>(milkpowder_cast(self)->items().size())) {
-    MilkTea_throwf(InvalidParam, "index: %" PRIu16 ", size: %" PRIu16, index, static_cast<uint16_t>(milkpowder_cast(self)->items().size()));
+  if (index >= static_cast<uint16_t>(milkpowder_cast(self).items().size())) {
+    MilkTea_throwf(InvalidParam, "index: %" PRIu16 ", size: %" PRIu16, index, static_cast<uint16_t>(milkpowder_cast(self).items().size()));
   }
-  *item = milkpowder_cast(milkpowder_cast(self)->items()[index].get());
+  *item = milkpowder_cast(*milkpowder_cast(self).items()[index].get());
 })
 
 MilkTea_extern(MilkPowder_Midi_Dump, (const MilkPowder_Midi_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
@@ -182,11 +213,11 @@ MilkTea_extern(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_M
   } else {
     MilkTea_logW("MilkPowder_Track_Create: length equals 0");
   }
-  std::vector<std::unique_ptr<milkpowder_cast_map<decltype(items)>::target>> vec;
+  std::vector<std::unique_ptr<MilkPowder::MessageImpl>> vec;
   for (uint16_t i = 0; i < length; ++i) {
-    vec.emplace_back(milkpowder_cast(items[i]));
+    vec.emplace_back(&milkpowder_cast(items[i]));
   }
-  *self = milkpowder_cast(new milkpowder_cast_map<decltype(self)>::target(std::move(vec)));
+  *self = milkpowder_cast(*new MilkPowder::TrackImpl(std::move(vec)));
 })
 
 MilkTea_extern(MilkPowder_Track_Clone, (const MilkPowder_Track_t *self, MilkPowder_Track_t **another), {
@@ -200,8 +231,8 @@ MilkTea_extern(MilkPowder_Track_Destroy, (MilkPowder_Track_t *self), {
 MilkTea_extern(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *obj, void (*callback)(void *obj, const MilkPowder_Message_t *item)), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(callback);
-  for (const auto &it : milkpowder_cast(self)->items()) {
-    callback(obj, milkpowder_cast(it.get()));
+  for (const auto &it : milkpowder_cast(self).items()) {
+    callback(obj, milkpowder_cast(*it.get()));
   }
 })
 
@@ -214,17 +245,17 @@ MilkTea_extern(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, void *obj
 MilkTea_extern(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(callback);
-  *self = milkpowder_cast(milkpowder_cast_map<decltype(self)>::target::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+  *self = milkpowder_cast(MilkPowder::MessageImpl::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
     bool ret = callback(obj, &byte);
     return std::make_tuple(byte, ret);
-  }, last).release());
+  }, last));
 })
 
 MilkTea_extern(MilkPowder_Message_Clone, (const MilkPowder_Message_t *self, MilkPowder_Message_t **another), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(another);
-  *another = milkpowder_cast(milkpowder_cast(self)->Clone().release());
+  *another = milkpowder_cast(milkpowder_cast(self).Clone());
 })
 
 MilkTea_extern(MilkPowder_Message_Destroy, (MilkPowder_Message_t *self), {
@@ -233,19 +264,19 @@ MilkTea_extern(MilkPowder_Message_Destroy, (MilkPowder_Message_t *self), {
 
 MilkTea_extern(MilkPowder_Message_SetDelta, (MilkPowder_Message_t *self, uint32_t delta), {
   MilkTea_nonnull(self);
-  milkpowder_cast(self)->delta(delta);
+  milkpowder_cast(self).delta(delta);
 })
 
 MilkTea_extern(MilkPowder_Message_GetDelta, (const MilkPowder_Message_t *self, uint32_t *delta), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(delta);
-  *delta = milkpowder_cast(self)->delta();
+  *delta = milkpowder_cast(self).delta();
 })
 
 MilkTea_extern(MilkPowder_Message_GetType, (const MilkPowder_Message_t *self, uint8_t *type), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(type);
-  *type = milkpowder_cast(self)->type();
+  *type = milkpowder_cast(self).type();
 })
 
 MilkTea_extern(MilkPowder_Message_Dump, (const MilkPowder_Message_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
@@ -265,27 +296,27 @@ MilkTea_extern(MilkPowder_Message_FromSysex, (MilkPowder_Message_t **self, MilkP
 })
 
 MilkTea_extern(MilkPowder_Message_IsEvent, (const MilkPowder_Message_t *self, bool *item), {
-  MilkPowder_Message_Is<&milkpowder_cast_map<decltype(self)>::target::IsEvent>(self, item);
+  MilkPowder_Message_Is<MilkPowder::EventImpl>(self, item);
 })
 
 MilkTea_extern(MilkPowder_Message_IsMeta, (const MilkPowder_Message_t *self, bool *item), {
-  MilkPowder_Message_Is<&milkpowder_cast_map<decltype(self)>::target::IsMeta>(self, item);
+  MilkPowder_Message_Is<MilkPowder::MetaImpl>(self, item);
 })
 
 MilkTea_extern(MilkPowder_Message_IsSysex, (const MilkPowder_Message_t *self, bool *item), {
-  MilkPowder_Message_Is<&milkpowder_cast_map<decltype(self)>::target::IsSysex>(self, item);
+  MilkPowder_Message_Is<MilkPowder::SysexImpl>(self, item);
 })
 
 MilkTea_extern(MilkPowder_Message_ToEvent, (const MilkPowder_Message_t *self, const MilkPowder_Event_t **item), {
-  MilkPowder_Message_To<&milkpowder_cast_map<decltype(self)>::target::IsEvent>(self, item);
+  MilkPowder_Message_To(self, item);
 })
 
 MilkTea_extern(MilkPowder_Message_ToMeta, (const MilkPowder_Message_t *self, const MilkPowder_Meta_t **item), {
-  MilkPowder_Message_To<&milkpowder_cast_map<decltype(self)>::target::IsMeta>(self, item);
+  MilkPowder_Message_To(self, item);
 })
 
 MilkTea_extern(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, const MilkPowder_Sysex_t **item), {
-  MilkPowder_Message_To<&milkpowder_cast_map<decltype(self)>::target::IsSysex>(self, item);
+  MilkPowder_Message_To(self, item);
 })
 
 // Event
@@ -293,16 +324,16 @@ MilkTea_extern(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, co
 MilkTea_extern(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(callback);
-  *self = milkpowder_cast(milkpowder_cast_map<decltype(self)>::target::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+  *self = milkpowder_cast(MilkPowder::EventImpl::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
     bool ret = callback(obj, &byte);
     return std::make_tuple(byte, ret);
-  }, last).release());
+  }, last));
 })
 
 MilkTea_extern(MilkPowder_Event_Create, (MilkPowder_Event_t **self, uint32_t delta, uint8_t type, uint8_t arg0, uint8_t arg1), {
   MilkTea_nonnull(self);
-  *self = milkpowder_cast(new milkpowder_cast_map<decltype(self)>::target(delta, type, std::make_tuple(arg0, arg1)));
+  *self = milkpowder_cast(*new MilkPowder::EventImpl(delta, type, std::make_tuple(arg0, arg1)));
 })
 
 MilkTea_extern(MilkPowder_Event_Clone, (const MilkPowder_Event_t *self, MilkPowder_Event_t **another), {
@@ -316,17 +347,17 @@ MilkTea_extern(MilkPowder_Event_Destroy, (MilkPowder_Event_t *self), {
 MilkTea_extern(MilkPowder_Event_GetType, (const MilkPowder_Event_t *self, uint8_t *type), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(type);
-  *type = milkpowder_cast(self)->type();
+  *type = milkpowder_cast(self).type();
 })
 
 MilkTea_extern(MilkPowder_Event_GetArgs, (const MilkPowder_Event_t *self, uint8_t *args), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(args);
-  uint8_t type = milkpowder_cast(self)->type() & 0xf0;
+  uint8_t type = milkpowder_cast(self).type() & 0xf0;
   if (type != 0xc0 && type != 0xd0) {
-    std::tie(args[0], args[1]) = milkpowder_cast(self)->args();
+    std::tie(args[0], args[1]) = milkpowder_cast(self).args();
   } else {
-    args[0] = std::get<0>(milkpowder_cast(self)->args());
+    args[0] = std::get<0>(milkpowder_cast(self).args());
   }
 })
 
@@ -335,18 +366,11 @@ MilkTea_extern(MilkPowder_Event_Dump, (const MilkPowder_Event_t *self, void *obj
 })
 
 MilkTea_extern(MilkPowder_Event_FromMessage, (MilkPowder_Event_t **self, MilkPowder_Message_t *item), {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  if (!milkpowder_cast(item)->IsEvent()) {
-    MilkTea_throw(LogicError, "must ensure the type is matched");
-  }
-  *self = milkpowder_cast(dynamic_cast<MilkPowder::EventImpl *>(milkpowder_cast(item)));
+  MilkPowder_From_Message(self, item);
 })
 
 MilkTea_extern(MilkPowder_Event_ToMessage, (const MilkPowder_Event_t *self, const MilkPowder_Message_t **item), {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl *>(milkpowder_cast(self)));
+  MilkPowder_To_Message(self, item);
 })
 
 // Meta
@@ -362,7 +386,7 @@ MilkTea_extern(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta
   } else {
     MilkTea_logW("MilkPowder_Meta_Create: length equals 0");
   }
-  *self = milkpowder_cast(new milkpowder_cast_map<decltype(self)>::target(delta, type, std::vector<uint8_t>(args, args + length)));
+  *self = milkpowder_cast(*new MilkPowder::MetaImpl(delta, type, std::vector<uint8_t>(args, args + length)));
 })
 
 MilkTea_extern(MilkPowder_Meta_Clone, (const MilkPowder_Meta_t *self, MilkPowder_Meta_t **another), {
@@ -376,16 +400,16 @@ MilkTea_extern(MilkPowder_Meta_Destroy, (MilkPowder_Meta_t *self), {
 MilkTea_extern(MilkPowder_Meta_GetType, (const MilkPowder_Meta_t *self, uint8_t *type), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(type);
-  *type = milkpowder_cast(self)->type();
+  *type = milkpowder_cast(self).type();
 })
 
 MilkTea_extern(MilkPowder_Meta_GetArgs, (const MilkPowder_Meta_t *self, const uint8_t **args, uint32_t *length), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(args);
   MilkTea_nonnull(length);
-  *length = static_cast<uint32_t>(milkpowder_cast(self)->args().size());
+  *length = static_cast<uint32_t>(milkpowder_cast(self).args().size());
   if (*length != 0) {
-    *args = milkpowder_cast(self)->args().data();
+    *args = milkpowder_cast(self).args().data();
   } else {
     *args = nullptr;
   }
@@ -396,18 +420,11 @@ MilkTea_extern(MilkPowder_Meta_Dump, (const MilkPowder_Meta_t *self, void *obj, 
 })
 
 MilkTea_extern(MilkPowder_Meta_FromMessage, (MilkPowder_Meta_t **self, MilkPowder_Message_t *item), {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  if (!milkpowder_cast(item)->IsMeta()) {
-    MilkTea_throw(LogicError, "must ensure the type is matched");
-  }
-  *self = milkpowder_cast(dynamic_cast<MilkPowder::MetaImpl *>(milkpowder_cast(item)));
+  MilkPowder_From_Message(self, item);
 })
 
 MilkTea_extern(MilkPowder_Meta_ToMessage, (const MilkPowder_Meta_t *self, const MilkPowder_Message_t **item), {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl *>(milkpowder_cast(self)));
+  MilkPowder_To_Message(self, item);
 })
 
 // Sysex
@@ -431,7 +448,7 @@ MilkTea_extern(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t del
   for (uint32_t i = 0; i < size; ++i) {
     vec.emplace_back(delta[i], std::vector<uint8_t>(args[i], args[i] + length[i]));
   }
-  *self = milkpowder_cast(new milkpowder_cast_map<decltype(self)>::target(std::move(vec)));
+  *self = milkpowder_cast(*new MilkPowder::SysexImpl(std::move(vec)));
 })
 
 MilkTea_extern(MilkPowder_Sysex_Clone, (const MilkPowder_Sysex_t *self, MilkPowder_Sysex_t **another), {
@@ -444,7 +461,7 @@ MilkTea_extern(MilkPowder_Sysex_Destroy, (MilkPowder_Sysex_t *self), {
 
 MilkTea_extern(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, uint32_t delta, const uint8_t *args, uint32_t length)), {
   MilkTea_nonnull(self);
-  for (const auto &it : milkpowder_cast(self)->items()) {
+  for (const auto &it : milkpowder_cast(self).items()) {
     callback(obj, static_cast<uint32_t>(std::get<0>(it)), std::get<1>(it).data(), static_cast<uint32_t>(std::get<1>(it).size()));
   }
 })
@@ -454,18 +471,11 @@ MilkTea_extern(MilkPowder_Sysex_Dump, (const MilkPowder_Sysex_t *self, void *obj
 })
 
 MilkTea_extern(MilkPowder_Sysex_FromMessage, (MilkPowder_Sysex_t **self, MilkPowder_Message_t *item), {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  if (!milkpowder_cast(item)->IsSysex()) {
-    MilkTea_throw(LogicError, "must ensure the type is matched");
-  }
-  *self = milkpowder_cast(dynamic_cast<MilkPowder::SysexImpl *>(milkpowder_cast(item)));
+  MilkPowder_From_Message(self, item);
 })
 
 MilkTea_extern(MilkPowder_Sysex_ToMessage, (const MilkPowder_Sysex_t *self, const MilkPowder_Message_t **item), {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(item);
-  *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl *>(milkpowder_cast(self)));
+  MilkPowder_To_Message(self, item);
 })
 
 } // extern "C"

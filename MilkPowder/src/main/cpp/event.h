@@ -10,10 +10,14 @@ namespace MilkPowder {
 class EventImpl final : public MessageImpl {
   static constexpr char TAG[] = "MilkPowder::EventImpl";
  public:
-  static std::unique_ptr<EventImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
-  void Dump(std::vector<uint8_t> &) const final;
-  std::unique_ptr<MessageImpl> Clone() const final {
-    return std::make_unique<EventImpl>(*this);
+  using mapping = Mapping::Event;
+  static bool message_is(const MessageImpl &it) {
+    return it.IsEvent();
+  }
+  static EventImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last);
+  std::vector<uint8_t> Dump() const final;
+  MessageImpl &Clone() const final {
+    return *new EventImpl(*this);
   }
   EventImpl(uint32_t delta, uint8_t type, std::tuple<uint8_t, uint8_t> args) : MessageImpl(delta, type), args_(args) {
     if (type >= 0xf0) {

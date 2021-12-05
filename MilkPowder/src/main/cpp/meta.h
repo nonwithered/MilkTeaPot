@@ -8,10 +8,14 @@ namespace MilkPowder {
 class MetaImpl final : public MessageImpl {
   static constexpr char TAG[] = "MilkPowder::MetaImpl";
  public:
-  static std::unique_ptr<MetaImpl> Parse(std::function<std::tuple<uint8_t, bool>()> callback);
-  void Dump(std::vector<uint8_t> &) const final;
-  std::unique_ptr<MessageImpl> Clone() const final {
-    return std::make_unique<MetaImpl>(*this);
+  using mapping = Mapping::Meta;
+  static bool message_is(const MessageImpl &it) {
+    return it.IsMeta();
+  }
+  static MetaImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback);
+  std::vector<uint8_t> Dump() const final;
+  MessageImpl &Clone() const final {
+    return *new MetaImpl(*this);
   }
   MetaImpl(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : MessageImpl(delta, 0xff), type_(type), args_(std::move(args)) {
     if (type >= 0x80) {

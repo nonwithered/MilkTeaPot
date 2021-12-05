@@ -6,7 +6,7 @@
 #include "meta.h"
 #include "sysex.h"
 
-namespace {
+namespace MilkPowder {
 
 constexpr char TAG[] = "MilkPowder::Dump";
 
@@ -44,28 +44,40 @@ void DumpArgs(const std::vector<uint8_t> &args, std::vector<uint8_t> &vec) {
   }
 }
 
-} // namespace
-
-namespace MilkPowder {
-    
-void MidiImpl::Dump(std::vector<uint8_t> &vec) const {
-  DumpU8(static_cast<uint8_t>('M'), vec);
-  DumpU8(static_cast<uint8_t>('T'), vec);
-  DumpU8(static_cast<uint8_t>('h'), vec);
-  DumpU8(static_cast<uint8_t>('d'), vec);
-  DumpU8(0, vec);
-  DumpU8(0, vec);
-  DumpU8(0, vec);
-  DumpU8(6, vec);
-  DumpU16(format_, vec);
-  DumpU16(static_cast<uint16_t>(items_.size()), vec);
-  DumpU16(division_, vec);
-  for (const std::unique_ptr<TrackImpl> &it : items_) {
-    it->Dump(vec);
+void DumpEvent(const EventImpl &self, std::vector<uint8_t> &vec) {
+  DumpUsize(self.delta(), vec);
+  auto type = self.type();
+  DumpU8(type, vec);
+  const auto &args = self.args();
+  DumpU8(std::get<0>(args), vec);
+  type &= 0xf0;
+  if (type != 0xc0 && type != 0xd0) {
+    DumpU8(std::get<1>(args), vec);
   }
 }
 
-void TrackImpl::Dump(std::vector<uint8_t> &vec) const {
+void DumpMeta(const MetaImpl &self, std::vector<uint8_t> &vec) {
+  DumpUsize(self.delta(), vec);
+  DumpU8(0xff, vec);
+  DumpU8(self.type(), vec);
+  DumpArgs(self.args(), vec);
+}
+
+void DumpSysex(const SysexImpl &self, std::vector<uint8_t> &vec) {
+  DumpUsize(self.delta(), vec);
+  DumpU8(0xf0, vec);
+  const auto &items = self.items();
+  DumpArgs(std::get<1>(items[0]), vec);
+  if (items.size() != 1) {
+    std::for_each(items.begin() + 1, items.end(), [&vec](const auto &it) {
+      DumpUsize(static_cast<uint32_t>(std::get<0>(it)), vec);
+      DumpU8(0xf7, vec);
+      DumpArgs(std::get<1>(it), vec);
+    });
+  }
+}
+
+void DumpTrack(const TrackImpl &self, std::vector<uint8_t> &vec) {
   DumpU8(static_cast<uint8_t>('M'), vec);
   DumpU8(static_cast<uint8_t>('T'), vec);
   DumpU8(static_cast<uint8_t>('r'), vec);
@@ -75,8 +87,16 @@ void TrackImpl::Dump(std::vector<uint8_t> &vec) const {
   DumpU8(0, vec);
   DumpU8(0, vec);
   DumpU8(0, vec);
-  for (const std::unique_ptr<MessageImpl> &it : items_) {
-    it->Dump(vec);
+  for (const auto &it : self.items()) {
+    if (it->IsEvent()) {
+      DumpEvent(dynamic_cast<const EventImpl &>(*it), vec);
+    } else if (it->IsMeta()) {
+      DumpMeta(dynamic_cast<const MetaImpl &>(*it), vec);
+    } else if (it->IsSysex()) {
+      DumpSysex(dynamic_cast<const SysexImpl &>(*it), vec);
+    } else {
+      MilkTea_assertf("DumpTrack type -- %" PRIx8, it->type());
+    }
   }
   std::vector<uint8_t> len;
   DumpU32(static_cast<uint32_t>(vec.size() - index - 4), len);
@@ -85,34 +105,51 @@ void TrackImpl::Dump(std::vector<uint8_t> &vec) const {
   }
 }
 
-void EventImpl::Dump(std::vector<uint8_t> &vec) const {
-  DumpUsize(MessageImpl::delta(), vec);
-  uint8_t type = MessageImpl::type();
-  DumpU8(type, vec);
-  DumpU8(std::get<0>(args_), vec);
-  type &= 0xf0;
-  if (type != 0xc0 && type != 0xd0) {
-    DumpU8(std::get<1>(args_), vec);
+void DumpMidi(const MidiImpl &self, std::vector<uint8_t> &vec) {
+  DumpU8(static_cast<uint8_t>('M'), vec);
+  DumpU8(static_cast<uint8_t>('T'), vec);
+  DumpU8(static_cast<uint8_t>('h'), vec);
+  DumpU8(static_cast<uint8_t>('d'), vec);
+  DumpU8(0, vec);
+  DumpU8(0, vec);
+  DumpU8(0, vec);
+  DumpU8(6, vec);
+  DumpU16(self.format(), vec);
+  DumpU16(static_cast<uint16_t>(self.items().size()), vec);
+  DumpU16(self.division(), vec);
+  for (const std::unique_ptr<TrackImpl> &it : self.items()) {
+    DumpTrack(*it, vec);
   }
 }
-
-void MetaImpl::Dump(std::vector<uint8_t> &vec) const {
-  DumpUsize(MessageImpl::delta(), vec);
-  DumpU8(0xff, vec);
-  DumpU8(type_, vec);
-  DumpArgs(args_, vec);
+    
+std::vector<uint8_t> MidiImpl::Dump() const {
+  std::vector<uint8_t> vec;
+  DumpMidi(*this, vec);
+  return vec;
 }
 
-void SysexImpl::Dump(std::vector<uint8_t> &vec) const {
-  DumpUsize(MessageImpl::delta(), vec);
-  DumpU8(0xf0, vec);
-  std::vector<std::tuple<uint32_t, std::vector<uint8_t>>>::const_iterator itr = items_.begin();
-  DumpArgs(std::get<1>(*itr++), vec);
-  for (; itr != items_.end(); ++itr) {
-    DumpUsize(static_cast<uint32_t>(std::get<0>(*itr)), vec);
-    DumpU8(0xf7, vec);
-    DumpArgs(std::get<1>(*itr), vec);
-  }
+std::vector<uint8_t> TrackImpl::Dump() const {
+  std::vector<uint8_t> vec;
+  DumpTrack(*this, vec);
+  return vec;
+}
+
+std::vector<uint8_t> EventImpl::Dump() const {
+  std::vector<uint8_t> vec;
+  DumpEvent(*this, vec);
+  return vec;
+}
+
+std::vector<uint8_t> MetaImpl::Dump() const {
+  std::vector<uint8_t> vec;
+  DumpMeta(*this, vec);
+  return vec;
+}
+
+std::vector<uint8_t> SysexImpl::Dump() const {
+  std::vector<uint8_t> vec;
+  DumpSysex(*this, vec);
+  return vec;
 }
 
 } // namespace MilkPowder
