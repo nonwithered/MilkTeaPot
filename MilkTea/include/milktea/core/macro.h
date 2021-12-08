@@ -79,6 +79,6 @@ do b while (false)
 #define MilkTea_decl(T) \
 MilkTea_symbol T MilkTea_call
 
-#define MilkTea_api MilkTea_decl(MilkTea_error)
+#define MilkTea_api MilkTea_decl(MilkTea_Exception_t)
 
 #endif // ifndef LIB_MILKTEA_CORE_MACRO_H_

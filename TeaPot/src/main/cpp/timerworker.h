@@ -16,7 +16,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   using time_point_type = TimerUnit::time_point_type;
   using clock_type = TimerUnit::clock_type;
  public:
-  static worker_type Make(std::function<bool(std::exception *)> on_terminate) {
+  static worker_type Make(std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate) {
     auto worker = worker_type(new TimerWorkerImpl(on_terminate));
     worker->binder_.Bind(worker);
     return worker;
@@ -112,12 +112,12 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     return future;
   }
  private:
-  explicit TimerWorkerImpl(std::function<bool(std::exception *)> on_terminate)
+  explicit TimerWorkerImpl(std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate)
   : state_(State::INIT),
     on_terminate_(on_terminate),
     binder_() {}
   void Run() {
-    try {
+    auto type = MilkTea::Exception::Catch([this]() {
       while (true) {
         auto [b, f] = Take();
         if (!b) {
@@ -125,14 +125,10 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
         }
         f();
       }
-      TryTerminate(nullptr);
-    } catch (std::exception &e) {
-      if (!TryTerminate(&e)) {
-        throw e;
-      }
-    }
+    });
+    TryTerminate(type, MilkTea::Exception::What());
   }
-  bool TryTerminate(std::exception *e) {
+  bool TryTerminate(MilkTea::Exception::Type type, std::string_view what) {
     return ChangeState(State::TIDYING, [](State state) -> bool {
       switch (state) {
         case State::INIT:
@@ -149,9 +145,9 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
         default:
           MilkTea_assert("TryTerminate assert default");
       }
-    }) && OnTerminate(e);
+    }) && OnTerminate(type, what);
   }
-  bool OnTerminate(std::exception *e) {
+  bool OnTerminate(MilkTea::Exception::Type type, std::string_view what) {
     MilkTea::Defer defer([this]() {
       if (!ChangeStateAnd(State::TIDYING, State::TERMINATED, [this]() -> void {
         state_cond_.notify_all();
@@ -159,7 +155,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
         MilkTea_assert("OnTerminate assert");
       }
     });
-    return on_terminate_(e);
+    return on_terminate_(type, what);
   }
   std::tuple<bool, action_type> Take() {
     std::unique_lock guard(lock_);
@@ -278,7 +274,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   std::recursive_mutex lock_;
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
-  std::function<bool(std::exception *)> on_terminate_;
+  std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate_;
   worker_binder binder_;
   MilkTea_NonCopy(TimerWorkerImpl)
   MilkTea_NonMove(TimerWorkerImpl)

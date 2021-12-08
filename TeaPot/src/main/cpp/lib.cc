@@ -104,9 +104,7 @@ MilkTea_extern(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, MilkTea_
   MilkTea_nonnull(self);
   MilkTea_nonnull(on_terminate);
   auto do_terminate = MilkTea::ClosureToken<bool(MilkTea_Exception_t, const char *)>::FromRawType(obj, on_terminate);
-  auto worker = TeaPot::TimerWorkerImpl::Make([do_terminate](std::exception *e) -> bool {
-    auto type = MilkTea::Exception::Unwrap(e);
-    auto what = MilkTea::Exception::What();
+  auto worker = TeaPot::TimerWorkerImpl::Make([do_terminate](MilkTea::Exception::Type type, std::string_view what) -> bool {
     return do_terminate(MilkTea::Exception::ToRawType(type), what.data());
   });
   *self = timer_cast(*new TeaPot::worker_type(std::move(worker)));

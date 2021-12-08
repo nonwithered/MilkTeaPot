@@ -126,13 +126,4 @@ inline Type FromRawType(MilkTea_Exception_t type) {
 } // namespace Exception
 } // namespace MilkTea
 
-#define MilkTea_with_except(block) { \
-  try { \
-    block \
-  } catch (std::exception &e) { \
-    return MilkTea::Exception::ToRawType(MilkTea::Exception::Unwrap(&e)); \
-  } \
-  return MilkTea::Exception::ToRawType(MilkTea::Exception::Unwrap(nullptr)); \
-}
-
 #endif // ifndef LIB_MILKTEA_COMMON_EXCEPT_H_

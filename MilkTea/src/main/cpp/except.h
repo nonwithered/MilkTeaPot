@@ -8,7 +8,7 @@
 
 namespace MilkTea {
 
-class ExceptionImpl final : public std::exception {
+class MilkTea_symbol ExceptionImpl final : public std::exception {
  public:
   static std::string_view What(std::string_view = nullptr);
   ExceptionImpl(Exception::Type type, std::string what) : type_(type), what_(what) {}

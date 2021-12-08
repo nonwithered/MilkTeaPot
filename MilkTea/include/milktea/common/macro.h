@@ -3,15 +3,6 @@
 
 #include <milktea/core.h>
 
-#define MilkTea_extern(section, list, block) \
-extern "C" \
-MilkTea_Exception_t \
-section list { \
-  MilkTea_logD(#section " begin"); \
-  MilkTea::Defer defer_([]() { MilkTea_logD(#section " end"); }); \
-  MilkTea_with_except(block) \
-}
-
 #define MilkTea_NonCopy(T) \
   T(const T &) = delete; \
   void operator=(const T &) = delete;

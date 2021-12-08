@@ -16,17 +16,9 @@ class TimerWorkerWrapper final {
   using State = TeaPot::TimerWorker::State;
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
-  explicit TimerWorkerWrapper(std::function<bool(std::exception *)> on_terminate) : TimerWorkerWrapper() {
+  explicit TimerWorkerWrapper(std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate) : TimerWorkerWrapper() {
     std::function<bool(MilkTea_Exception_t, const char *)> do_terminate = [on_terminate](MilkTea_Exception_t type, const char *what) -> bool {
-      if (type == MilkTea_Exception_Nil) {
-        return on_terminate(nullptr);
-      }
-      try {
-        MilkTea_Exception_Throw(type, what);
-      }  catch (std::exception &e) {
-        return on_terminate(&e);
-      }
-      return false;
+      return on_terminate(MilkTea::Exception::FromRawType(type), what);
     };
     TeaPot_TimerWorker_t *self = nullptr;
     MilkTea_panic(TeaPot_TimerWorker_Create(&self, MilkTea::ClosureToken<decltype(do_terminate)>::ToRawType(do_terminate), MilkTea::ClosureToken<decltype(do_terminate)>::Invoke));

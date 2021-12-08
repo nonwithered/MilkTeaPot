@@ -3,8 +3,6 @@
 
 #include <milktea/core/macro.h>
 
-#define MilkTea_error MilkTea_Exception_t
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,6 +28,18 @@ MilkTea_Exception_What();
 MilkTea_noreturn
 MilkTea_decl(void)
 MilkTea_Exception_Throw(MilkTea_Exception_t, const char *);
+
+struct MilkTea_Exception_Block_t {
+  void *self_;
+  void (MilkTea_call *invoke_)(void *);
+};
+
+#ifndef __cplusplus
+typedef struct MilkTea_Exception_Block_t MilkTea_Exception_Block_t;
+#endif
+
+MilkTea_api
+MilkTea_Exception_Catch(MilkTea_Exception_Block_t block);
 
 #define MilkTea_throw(type, what) MilkTea_block({ \
   MilkTea_Exception_Throw(MilkTea_Exception_##type, what); \
