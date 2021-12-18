@@ -25,7 +25,7 @@ typedef struct MilkPowder_Sysex_t MilkPowder_Sysex_t;
 
 struct MilkPowder_Reader_t {
   void *self_;
-  bool (MilkTea_call *Read_)(void *self, uint8_t *byte);
+  bool (MilkTea_call *read_)(void *self, uint8_t *byte);
 };
 
 #ifndef __cplusplus
@@ -34,7 +34,7 @@ typedef struct MilkPowder_Reader_t MilkPowder_Reader_t;
 
 struct MilkPowder_Writer_t {
   void *self_;
-  void (MilkTea_call *Write_)(void *self, const uint8_t bytes[], size_t len);
+  void (MilkTea_call *write_)(void *self, const uint8_t bytes[], size_t len);
 };
 
 #ifndef __cplusplus
@@ -85,7 +85,7 @@ MilkTea_api
 MilkPowder_Track_Destroy(MilkPowder_Track_t *self);
 
 MilkTea_api
-MilkPowder_Track_GetMessages(const MilkPowder_Track_t *self, void *obj, void (MilkTea_call *callback)(void *obj, const MilkPowder_Message_t *item));
+MilkPowder_Track_GetMessages(const MilkPowder_Track_t *self, void *collector, void (MilkTea_call *collect)(void *collector, const MilkPowder_Message_t *item));
 
 MilkTea_api
 MilkPowder_Track_Dump(const MilkPowder_Track_t *self, MilkPowder_Writer_t writer);
@@ -213,7 +213,7 @@ MilkTea_api
 MilkPowder_Sysex_Destroy(MilkPowder_Sysex_t *self);
 
 MilkTea_api
-MilkPowder_Sysex_GetArgs(const MilkPowder_Sysex_t *self, void *obj, void (MilkTea_call *callback)(void *obj, uint32_t delta, const uint8_t *args, uint32_t length));
+MilkPowder_Sysex_GetArgs(const MilkPowder_Sysex_t *self, void *collector, void (MilkTea_call *collect)(void *collector, uint32_t delta, const uint8_t *args, uint32_t length));
 
 MilkTea_api
 MilkPowder_Sysex_Dump(const MilkPowder_Sysex_t *self, MilkPowder_Writer_t writer);

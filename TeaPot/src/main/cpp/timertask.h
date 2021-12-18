@@ -8,7 +8,7 @@
 
 namespace TeaPot {
 
-using action_type = std::function<void()>;
+using action_type = Action::action_type;
 class TimerTaskImpl;
 using task_type = std::unique_ptr<TimerTaskImpl>;
 using task_raw = task_type::element_type *;

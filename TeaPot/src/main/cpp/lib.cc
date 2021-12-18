@@ -128,14 +128,12 @@ MilkTea_extern(TeaPot_TimerWorker_GetState, (TeaPot_TimerWorker_t *self, TeaPot_
   *state = TeaPot::TimerWorker::ToRawType(timer_cast(self)->state());
 })
 
-MilkTea_extern(TeaPot_TimerWorker_Post, (TeaPot_TimerWorker_t *self, TeaPot_TimerFuture_t **future, int64_t delay, MilkTea_ClosureToken_t obj, void (MilkTea_call *action)(void *obj)), {
+MilkTea_extern(TeaPot_TimerWorker_Post, (TeaPot_TimerWorker_t *self, TeaPot_TimerFuture_t **future, int64_t delay, TeaPot_Action_t action), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(action);
   if (delay < 0) {
     MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
   }
-  auto do_action = MilkTea::ClosureToken<void()>::FromRawType(obj, action);
-  auto future_ = timer_cast(self)->Post(duration_type(delay), do_action);
+  auto future_ = timer_cast(self)->Post(duration_type(delay), TeaPot::Action::FromRawType(action));
   if (future != nullptr) {
     *future = timer_cast(*new TeaPot::future_type(std::move(future_)));
   }
@@ -147,9 +145,9 @@ MilkTea_extern(TeaPot_TimerWorker_Shutdown, (TeaPot_TimerWorker_t *self, bool *s
   *success = timer_cast(self)->Shutdown();
 })
 
-MilkTea_extern(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, void *obj, void (MilkTea_call *callback)(void *obj, uint32_t size, TeaPot_TimerTask_t **tasks)), {
+MilkTea_extern(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, void *collector, void (MilkTea_call *collect)(void *collector, uint32_t size, TeaPot_TimerTask_t *tasks[])), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(callback);
+  MilkTea_nonnull(collect);
   bool success;
   std::vector<TeaPot::task_type> vec;
   std::tie(success, vec) = timer_cast(self)->ShutdownNow();
@@ -159,7 +157,7 @@ MilkTea_extern(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, void
     for (decltype(sz) i = 0; i != sz; ++i) {
       arr[i] = timer_cast(*vec[i].release());
     }
-    callback(obj, static_cast<uint32_t>(sz), arr.data());
+    collect(collector, static_cast<uint32_t>(sz), arr.data());
   }
 });
 

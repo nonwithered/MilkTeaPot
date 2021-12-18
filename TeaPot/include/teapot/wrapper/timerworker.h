@@ -45,7 +45,7 @@ class TimerWorkerWrapper final {
   }
   TimerFutureWrapper Post(duration_type delay, std::function<void()> action) {
     TeaPot_TimerFuture_t *future = nullptr;
-    MilkTea_panic(TeaPot_TimerWorker_Post(self_, &future, delay.count(), MilkTea::ClosureToken<decltype(action)>::ToRawType(action), MilkTea::ClosureToken<decltype(action)>::Invoke));
+    MilkTea_panic(TeaPot_TimerWorker_Post(self_, &future, delay.count(), Action::ToRawType(action)));
     return future;
   }
   bool Shutdown() {

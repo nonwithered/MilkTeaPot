@@ -94,7 +94,7 @@ struct Reader {
   operator raw_type(){
     return {
       .self_ = &f_,
-      .Read_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
+      .read_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
     };
   }
  private:
@@ -107,7 +107,7 @@ struct Writer {
   operator raw_type() {
     return {
       .self_ = &f_,
-      .Write_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
+      .write_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
     };
   }
  private:

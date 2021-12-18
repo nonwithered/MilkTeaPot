@@ -13,10 +13,9 @@ void MilkTea_call SoyMilk_BaseController_Deleter(void *self) {
   std::move(BaseController_cast(self)).Destroy();
 }
 
-void MilkTea_call SoyMilk_BaseController_OnSubmit(void *self, MilkTea_ClosureToken_t obj, void (MilkTea_call *submit)(void *obj)) {
-  auto callback = MilkTea::ClosureToken<void()>::FromRawType(obj, submit);
-  BaseController_cast(self).OnSubmit([callback]() -> void {
-    callback();
+void MilkTea_call SoyMilk_BaseController_OnSubmit(void *self, TeaPot_Action_t action) {
+  BaseController_cast(self).OnSubmit([action_ = TeaPot::Action::FromRawType(action)]() -> void {
+    action_();
   });
 }
 void MilkTea_call SoyMilk_BaseController_OnPlay(void *self, int64_t time, uint16_t ntrk, MilkPowder_Message_t *message) {
@@ -31,8 +30,8 @@ void MilkTea_call SoyMilk_BaseController_OnStart(void *self) {
 void MilkTea_call SoyMilk_BaseController_OnPause(void *self, int64_t time) {
   BaseController_cast(self).OnPause(SoyMilk::BaseController::duration_type(time));
 }
-void MilkTea_call SoyMilk_BaseController_OnSeekBegin(void *self, int64_t time) {
-  BaseController_cast(self).OnSeekBegin(SoyMilk::BaseController::duration_type(time));
+void MilkTea_call SoyMilk_BaseController_OnSeekBegin(void *self) {
+  BaseController_cast(self).OnSeekBegin();
 }
 void MilkTea_call SoyMilk_BaseController_OnSeekEnd(void *self) {
   BaseController_cast(self).OnSeekEnd();
@@ -40,8 +39,8 @@ void MilkTea_call SoyMilk_BaseController_OnSeekEnd(void *self) {
 void MilkTea_call SoyMilk_BaseController_OnResume(void *self) {
   BaseController_cast(self).OnResume();
 }
-void MilkTea_call SoyMilk_BaseController_OnStop(void *self, int64_t time) {
-  BaseController_cast(self).OnStop(SoyMilk::BaseController::duration_type(time));
+void MilkTea_call SoyMilk_BaseController_OnStop(void *self) {
+  BaseController_cast(self).OnStop();
 }
 void MilkTea_call SoyMilk_BaseController_OnComplete(void *self) {
   BaseController_cast(self).OnComplete();

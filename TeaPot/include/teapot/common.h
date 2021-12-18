@@ -5,6 +5,7 @@
 
 #ifdef __cplusplus
 
+#include <teapot/common/action.h>
 #include <teapot/common/timerunit.h>
 #include <teapot/common/timerfuture.h>
 #include <teapot/common/timertask.h>

@@ -67,10 +67,10 @@ const typename T::mapping::raw_type *milkpowder_cast(const T &it) {
 template<typename T>
 void MilkPowder_Parse(T **self, MilkPowder_Reader_t reader) {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(reader.Read_);
+  MilkTea_nonnull(reader.read_);
   *self = milkpowder_cast(FromRawType<T>::target::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = reader.Read_(reader.self_, &byte);
+    bool ret = reader.read_(reader.self_, &byte);
     return std::make_tuple(byte, ret);
   }));
 }
@@ -78,9 +78,9 @@ void MilkPowder_Parse(T **self, MilkPowder_Reader_t reader) {
 template<typename T>
 void MilkPowder_Dump(const T *self, MilkPowder_Writer_t writer) {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(writer.Write_);
+  MilkTea_nonnull(writer.write_);
   auto vec = milkpowder_cast(self).Dump();
-  writer.Write_(writer.self_, vec.data(), static_cast<size_t>(vec.size()));
+  writer.write_(writer.self_, vec.data(), static_cast<size_t>(vec.size()));
 }
 
 template<typename T>
@@ -228,11 +228,11 @@ MilkTea_extern(MilkPowder_Track_Destroy, (MilkPowder_Track_t *self), {
   MilkPowder_Destroy(self);
 })
 
-MilkTea_extern(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *obj, void (*callback)(void *obj, const MilkPowder_Message_t *item)), {
+MilkTea_extern(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *collector, void (*collect)(void *collector, const MilkPowder_Message_t *item)), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(callback);
+  MilkTea_nonnull(collect);
   for (const auto &it : milkpowder_cast(self).items()) {
-    callback(obj, milkpowder_cast(*it.get()));
+    collect(collector, milkpowder_cast(*it.get()));
   }
 })
 
@@ -244,10 +244,10 @@ MilkTea_extern(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, MilkPowde
 
 MilkTea_extern(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, MilkPowder_Reader_t reader, uint8_t last), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(reader.Read_);
+  MilkTea_nonnull(reader.read_);
   *self = milkpowder_cast(MilkPowder::MessageImpl::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = reader.Read_(reader.self_, &byte);
+    bool ret = reader.read_(reader.self_, &byte);
     return std::make_tuple(byte, ret);
   }, last));
 })
@@ -323,10 +323,10 @@ MilkTea_extern(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, co
 
 MilkTea_extern(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, MilkPowder_Reader_t reader, uint8_t last), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(reader.Read_);
+  MilkTea_nonnull(reader.read_);
   *self = milkpowder_cast(MilkPowder::EventImpl::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = reader.Read_(reader.self_, &byte);
+    bool ret = reader.read_(reader.self_, &byte);
     return std::make_tuple(byte, ret);
   }, last));
 })
@@ -459,10 +459,10 @@ MilkTea_extern(MilkPowder_Sysex_Destroy, (MilkPowder_Sysex_t *self), {
   MilkPowder_Destroy(self);
 })
 
-MilkTea_extern(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, uint32_t delta, const uint8_t *args, uint32_t length)), {
+MilkTea_extern(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *collector, void (*collect)(void *collector, uint32_t delta, const uint8_t *args, uint32_t length)), {
   MilkTea_nonnull(self);
   for (const auto &it : milkpowder_cast(self).items()) {
-    callback(obj, static_cast<uint32_t>(std::get<0>(it)), std::get<1>(it).data(), static_cast<uint32_t>(std::get<1>(it).size()));
+    collect(collector, static_cast<uint32_t>(std::get<0>(it)), std::get<1>(it).data(), static_cast<uint32_t>(std::get<1>(it).size()));
   }
 })
 

@@ -22,15 +22,15 @@ typedef enum SoyMilk_Player_State_t SoyMilk_Player_State_t;
 
 struct SoyMilk_Player_Controller_Interface_t {
   void (MilkTea_call *Deleter)(void *self);
-  void (MilkTea_call *OnSubmit)(void *self, MilkTea_ClosureToken_t obj, void (MilkTea_call *submit)(void *obj));
+  void (MilkTea_call *OnSubmit)(void *self, TeaPot_Action_t action);
   void (MilkTea_call *OnPlay)(void *self, int64_t time, uint16_t ntrk, MilkPowder_Message_t *message);
   void (MilkTea_call *OnPrepare)(void *self, int64_t time);
   void (MilkTea_call *OnStart)(void *self);
   void (MilkTea_call *OnPause)(void *self, int64_t time);
-  void (MilkTea_call *OnSeekBegin)(void *self, int64_t time);
+  void (MilkTea_call *OnSeekBegin)(void *self);
   void (MilkTea_call *OnSeekEnd)(void *self);
   void (MilkTea_call *OnResume)(void *self);
-  void (MilkTea_call *OnStop)(void *self, int64_t time);
+  void (MilkTea_call *OnStop)(void *self);
   void (MilkTea_call *OnComplete)(void *self);
   void (MilkTea_call *OnReset)(void *self);
 };

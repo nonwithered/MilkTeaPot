@@ -25,10 +25,10 @@ class BaseController {
   virtual void OnPrepare(duration_type time) = 0;
   virtual void OnStart() = 0;
   virtual void OnPause(duration_type time) = 0;
-  virtual void OnSeekBegin(duration_type time) = 0;
+  virtual void OnSeekBegin() = 0;
   virtual void OnSeekEnd() = 0;
   virtual void OnResume() = 0;
-  virtual void OnStop(duration_type time) = 0;
+  virtual void OnStop() = 0;
   virtual void OnComplete() = 0;
   virtual void OnReset() = 0;
  private:
@@ -54,8 +54,8 @@ class ControllerWrapper final : public BaseController {
   void Destroy() && final {
     delete this;
   }
-  void OnSubmit(std::function<void()> submit) final {
-    GetInterface().OnSubmit(GetObj(), MilkTea::ClosureToken<decltype(submit)>::ToRawType(submit), MilkTea::ClosureToken<decltype(submit)>::Invoke);
+  void OnSubmit(TeaPot::Action::action_type action) final {
+    GetInterface().OnSubmit(GetObj(), TeaPot::Action::ToRawType(action));
   };
   void OnPlay(duration_type time, uint16_t ntrk, MilkPowder::MessageMutableWrapper message) final {
     GetInterface().OnPlay(GetObj(), time.count(), ntrk, message.release());
@@ -69,8 +69,8 @@ class ControllerWrapper final : public BaseController {
   void OnPause(duration_type time) final {
     GetInterface().OnPause(GetObj(), time.count());
   }
-  void OnSeekBegin(duration_type time) final {
-    GetInterface().OnSeekBegin(GetObj(), time.count());
+  void OnSeekBegin() final {
+    GetInterface().OnSeekBegin(GetObj());
   }
   void OnSeekEnd() final {
     GetInterface().OnSeekEnd(GetObj());
@@ -78,8 +78,8 @@ class ControllerWrapper final : public BaseController {
   void OnResume() final {
     GetInterface().OnResume(GetObj());
   }
-  void OnStop(duration_type time) final {
-    GetInterface().OnStop(GetObj(), time.count());
+  void OnStop() final {
+    GetInterface().OnStop(GetObj());
   }
   void OnComplete() final {
     GetInterface().OnComplete(GetObj());

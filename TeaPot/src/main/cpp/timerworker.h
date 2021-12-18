@@ -185,8 +185,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
           tasks_cond_.wait_for(guard, delta);
           continue;
         } else {
-          auto task = std::shared_ptr<task_type::element_type>(Poll().release());
-          return std::make_tuple(true, [task]() -> void {
+          return std::make_tuple(true, [task = std::shared_ptr<task_type::element_type>(Poll().release())]() -> void {
             task->Run();
           });
         }
@@ -241,8 +240,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     }
   }
   std::function<void(future_type)> GetCancel() {
-    worker_binder binder = binder_;
-    return [binder](future_type future) -> void {
+    return [binder = binder_](future_type future) -> void {
       auto binder_ = binder;
       binder_.WithGuard([future](worker_type self) -> void {
         self->OnCancel(future);
