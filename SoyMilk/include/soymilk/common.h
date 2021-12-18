@@ -5,6 +5,9 @@
 
 #ifdef __cplusplus
 
+#include <soymilk/common/renderer.h>
+#include <soymilk/common/player.h>
+
 #endif // ifdef __cplusplus
 
 #endif // ifndef LIB_SOYMILK_COMMON_H_

@@ -5,7 +5,7 @@
 
 #ifdef __cplusplus
 
-#include <soymilk/wrapper/controller.h>
+#include <soymilk/wrapper/player.h>
 
 #endif // ifdef __cplusplus
 

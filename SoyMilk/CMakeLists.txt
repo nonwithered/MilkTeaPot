@@ -2,7 +2,7 @@ project(soymilk)
 
 set(src_files
     "lib.cc"
-    "controller.cc"
+    "renderer.cc"
 )
 
 set(src_dir
