@@ -43,9 +43,9 @@ class MutableInterface<Mapping::Midi> {
  public:;
   virtual raw_type *get() = 0;
  public:
-  static MutableWrapper<Mapping::Midi> Parse(std::function<bool(uint8_t *)> callback) {
+  static MutableWrapper<Mapping::Midi> Parse(std::function<bool(uint8_t *)> reader) {
     raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_parse(&self, &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    MilkTea_panic(mapping::raw_parse(&self, Mapping::Reader(reader)));
     return self;
   }
   static MutableWrapper<Mapping::Midi> Make(uint16_t format, uint16_t division, std::vector<MutableWrapper<Mapping::Track>> tracks) {

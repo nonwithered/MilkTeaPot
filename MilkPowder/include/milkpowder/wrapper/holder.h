@@ -27,8 +27,8 @@ class ConstWrapper final : public ConstInterface<T> {
   }
  public:
   ConstWrapper(const typename T::raw_type *self) : self_(self) {}
-  void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
-    MilkTea_panic(T::raw_dump(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  void Dump(std::function<void(const uint8_t *, size_t)> writer) const {
+    MilkTea_panic(T::raw_dump(get(), Mapping::Writer(writer)));
   }
 };
 
@@ -101,8 +101,8 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
     std::swap(self_, self);
     return self;
   }
-  void Dump(std::function<void(const uint8_t *, size_t)> callback) const {
-    MilkTea_panic(T::raw_dump(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  void Dump(std::function<void(const uint8_t *, size_t)> writer) const {
+    MilkTea_panic(T::raw_dump(get(), Mapping::Writer(writer)));
   }
 };
 

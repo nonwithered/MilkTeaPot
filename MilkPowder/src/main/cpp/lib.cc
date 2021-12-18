@@ -65,22 +65,22 @@ const typename T::mapping::raw_type *milkpowder_cast(const T &it) {
 }
 
 template<typename T>
-void MilkPowder_Parse(T **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)) {
+void MilkPowder_Parse(T **self, MilkPowder_Reader_t reader) {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(callback);
-  *self = milkpowder_cast(FromRawType<T>::target::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+  MilkTea_nonnull(reader.Read_);
+  *self = milkpowder_cast(FromRawType<T>::target::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = callback(obj, &byte);
+    bool ret = reader.Read_(reader.self_, &byte);
     return std::make_tuple(byte, ret);
   }));
 }
 
 template<typename T>
-void MilkPowder_Dump(const T *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)) {
+void MilkPowder_Dump(const T *self, MilkPowder_Writer_t writer) {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(callback);
+  MilkTea_nonnull(writer.Write_);
   auto vec = milkpowder_cast(self).Dump();
-  callback(obj, vec.data(), static_cast<size_t>(vec.size()));
+  writer.Write_(writer.self_, vec.data(), static_cast<size_t>(vec.size()));
 }
 
 template<typename T>
@@ -143,8 +143,8 @@ void MilkPowder_To_Message(const T *self, const MilkPowder_Message_t **item) {
 
 // Midi
 
-MilkTea_extern(MilkPowder_Midi_Parse, (MilkPowder_Midi_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
-  MilkPowder_Parse(self, obj, callback);
+MilkTea_extern(MilkPowder_Midi_Parse, (MilkPowder_Midi_t **self, MilkPowder_Reader_t reader), {
+  MilkPowder_Parse(self, reader);
 })
 
 MilkTea_extern(MilkPowder_Midi_Create, (MilkPowder_Midi_t **self, uint16_t format, uint16_t ntrks, uint16_t division, MilkPowder_Track_t *items[]), {
@@ -196,14 +196,14 @@ MilkTea_extern(MilkPowder_Midi_GetTrack, (const MilkPowder_Midi_t *self, uint16_
   *item = milkpowder_cast(*milkpowder_cast(self).items()[index].get());
 })
 
-MilkTea_extern(MilkPowder_Midi_Dump, (const MilkPowder_Midi_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
-  MilkPowder_Dump(self, obj, callback);
+MilkTea_extern(MilkPowder_Midi_Dump, (const MilkPowder_Midi_t *self, MilkPowder_Writer_t writer), {
+  MilkPowder_Dump(self, writer);
 })
 
 // Track
 
-MilkTea_extern(MilkPowder_Track_Parse, (MilkPowder_Track_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
-  MilkPowder_Parse(self, obj, callback);
+MilkTea_extern(MilkPowder_Track_Parse, (MilkPowder_Track_t **self, MilkPowder_Reader_t reader), {
+  MilkPowder_Parse(self, reader);
 })
 
 MilkTea_extern(MilkPowder_Track_Create, (MilkPowder_Track_t **self, MilkPowder_Message_t *items[], uint32_t length), {
@@ -236,18 +236,18 @@ MilkTea_extern(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, vo
   }
 })
 
-MilkTea_extern(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
-  MilkPowder_Dump(self, obj, callback);
+MilkTea_extern(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, MilkPowder_Writer_t writer), {
+  MilkPowder_Dump(self, writer);
 })
 
 // Message
 
-MilkTea_extern(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
+MilkTea_extern(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, MilkPowder_Reader_t reader, uint8_t last), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(callback);
-  *self = milkpowder_cast(MilkPowder::MessageImpl::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+  MilkTea_nonnull(reader.Read_);
+  *self = milkpowder_cast(MilkPowder::MessageImpl::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = callback(obj, &byte);
+    bool ret = reader.Read_(reader.self_, &byte);
     return std::make_tuple(byte, ret);
   }, last));
 })
@@ -279,8 +279,8 @@ MilkTea_extern(MilkPowder_Message_GetType, (const MilkPowder_Message_t *self, ui
   *type = milkpowder_cast(self).type();
 })
 
-MilkTea_extern(MilkPowder_Message_Dump, (const MilkPowder_Message_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
-  MilkPowder_Dump(self, obj, callback);
+MilkTea_extern(MilkPowder_Message_Dump, (const MilkPowder_Message_t *self, MilkPowder_Writer_t writer), {
+  MilkPowder_Dump(self, writer);
 })
 
 MilkTea_extern(MilkPowder_Message_FromEvent, (MilkPowder_Message_t **self, MilkPowder_Event_t *item), {
@@ -321,12 +321,12 @@ MilkTea_extern(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, co
 
 // Event
 
-MilkTea_extern(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte), uint8_t last), {
+MilkTea_extern(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, MilkPowder_Reader_t reader, uint8_t last), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(callback);
-  *self = milkpowder_cast(MilkPowder::EventImpl::Parse([obj, callback]() -> std::tuple<uint8_t, bool> {
+  MilkTea_nonnull(reader.Read_);
+  *self = milkpowder_cast(MilkPowder::EventImpl::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = callback(obj, &byte);
+    bool ret = reader.Read_(reader.self_, &byte);
     return std::make_tuple(byte, ret);
   }, last));
 })
@@ -361,8 +361,8 @@ MilkTea_extern(MilkPowder_Event_GetArgs, (const MilkPowder_Event_t *self, uint8_
   }
 })
 
-MilkTea_extern(MilkPowder_Event_Dump, (const MilkPowder_Event_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
-  MilkPowder_Dump(self, obj, callback);
+MilkTea_extern(MilkPowder_Event_Dump, (const MilkPowder_Event_t *self, MilkPowder_Writer_t writer), {
+  MilkPowder_Dump(self, writer);
 })
 
 MilkTea_extern(MilkPowder_Event_FromMessage, (MilkPowder_Event_t **self, MilkPowder_Message_t *item), {
@@ -375,8 +375,8 @@ MilkTea_extern(MilkPowder_Event_ToMessage, (const MilkPowder_Event_t *self, cons
 
 // Meta
 
-MilkTea_extern(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
-  MilkPowder_Parse(self, obj, callback);
+MilkTea_extern(MilkPowder_Meta_Parse, (MilkPowder_Meta_t **self, MilkPowder_Reader_t reader), {
+  MilkPowder_Parse(self, reader);
 })
 
 MilkTea_extern(MilkPowder_Meta_Create, (MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t args[], uint32_t length), {
@@ -415,8 +415,8 @@ MilkTea_extern(MilkPowder_Meta_GetArgs, (const MilkPowder_Meta_t *self, const ui
   }
 })
 
-MilkTea_extern(MilkPowder_Meta_Dump, (const MilkPowder_Meta_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
-  MilkPowder_Dump(self, obj, callback);
+MilkTea_extern(MilkPowder_Meta_Dump, (const MilkPowder_Meta_t *self, MilkPowder_Writer_t writer), {
+  MilkPowder_Dump(self, writer);
 })
 
 MilkTea_extern(MilkPowder_Meta_FromMessage, (MilkPowder_Meta_t **self, MilkPowder_Message_t *item), {
@@ -429,8 +429,8 @@ MilkTea_extern(MilkPowder_Meta_ToMessage, (const MilkPowder_Meta_t *self, const 
 
 // Sysex
 
-MilkTea_extern(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, void *obj, bool (*callback)(void *obj, uint8_t *byte)), {
-  MilkPowder_Parse(self, obj, callback);
+MilkTea_extern(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, MilkPowder_Reader_t reader), {
+  MilkPowder_Parse(self, reader);
 })
 
 using Vec = std::vector<std::tuple<uint32_t, std::vector<uint8_t>>>;
@@ -466,8 +466,8 @@ MilkTea_extern(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *
   }
 })
 
-MilkTea_extern(MilkPowder_Sysex_Dump, (const MilkPowder_Sysex_t *self, void *obj, void (*callback)(void *obj, const uint8_t *bytes, size_t len)), {
-  MilkPowder_Dump(self, obj, callback);
+MilkTea_extern(MilkPowder_Sysex_Dump, (const MilkPowder_Sysex_t *self, MilkPowder_Writer_t writer), {
+  MilkPowder_Dump(self, writer);
 })
 
 MilkTea_extern(MilkPowder_Sysex_FromMessage, (MilkPowder_Sysex_t **self, MilkPowder_Message_t *item), {

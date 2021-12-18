@@ -22,9 +22,8 @@ class ClosureToken {
     };
   }
   static std::function<Res(Args...)> FromRawType(MilkTea_ClosureToken_t token, std::function<Res(void *, Args...)> invoke) {
-    auto deleter = token.deleter_;
-    MilkTea_nonnull(deleter);
-    auto closure = std::shared_ptr<void>(token.self_, deleter);
+    MilkTea_nonnull(token.deleter_);
+    auto closure = std::shared_ptr<void>(token.self_, token.deleter_);
     return [closure, invoke](Args... args) -> Res {
       return invoke(closure.get(), args...);
     };

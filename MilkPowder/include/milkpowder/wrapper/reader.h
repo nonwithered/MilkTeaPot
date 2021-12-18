@@ -10,10 +10,6 @@ namespace MilkPowder {
 
 class FileReader final {
  public:
-  static bool MilkTea_call Callback(void *obj, uint8_t *byte) {
-    FileReader &self = *reinterpret_cast<FileReader *>(obj);
-    return self.Read(byte, 1) != 0;
-  }
   explicit FileReader(std::string_view filename)
     : ifs_(filename.data(), std::ios::binary) {
   }

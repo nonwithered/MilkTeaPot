@@ -9,10 +9,6 @@ namespace MilkPowder {
 
 class FileWriter final {
  public:
-  static void MilkTea_call Callback(void *obj, const uint8_t *bytes, size_t len) {
-    FileWriter &self = *reinterpret_cast<FileWriter *>(obj);
-    self.Write(bytes, len);
-  }
   explicit FileWriter(std::string_view filename)
     : ofs_(filename.data(), std::ios::binary) {
   }

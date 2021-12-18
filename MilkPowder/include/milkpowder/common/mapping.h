@@ -88,6 +88,32 @@ struct Sysex {
   static constexpr auto raw_message_to = MilkPowder_Message_ToSysex;
 };
 
+struct Reader {
+  using raw_type = MilkPowder_Reader_t;
+  Reader(std::function<bool(uint8_t *)> f) : f_(f) {}
+  operator raw_type(){
+    return {
+      .self_ = &f_,
+      .Read_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
+    };
+  }
+ private:
+  std::function<bool(uint8_t *)> f_;
+};
+
+struct Writer {
+  using raw_type = MilkPowder_Writer_t;
+  Writer(std::function<void(const uint8_t *, size_t)> f) : f_(f) {}
+  operator raw_type() {
+    return {
+      .self_ = &f_,
+      .Write_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
+    };
+  }
+ private:
+  std::function<void(const uint8_t *, size_t)> f_;
+};
+
 } // namespace Mapping
 } // namespace MilkPowder
 

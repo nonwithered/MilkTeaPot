@@ -44,9 +44,9 @@ class MutableInterface<Mapping::Meta> {
  public:;
   virtual raw_type *get() = 0;
  public:
-  static MutableWrapper<mapping> Parse(std::function<bool(uint8_t *)> callback) {
+  static MutableWrapper<mapping> Parse(std::function<bool(uint8_t *)> reader) {
     raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_parse(&self, &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    MilkTea_panic(mapping::raw_parse(&self, Mapping::Reader(reader)));
     return self;
   }
   static MutableWrapper<mapping> Make(uint32_t delta, uint8_t type, std::vector<uint8_t> args) {
