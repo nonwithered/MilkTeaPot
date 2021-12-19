@@ -14,9 +14,11 @@ namespace Codec {
 class FrameBufferQueueImpl final {
   static constexpr char TAG[] = "SoyMilk::Codec::FrameBufferQueueImpl";
   using duration_type = TeaPot::TimerUnit::duration_type;
+  using time_point_type = TeaPot::TimerUnit::time_point_type;
  public:
   FrameBufferQueueImpl()
-  : queue_() {}
+  : queue_(),
+    tag_(time_point_type()) {}
   void Fill(MilkPowder::MidiConstWrapper midi) {
     if (!queue_.empty()) {
       MilkTea_assert("fill but not empty");
@@ -32,9 +34,15 @@ class FrameBufferQueueImpl final {
     }
     return queue_.back().time();
   }
-
+  time_point_type tag() const {
+    return tag_;
+  }
+  void tag(time_point_type time) {
+    tag_ = time;
+  }
  private:
   std::vector<FrameBufferImpl> queue_;
+  std::atomic<time_point_type> tag_;
   MilkTea_NonCopy(FrameBufferQueueImpl)
   MilkTea_NonMove(FrameBufferQueueImpl)
 };

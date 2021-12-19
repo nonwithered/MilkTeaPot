@@ -26,9 +26,8 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     executor_(executor),
     timer_(std::forward<TeaPot::TimerWorkerWeakWrapper>(timer)),
     queue_(),
-    tag_(time_point_type()),
-    idle_(),
-    position_() {}
+    position_(),
+    idle_() {}
   ~PlayerImpl() = default;
   State state() const {
     return state_;
@@ -49,7 +48,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     PerformStart([weak = Weak()]() {
       auto self = Lock(weak);
       self->tag(TeaPot::TimerUnit::Now());
-      self->position(duration_type::zero());
+      self->position(duration_type(-1));
       self->Execute([self]() {
         self->ChangeState(State::STARTED, State::PLAYING);
       });
@@ -71,10 +70,10 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     ChangeState(State::SUSPEND, State::SEEKING);
     return Post([weak = Weak(), time]() {
       auto self = Lock(weak);
+      auto position = self->position();
       self->Renderer().OnSeekBegin();
       self->PerformSeek(time);
-      self->tag((self->tag() + self->position()) - time);
-      self->position(time);
+      self->tag((self->tag() + position) - self->position());
       self->Execute([self]() {
         self->ChangeState(State::SEEKING, State::SUSPEND);
       });
@@ -108,13 +107,13 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   }
  private:
   void CompleteInternal() {
-    time_point_type tag = tag_;
-    Execute([weak = Weak(), tag]() {
+    time_point_type tag_ = tag();
+    Execute([weak = Weak(), tag_]() {
       auto self = Lock(weak);
       auto state = self->state();
-      time_point_type current = self->tag_;
-      if (state != State::PLAYING || current != tag) {
-        MilkTea_logI("complete try but fail -- state: %s, current tag: %" PRIi64 ", expect tag: " PRIi64, StateName(state), current.time_since_epoch().count(), tag.time_since_epoch().count());
+      time_point_type current = self->tag();
+      if (state != State::PLAYING || current != tag_) {
+        MilkTea_logI("complete try but fail -- state: %s, current tag: %" PRIi64 ", expect tag: " PRIi64, StateName(state), current.time_since_epoch().count(), tag_.time_since_epoch().count());
         return;
       }
       self->ChangeState(State::PLAYING, State::PREPARED);
@@ -124,6 +123,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     });
   }
   void RenderInternal(const Codec::FrameBufferImpl &fbo) {
+    position(fbo.time());
     Renderer().OnRender(Codec::FrameBufferWrapper(fbo));
   }
   duration_type PerformPrepare(MilkPowder::MidiConstWrapper midi) {
@@ -174,23 +174,29 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   player_weak Weak() {
     return weak_from_this();
   }
-  time_point_type tag() const {
-    return tag_;
-  }
-  void tag(time_point_type time) {
-    tag_ = time;
-  }
   duration_type position() const {
     return position_;
   }
   void position(duration_type duration) {
     position_ = duration;
   }
+  duration_type idle_diff() const {
+    return TeaPot::TimerUnit::Now() - idle_;
+  }
   void idle_now() {
     idle_ = TeaPot::TimerUnit::Now();
   }
-  duration_type idle_diff() {
-    return TeaPot::TimerUnit::Now() - idle_;
+  time_point_type tag() const {
+    return queue().tag();
+  }
+  void tag(time_point_type time) {
+    queue().tag(time);
+  }
+  Codec::FrameBufferQueueImpl &queue() {
+    return queue_;
+  }
+  const Codec::FrameBufferQueueImpl &queue() const {
+    return queue_;
   }
   static player_type Lock(player_weak weak) {
     auto self = weak.lock();
@@ -217,9 +223,8 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   TeaPot::Executor::executor_type executor_;
   TeaPot::TimerWorkerWeakWrapper timer_;
   Codec::FrameBufferQueueImpl queue_;
-  std::atomic<time_point_type> tag_;
-  time_point_type idle_;
   duration_type position_;
+  time_point_type idle_;
   MilkTea_NonCopy(PlayerImpl)
   MilkTea_NonMove(PlayerImpl)
 };
