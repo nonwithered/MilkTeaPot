@@ -7,6 +7,7 @@
 #include <soymilk/common.h>
 
 #include "frame.h"
+#include "decode.h"
 
 namespace SoyMilk {
 
@@ -17,13 +18,17 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   using State = Player::State;
   using duration_type = TeaPot::TimerUnit::duration_type;
   using time_point_type = TeaPot::TimerUnit::time_point_type;
+  using clock_type = TeaPot::TimerUnit::clock_type;
  public:
   explicit PlayerImpl(RendererWrapper &&renderer, TeaPot::Executor::executor_type executor, TeaPot::TimerWorkerWeakWrapper &&timer)
   : state_(State::INIT),
     renderer_(std::forward<RendererWrapper>(renderer)),
     executor_(executor),
     timer_(std::forward<TeaPot::TimerWorkerWeakWrapper>(timer)),
-    time_tag_(time_point_type()) {}
+    queue_(),
+    tag_(time_point_type()),
+    idle_(),
+    position_() {}
   ~PlayerImpl() = default;
   State state() const {
     return state_;
@@ -43,6 +48,8 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     ChangeState(State::PREPARED, State::STARTED);
     PerformStart([weak = Weak()]() {
       auto self = Lock(weak);
+      self->tag(TeaPot::TimerUnit::Now());
+      self->position(duration_type::zero());
       self->Execute([self]() {
         self->ChangeState(State::STARTED, State::PLAYING);
       });
@@ -53,6 +60,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     ChangeState(State::PLAYING, State::PAUSED);
     PerformPause([weak = Weak()](duration_type time) {
       auto self = Lock(weak);
+      self->idle_now();
       self->Execute([self]() {
         self->ChangeState(State::PAUSED, State::SUSPEND);
       });
@@ -65,6 +73,8 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
       auto self = Lock(weak);
       self->Renderer().OnSeekBegin();
       self->PerformSeek(time);
+      self->tag((self->tag() + self->position()) - time);
+      self->position(time);
       self->Execute([self]() {
         self->ChangeState(State::SEEKING, State::SUSPEND);
       });
@@ -75,6 +85,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     ChangeState(State::SUSPEND, State::STARTED);
     PerformResume([weak = Weak()]() {
       auto self = Lock(weak);
+      self->tag(self->tag() + self->idle_diff());
       self->Execute([self]() {
         self->ChangeState(State::STARTED, State::PLAYING);
       });
@@ -97,13 +108,13 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   }
  private:
   void CompleteInternal() {
-    const time_point_type tag = time_tag_;
+    time_point_type tag = tag_;
     Execute([weak = Weak(), tag]() {
       auto self = Lock(weak);
-      const State state_ = self->state();
-      const time_point_type tag_ = self->time_tag_;
-      if (state_ != State::PLAYING || tag_ != tag) {
-        MilkTea_logI("complete try but fail -- state: %s, time: %, tag: " PRIi64, StateName(state_), tag_.time_since_epoch().count(), tag.time_since_epoch().count());
+      auto state = self->state();
+      time_point_type current = self->tag_;
+      if (state != State::PLAYING || current != tag) {
+        MilkTea_logI("complete try but fail -- state: %s, current tag: %" PRIi64 ", expect tag: " PRIi64, StateName(state), current.time_since_epoch().count(), tag.time_since_epoch().count());
         return;
       }
       self->ChangeState(State::PLAYING, State::PREPARED);
@@ -116,8 +127,8 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     Renderer().OnRender(Codec::FrameBufferWrapper(fbo));
   }
   duration_type PerformPrepare(MilkPowder::MidiConstWrapper midi) {
-    // todo
-    return duration_type::zero();
+    queue_.Fill(midi);
+    return queue_.Length();
   }
   void PerformStart(std::function<void()> action) {
     // todo
@@ -163,6 +174,24 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   player_weak Weak() {
     return weak_from_this();
   }
+  time_point_type tag() const {
+    return tag_;
+  }
+  void tag(time_point_type time) {
+    tag_ = time;
+  }
+  duration_type position() const {
+    return position_;
+  }
+  void position(duration_type duration) {
+    position_ = duration;
+  }
+  void idle_now() {
+    idle_ = TeaPot::TimerUnit::Now();
+  }
+  duration_type idle_diff() {
+    return TeaPot::TimerUnit::Now() - idle_;
+  }
   static player_type Lock(player_weak weak) {
     auto self = weak.lock();
     if (!self) {
@@ -187,7 +216,10 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   RendererWrapper renderer_;
   TeaPot::Executor::executor_type executor_;
   TeaPot::TimerWorkerWeakWrapper timer_;
-  std::atomic<time_point_type> time_tag_;
+  Codec::FrameBufferQueueImpl queue_;
+  std::atomic<time_point_type> tag_;
+  time_point_type idle_;
+  duration_type position_;
   MilkTea_NonCopy(PlayerImpl)
   MilkTea_NonMove(PlayerImpl)
 };

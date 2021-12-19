@@ -248,7 +248,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     };
   }
   static time_point_type CurrentTimePoint() {
-    return std::chrono::time_point_cast<duration_type>(clock_type::now());
+    return TimerUnit::Now();
   }
   static const char *StateName(State state) {
     switch (state) {
