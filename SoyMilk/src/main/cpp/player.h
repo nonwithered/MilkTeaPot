@@ -6,7 +6,7 @@
 
 #include <soymilk/common.h>
 
-#include "decode.h"
+#include "frame.h"
 
 namespace SoyMilk {
 
@@ -22,7 +22,8 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   : state_(State::INIT),
     renderer_(std::forward<RendererWrapper>(renderer)),
     executor_(executor),
-    timer_(std::forward<TeaPot::TimerWorkerWeakWrapper>(timer)) {}
+    timer_(std::forward<TeaPot::TimerWorkerWeakWrapper>(timer)),
+    time_tag_(time_point_type()) {}
   ~PlayerImpl() = default;
   State state() const {
     return state_;
@@ -110,6 +111,9 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
         self->Renderer().OnComplete();
       });
     });
+  }
+  void RenderInternal(const Codec::FrameBufferImpl &fbo) {
+    Renderer().OnRender(Codec::FrameBufferWrapper(fbo));
   }
   duration_type PerformPrepare(MilkPowder::MidiConstWrapper midi) {
     // todo

@@ -4,7 +4,7 @@
 #include <chrono>
 #include <functional>
 
-#include <soymilk/common.h>
+#include <soymilk/common/frame.h>
 
 namespace SoyMilk {
 
@@ -21,7 +21,7 @@ class BaseRenderer {
   virtual ~BaseRenderer() = default;
   virtual BaseRenderer *Move() && = 0;
   virtual void Destroy() && = 0;
-  virtual void OnRender(duration_type time, uint16_t ntrk, MilkPowder::MessageMutableWrapper message) = 0;
+  virtual void OnRender(Codec::FrameBufferWrapper fbo) = 0;
   virtual void OnPrepare(duration_type time) = 0;
   virtual void OnStart() = 0;
   virtual void OnPause(duration_type time) = 0;
@@ -56,8 +56,8 @@ class RendererWrapper final : public BaseRenderer {
   void Destroy() && final {
     delete this;
   }
-  void OnRender(duration_type time, uint16_t ntrk, MilkPowder::MessageMutableWrapper message) final {
-    GetInterface().OnRender(get(), time.count(), ntrk, message.release());
+  void OnRender(Codec::FrameBufferWrapper fbo) final {
+    GetInterface().OnRender(get(), fbo.get());
   }
   void OnPrepare(duration_type time) final {
     GetInterface().OnPrepare(get(), time.count());

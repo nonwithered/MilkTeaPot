@@ -5,6 +5,7 @@
 
 #ifdef __cplusplus
 
+#include <soymilk/common/frame.h>
 #include <soymilk/common/renderer.h>
 #include <soymilk/common/player.h>
 

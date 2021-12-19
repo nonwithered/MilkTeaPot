@@ -14,8 +14,8 @@ SoyMilk::BaseRenderer &BaseRenderer_cast(void *self) {
 void MilkTea_call SoyMilk_BaseRenderer_Deleter(void *self) {
   std::move(BaseRenderer_cast(self)).Destroy();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnRender(void *self, int64_t time, uint16_t ntrk, MilkPowder_Message_t *message) {
-  BaseRenderer_cast(self).OnRender(duration_type(time), ntrk, MilkPowder::MessageMutableWrapper(message));
+void MilkTea_call SoyMilk_BaseRenderer_OnRender(void *self, const SoyMilk::Codec::FrameBufferWrapper::raw_type *fbo) {
+  BaseRenderer_cast(self).OnRender(fbo);
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnPrepare(void *self, int64_t time) {
   BaseRenderer_cast(self).OnPrepare(duration_type(time));
