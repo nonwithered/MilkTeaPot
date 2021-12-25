@@ -15,23 +15,30 @@ struct Midi {
   static constexpr auto raw_parse = MilkPowder_Midi_Parse;
   static constexpr auto raw_dump = MilkPowder_Midi_Dump;
   static constexpr auto raw_get_format = MilkPowder_Midi_GetFormat;
+  static constexpr auto raw_set_format = MilkPowder_Midi_SetFormat;
   static constexpr auto raw_get_ntrks = MilkPowder_Midi_GetNtrks;
   static constexpr auto raw_get_division = MilkPowder_Midi_GetDivision;
+  static constexpr auto raw_set_division = MilkPowder_Midi_SetDivision;
   static constexpr auto raw_get_track = MilkPowder_Midi_GetTrack;
+  static constexpr auto raw_all_track = MilkPowder_Midi_AllTrack;
 };
 
 struct Track {
   using raw_type = MilkPowder_Track_t;
+  using raw_consumer_type = MilkPowder_Track_Consumer_t;
   static constexpr auto raw_create = MilkPowder_Track_Create;
   static constexpr auto raw_destroy = MilkPowder_Track_Destroy;
   static constexpr auto raw_clone = MilkPowder_Track_Clone;
   static constexpr auto raw_parse = MilkPowder_Track_Parse;
   static constexpr auto raw_dump = MilkPowder_Track_Dump;
-  static constexpr auto raw_get_messages = MilkPowder_Track_GetMessages;
+  static constexpr auto raw_get_count = MilkPowder_Track_GetCount;
+  static constexpr auto raw_get_message = MilkPowder_Track_GetMessage;
+  static constexpr auto raw_all_message = MilkPowder_Track_AllMessage;
 };
 
 struct Message {
   using raw_type = MilkPowder_Message_t;
+  using raw_consumer_type = MilkPowder_Message_Consumer_t;
   static constexpr auto raw_destroy = MilkPowder_Message_Destroy;
   static constexpr auto raw_clone = MilkPowder_Message_Clone;
   static constexpr auto raw_parse = MilkPowder_Message_Parse;

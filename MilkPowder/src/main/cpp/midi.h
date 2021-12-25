@@ -15,7 +15,7 @@ class MidiImpl final {
   std::vector<uint8_t> Dump() const;
   MidiImpl(uint16_t format, uint16_t division, std::vector<std::unique_ptr<TrackImpl>> items) : format_(format), division_(division), items_(std::move(items)) {
     MilkTea_logI("ctor format=%" PRIu16 ", division=%" PRIu16 ", ntrks=%" PRIu16, format_, division_, static_cast<uint16_t>(items_.size()));
-    if (format > static_cast<uint16_t>(0x0002)) {
+    if (format > 0x0002) {
       MilkTea_logW("ctor format %" PRIu16, format);
     }
   }
@@ -23,12 +23,18 @@ class MidiImpl final {
     MilkTea_logI("copy format=%" PRIu16 ", division=%" PRIu16 ", ntrks=%" PRIu16, format_, division_, static_cast<uint16_t>(items_.size()));
   }
   uint16_t format() const { return format_; }
+  void format(uint16_t format) {
+    format_ = format;
+  }
   uint16_t division() const { return division_; }
+  void division(uint16_t division) {
+    division_ = division;
+  }
   const std::vector<std::unique_ptr<TrackImpl>> &items() const { return items_; };
  private:
-  const uint16_t format_;
-  const uint16_t division_;
-  const std::vector<std::unique_ptr<TrackImpl>> items_;
+  uint16_t format_;
+  uint16_t division_;
+  std::vector<std::unique_ptr<TrackImpl>> items_;
   static std::vector<std::unique_ptr<TrackImpl>> Clone(const std::vector<std::unique_ptr<TrackImpl>> &another) {
     std::vector<std::unique_ptr<TrackImpl>> items;
     for (const auto &it : another) {

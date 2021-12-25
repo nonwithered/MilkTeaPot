@@ -259,8 +259,10 @@ class Dump final : public Command {
           ShowMessagesVerbose(item);
         };
       }
-      auto messages = track.GetMessages();
-      std::for_each(messages.begin(), messages.end(), callback);
+      for (uint32_t i = 0, n = track.GetCount(); i != n; ++i) {
+        auto item = track.GetMessage(i);
+        callback(item);
+      }
       std::cout << "[/CHUNK]" << std::endl;
     }
   }

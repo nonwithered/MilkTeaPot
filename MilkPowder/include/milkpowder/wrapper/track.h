@@ -14,12 +14,14 @@ class ConstInterface<Mapping::Track> {
  public:;
   virtual const raw_type *get() const = 0;
  public:
-  std::vector<ConstWrapper<Mapping::Message>> GetMessages() const {
-    std::vector<ConstWrapper<Mapping::Message>> result;
-    std::function<void(const Mapping::Message::raw_type *)> callback = [&result](const Mapping::Message::raw_type *message) -> void {
-      result.emplace_back(message);
-    };
-    MilkTea_panic(mapping::raw_get_messages(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  uint32_t GetCount() const {
+    uint32_t result = 0;
+    MilkTea_panic(mapping::raw_get_count(get(), &result));
+    return result;
+  }
+  ConstWrapper<Mapping::Message> GetMessage(uint32_t index) const {
+    const Mapping::Message::raw_type *result = nullptr;
+    MilkTea_panic(MilkPowder_Track_GetMessage(get(), index, &result));
     return result;
   }
 };
@@ -47,6 +49,19 @@ class MutableInterface<Mapping::Track> {
     }
     MilkTea_panic(mapping::raw_create(&self, vec.data(), length));
     return self;
+  }
+  void AllMessage(std::function<void(MutableWrapper<Mapping::Message> &)> consumer) {
+    std::function<void(Mapping::Message::raw_type *)> consumer_ = [&consumer](Mapping::Message::raw_type *it) {
+      MutableWrapper<Mapping::Message> it_ = it;
+      MilkTea::Defer defer([&it_]() {
+        it_.release();
+      });
+      consumer(it_);
+    };
+    MilkTea_panic(mapping::raw_all_message(get(), Mapping::Message::raw_consumer_type{
+      .self_ = &consumer,
+      .invoke_ = MilkTea::ClosureToken<decltype(consumer_)>::Invoke,
+    }));
   }
 };
 

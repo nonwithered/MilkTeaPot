@@ -175,6 +175,14 @@ MilkTea_extern(MilkPowder_Midi_GetFormat, (const MilkPowder_Midi_t *self, uint16
   *format = milkpowder_cast(self).format();
 })
 
+MilkTea_extern(MilkPowder_Midi_SetFormat, (MilkPowder_Midi_t *self, uint16_t format), {
+  MilkTea_nonnull(self);
+  if (format > 0x0002) {
+    MilkTea_logW("set format %" PRIu16, format);
+  }
+  milkpowder_cast(self).format(format);
+})
+
 MilkTea_extern(MilkPowder_Midi_GetNtrks, (const MilkPowder_Midi_t *self, uint16_t *ntrks), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(ntrks);
@@ -187,13 +195,28 @@ MilkTea_extern(MilkPowder_Midi_GetDivision, (const MilkPowder_Midi_t *self, uint
   *division = milkpowder_cast(self).division();
 })
 
+MilkTea_extern(MilkPowder_Midi_SetDivision, (MilkPowder_Midi_t *self, uint16_t division), {
+  MilkTea_nonnull(self);
+  milkpowder_cast(self).division(division);
+})
+
 MilkTea_extern(MilkPowder_Midi_GetTrack, (const MilkPowder_Midi_t *self, uint16_t index, const MilkPowder_Track_t **item), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(item);
-  if (index >= static_cast<uint16_t>(milkpowder_cast(self).items().size())) {
-    MilkTea_throwf(InvalidParam, "index: %" PRIu16 ", size: %" PRIu16, index, static_cast<uint16_t>(milkpowder_cast(self).items().size()));
+  auto size = static_cast<uint16_t>(milkpowder_cast(self).items().size());
+  if (index >= size) {
+    MilkTea_throwf(InvalidParam, "index: %" PRIu16 ", size: %" PRIu16, index, size);
   }
   *item = milkpowder_cast(*milkpowder_cast(self).items()[index].get());
+})
+
+MilkTea_extern(MilkPowder_Midi_AllTrack, (MilkPowder_Midi_t *self, MilkPowder_Track_Consumer_t consumer), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(consumer.invoke_);
+  auto &items = milkpowder_cast(self).items();
+  std::for_each(items.begin(), items.end(), [consumer](const std::unique_ptr<MilkPowder::TrackImpl> &it) {
+    consumer.invoke_(consumer.self_, milkpowder_cast(*it.get()));
+  });
 })
 
 MilkTea_extern(MilkPowder_Midi_Dump, (const MilkPowder_Midi_t *self, MilkPowder_Writer_t writer), {
@@ -228,12 +251,29 @@ MilkTea_extern(MilkPowder_Track_Destroy, (MilkPowder_Track_t *self), {
   MilkPowder_Destroy(self);
 })
 
-MilkTea_extern(MilkPowder_Track_GetMessages, (const MilkPowder_Track_t *self, void *collector, void (*collect)(void *collector, const MilkPowder_Message_t *item)), {
+MilkTea_extern(MilkPowder_Track_GetCount, (const MilkPowder_Track_t *self, uint32_t *count), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(collect);
-  for (const auto &it : milkpowder_cast(self).items()) {
-    collect(collector, milkpowder_cast(*it.get()));
+  MilkTea_nonnull(count);
+  *count = static_cast<uint32_t>(milkpowder_cast(self).items().size());
+})
+
+MilkTea_extern(MilkPowder_Track_GetMessage, (const MilkPowder_Track_t *self, uint32_t index, const MilkPowder_Message_t **item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  auto size = static_cast<uint32_t>(milkpowder_cast(self).items().size());
+  if (index >= size) {
+    MilkTea_throwf(InvalidParam, "index: %" PRIu32 ", size: %" PRIu32, index, size);
   }
+  *item = milkpowder_cast(*milkpowder_cast(self).items()[index].get());
+})
+
+MilkTea_extern(MilkPowder_Track_AllMessage, (MilkPowder_Track_t *self, MilkPowder_Message_Consumer_t consumer), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(consumer.invoke_);
+  auto &items = milkpowder_cast(self).items();
+  std::for_each(items.begin(), items.end(), [consumer](const std::unique_ptr<MilkPowder::MessageImpl> &it) {
+    consumer.invoke_(consumer.self_, milkpowder_cast(*it.get()));
+  });
 })
 
 MilkTea_extern(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, MilkPowder_Writer_t writer), {

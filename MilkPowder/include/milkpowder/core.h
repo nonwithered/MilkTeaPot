@@ -41,6 +41,18 @@ struct MilkPowder_Writer_t {
 typedef struct MilkPowder_Writer_t MilkPowder_Writer_t;
 #endif
 
+MilkTea_Consumer_t(MilkPowder_Track_Consumer_t, MilkPowder_Track_t *)
+
+#ifndef __cplusplus
+typedef struct MilkPowder_Track_Consumer_t MilkPowder_Track_Consumer_t;
+#endif
+
+MilkTea_Consumer_t(MilkPowder_Message_Consumer_t, MilkPowder_Message_t *)
+
+#ifndef __cplusplus
+typedef struct MilkPowder_Message_Consumer_t MilkPowder_Message_Consumer_t;
+#endif
+
 // Midi
 
 MilkTea_api
@@ -59,13 +71,22 @@ MilkTea_api
 MilkPowder_Midi_GetFormat(const MilkPowder_Midi_t *self, uint16_t *format);
 
 MilkTea_api
+MilkPowder_Midi_SetFormat(MilkPowder_Midi_t *self, uint16_t format);
+
+MilkTea_api
 MilkPowder_Midi_GetNtrks(const MilkPowder_Midi_t *self, uint16_t *ntrks);
 
 MilkTea_api
 MilkPowder_Midi_GetDivision(const MilkPowder_Midi_t *self, uint16_t *division);
 
 MilkTea_api
+MilkPowder_Midi_SetDivision(MilkPowder_Midi_t *self, uint16_t division);
+
+MilkTea_api
 MilkPowder_Midi_GetTrack(const MilkPowder_Midi_t *self, uint16_t index, const MilkPowder_Track_t **item);
+
+MilkTea_api
+MilkPowder_Midi_AllTrack(MilkPowder_Midi_t *self, MilkPowder_Track_Consumer_t consumer);
 
 MilkTea_api
 MilkPowder_Midi_Dump(const MilkPowder_Midi_t *self, MilkPowder_Writer_t writer);
@@ -85,7 +106,13 @@ MilkTea_api
 MilkPowder_Track_Destroy(MilkPowder_Track_t *self);
 
 MilkTea_api
-MilkPowder_Track_GetMessages(const MilkPowder_Track_t *self, void *collector, void (MilkTea_call *collect)(void *collector, const MilkPowder_Message_t *item));
+MilkPowder_Track_GetCount(const MilkPowder_Track_t *self, uint32_t *count);
+
+MilkTea_api
+MilkPowder_Track_GetMessage(const MilkPowder_Track_t *self, uint32_t index, const MilkPowder_Message_t **item);
+
+MilkTea_api
+MilkPowder_Track_AllMessage(MilkPowder_Track_t *self, MilkPowder_Message_Consumer_t consumer);
 
 MilkTea_api
 MilkPowder_Track_Dump(const MilkPowder_Track_t *self, MilkPowder_Writer_t writer);

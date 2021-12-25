@@ -58,6 +58,25 @@ class MutableInterface<Mapping::Midi> {
     MilkTea_panic(mapping::raw_create(&self, format, ntrks, division, vec.data()));
     return self;
   }
+  void AllTrack(std::function<void(MutableWrapper<Mapping::Track> &)> consumer) {
+    std::function<void(Mapping::Track::raw_type *)> consumer_ = [&consumer](Mapping::Track::raw_type *it) {
+      MutableWrapper<Mapping::Track> it_ = it;
+      MilkTea::Defer defer([&it_]() {
+        it_.release();
+      });
+      consumer(it_);
+    };
+    MilkTea_panic(mapping::raw_all_track(get(), Mapping::Track::raw_consumer_type{
+      .self_ = &consumer,
+      .invoke_ = MilkTea::ClosureToken<decltype(consumer_)>::Invoke,
+    }));
+  }
+  void SetFormat(uint16_t format) {
+    MilkTea_panic(mapping::raw_set_format(get(), format));
+  }
+  void SetDivision(uint16_t division) {
+    MilkTea_panic(mapping::raw_set_division(get(), division));
+  }
 };
 
 using MidiMutableWrapper = MutableWrapper<Mapping::Midi>;

@@ -191,11 +191,11 @@ class Codec final : public Command {
         delta += item.GetDelta();
         messages.push_back(std::make_tuple(delta, item));
       };
-      auto vec = tracks[i].GetMessages();
-      std::for_each(vec.begin(), vec.end(), [&delta, &messages](MilkPowder::MessageConstWrapper item) -> void {
+      for (uint32_t i = 0, n = tracks[i].GetCount(); i != n; ++i) {
+        auto item = tracks[i].GetMessage(i);
         delta += item.GetDelta();
         messages.push_back(std::make_tuple(delta, item));
-      });
+      }
     }
     return message_vec;
   }
