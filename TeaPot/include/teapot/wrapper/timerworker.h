@@ -22,7 +22,10 @@ class TimerWorkerWrapper final {
       return on_terminate(MilkTea::Exception::FromRawType(type), what);
     };
     raw_type *self = nullptr;
-    MilkTea_panic(TeaPot_TimerWorker_Create(&self, MilkTea::ClosureToken<decltype(do_terminate)>::ToRawType(do_terminate), MilkTea::ClosureToken<decltype(do_terminate)>::Invoke));
+    MilkTea_panic(TeaPot_TimerWorker_Create(&self, TeaPot_TimerWorker_Termination{
+      .self_ = MilkTea::ClosureFactory<decltype(do_terminate)>::ToRawType(do_terminate),
+      .invoke_ = MilkTea::FunctionFactory<decltype(do_terminate)>::Invoke,
+    }));
     std::swap(self_, self);
   }
   TimerWorkerWrapper(raw_type *self = nullptr) : self_(self) {}
@@ -57,13 +60,14 @@ class TimerWorkerWrapper final {
   std::tuple<bool, std::vector<TimerTaskWrapper>> ShutdownNow() {
     bool success = false;
     std::vector<TimerTaskWrapper> vec;
-    std::function<void(uint32_t, TeaPot_TimerTask_t **)> callback = [&success, &vec](uint32_t size, TeaPot_TimerTask_t ** tasks) -> void {
+    std::function<void(TeaPot_TimerTask_t *)> callback = [&success, &vec](TeaPot_TimerTask_t *task) -> void {
       success = true;
-      for (uint32_t i = 0; i != size; ++i) {
-        vec.emplace_back(tasks[i]);
-      }
+      vec.emplace_back(task);
     };
-    MilkTea_panic(TeaPot_TimerWorker_ShutdownNow(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+    MilkTea_panic(TeaPot_TimerWorker_ShutdownNow(get(), TeaPot_TimerTask_Consumer_t{
+      .self_ = &callback,
+      .invoke_ = MilkTea::FunctionFactory<decltype(callback)>::Invoke,
+    }));
     return std::make_tuple(success, std::move(vec));
   }
   bool AwaitTermination(duration_type delay = duration_type()) {

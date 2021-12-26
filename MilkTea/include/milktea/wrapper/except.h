@@ -36,7 +36,7 @@ inline
 Type Catch(std::function<void()> block) {
   return FromRawType(MilkTea_Exception_Catch(MilkTea_Exception_Block_t{
     .self_ = &block,
-    .invoke_ = ClosureToken<decltype(block)>::Invoke,
+    .invoke_ = FunctionFactory<decltype(block)>::Invoke,
   }));
 }
 

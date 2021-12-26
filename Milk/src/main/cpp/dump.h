@@ -312,10 +312,10 @@ class Dump final : public Command {
         std::cout << std::endl;
         auto sysex = MilkPowder::SysexConstWrapper::From(message);
         uint32_t idx = 0;
-        std::function<void(const std::tuple<uint32_t, std::vector<uint8_t>> &)> callback = [this, &idx](const std::tuple<uint32_t, std::vector<uint8_t>> &vec) -> void {
-          uint32_t delta = std::get<0>(vec);
-          const uint8_t *args = std::get<1>(vec).data();
-          uint32_t length = std::get<1>(vec).size();
+        std::function<void(const MilkPowder::SysexItem &)> callback = [this, &idx](const MilkPowder::SysexItem &it) -> void {
+          uint32_t delta = it.delta_;
+          uint32_t length = it.length_;
+          const uint8_t *args = it.args_;
           if (idx == 0) {
             std::cout << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << std::endl;
             return;
@@ -323,8 +323,9 @@ class Dump final : public Command {
             std::cout << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << ", delta=" << MilkTea::ToStringHexFromVarLen(delta) << std::endl;
           }
         };
-        auto args = sysex.GetArgs();
-        std::for_each(args.begin(), args.end(), callback);
+        for (uint32_t i = 0, n = sysex.GetCount(); i != n; ++i) {
+          callback(sysex.GetItem(i));
+        }
         break;
       }
       // assert

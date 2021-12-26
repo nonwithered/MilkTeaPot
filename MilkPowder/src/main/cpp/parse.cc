@@ -100,7 +100,7 @@ MilkPowder::SysexImpl &ParseSysex(std::function<std::tuple<uint8_t, bool>()> cal
   }
   std::vector<uint8_t> args = ParseArgs(callback);
   uint8_t last = args.back();
-  std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> items;
+  std::vector<MilkPowder::SysexImpl::Item> items;
   items.emplace_back(delta, std::move(args));
   while (last != 0xf7) {
     delta = ParseUsize(callback);

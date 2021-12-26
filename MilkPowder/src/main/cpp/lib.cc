@@ -67,10 +67,10 @@ const typename T::mapping::raw_type *milkpowder_cast(const T &it) {
 template<typename T>
 void MilkPowder_Parse(T **self, MilkPowder_Reader_t reader) {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(reader.read_);
+  MilkTea_nonnull(reader.invoke_);
   *self = milkpowder_cast(FromRawType<T>::target::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = reader.read_(reader.self_, &byte);
+    bool ret = MilkTea_Function_Invoke(reader, &byte);
     return std::make_tuple(byte, ret);
   }));
 }
@@ -78,9 +78,9 @@ void MilkPowder_Parse(T **self, MilkPowder_Reader_t reader) {
 template<typename T>
 void MilkPowder_Dump(const T *self, MilkPowder_Writer_t writer) {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(writer.write_);
+  MilkTea_nonnull(writer.invoke_);
   auto vec = milkpowder_cast(self).Dump();
-  writer.write_(writer.self_, vec.data(), static_cast<size_t>(vec.size()));
+  MilkTea_Function_Invoke(writer, vec.data(), static_cast<size_t>(vec.size()));
 }
 
 template<typename T>
@@ -137,6 +137,22 @@ void MilkPowder_To_Message(const T *self, const MilkPowder_Message_t **item) {
   MilkTea_nonnull(self);
   MilkTea_nonnull(item);
   *item = milkpowder_cast(dynamic_cast<const MilkPowder::MessageImpl &>(milkpowder_cast(self)));
+}
+
+MilkPowder_Sysex_Item_t Make_Sysex_Item(uint32_t delta, uint32_t length, const uint8_t *args) {
+  return {
+    .delta_ = delta,
+    .length_ = length,
+    .args_ = args,
+  };
+}
+
+MilkPowder_Sysex_Item_mut_t Make_Sysex_Item_mut(uint32_t &delta, uint32_t length, uint8_t *args) {
+  return {
+    .delta_ = &delta,
+    .length_ = length,
+    .args_ = args,
+  };
 }
 
 } // namespace
@@ -215,7 +231,7 @@ MilkTea_extern(MilkPowder_Midi_AllTrack, (MilkPowder_Midi_t *self, MilkPowder_Tr
   MilkTea_nonnull(consumer.invoke_);
   auto &items = milkpowder_cast(self).items();
   std::for_each(items.begin(), items.end(), [consumer](const std::unique_ptr<MilkPowder::TrackImpl> &it) {
-    consumer.invoke_(consumer.self_, milkpowder_cast(*it.get()));
+    MilkTea_Function_Invoke(consumer, milkpowder_cast(*it.get()));
   });
 })
 
@@ -272,7 +288,7 @@ MilkTea_extern(MilkPowder_Track_AllMessage, (MilkPowder_Track_t *self, MilkPowde
   MilkTea_nonnull(consumer.invoke_);
   auto &items = milkpowder_cast(self).items();
   std::for_each(items.begin(), items.end(), [consumer](const std::unique_ptr<MilkPowder::MessageImpl> &it) {
-    consumer.invoke_(consumer.self_, milkpowder_cast(*it.get()));
+    MilkTea_Function_Invoke(consumer, milkpowder_cast(*it.get()));
   });
 })
 
@@ -284,10 +300,10 @@ MilkTea_extern(MilkPowder_Track_Dump, (const MilkPowder_Track_t *self, MilkPowde
 
 MilkTea_extern(MilkPowder_Message_Parse, (MilkPowder_Message_t **self, MilkPowder_Reader_t reader, uint8_t last), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(reader.read_);
+  MilkTea_nonnull(reader.invoke_);
   *self = milkpowder_cast(MilkPowder::MessageImpl::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = reader.read_(reader.self_, &byte);
+    bool ret = MilkTea_Function_Invoke(reader, &byte);
     return std::make_tuple(byte, ret);
   }, last));
 })
@@ -363,10 +379,10 @@ MilkTea_extern(MilkPowder_Message_ToSysex, (const MilkPowder_Message_t *self, co
 
 MilkTea_extern(MilkPowder_Event_Parse, (MilkPowder_Event_t **self, MilkPowder_Reader_t reader, uint8_t last), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(reader.read_);
+  MilkTea_nonnull(reader.invoke_);
   *self = milkpowder_cast(MilkPowder::EventImpl::Parse([reader]() -> std::tuple<uint8_t, bool> {
     uint8_t byte;
-    bool ret = reader.read_(reader.self_, &byte);
+    bool ret = MilkTea_Function_Invoke(reader, &byte);
     return std::make_tuple(byte, ret);
   }, last));
 })
@@ -473,21 +489,17 @@ MilkTea_extern(MilkPowder_Sysex_Parse, (MilkPowder_Sysex_t **self, MilkPowder_Re
   MilkPowder_Parse(self, reader);
 })
 
-using Vec = std::vector<std::tuple<uint32_t, std::vector<uint8_t>>>;
-
-MilkTea_extern(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t delta[], const uint8_t *const args[], const uint32_t length[], uint32_t size), {
+MilkTea_extern(MilkPowder_Sysex_Create, (MilkPowder_Sysex_t **self, uint32_t size, const MilkPowder_Sysex_Item_t items[]), {
   MilkTea_nonnull(self);
   if (size != 0) {
-    MilkTea_nonnull(delta);
-    MilkTea_nonnull(args);
-    MilkTea_nonnull(length);
+    MilkTea_nonnull(items);
   } else {
     MilkTea_logW("MilkPowder_Sysex_Create: size equals 0");
   }
-  Vec vec;
-  for (uint32_t i = 0; i < size; ++i) {
-    vec.emplace_back(delta[i], std::vector<uint8_t>(args[i], args[i] + length[i]));
-  }
+  std::vector<MilkPowder::SysexImpl::Item> vec;
+  std::for_each(items, items + size, [&vec](const MilkPowder_Sysex_Item_t &it) {
+    vec.emplace_back(it.delta_, std::vector<uint8_t>(it.args_, it.args_ + it.length_));
+  });
   *self = milkpowder_cast(*new MilkPowder::SysexImpl(std::move(vec)));
 })
 
@@ -499,11 +511,34 @@ MilkTea_extern(MilkPowder_Sysex_Destroy, (MilkPowder_Sysex_t *self), {
   MilkPowder_Destroy(self);
 })
 
-MilkTea_extern(MilkPowder_Sysex_GetArgs, (const MilkPowder_Sysex_t *self, void *collector, void (*collect)(void *collector, uint32_t delta, const uint8_t *args, uint32_t length)), {
+MilkTea_extern(MilkPowder_Sysex_GetCount, (const MilkPowder_Sysex_t *self, uint32_t *count), {
   MilkTea_nonnull(self);
-  for (const auto &it : milkpowder_cast(self).items()) {
-    collect(collector, static_cast<uint32_t>(std::get<0>(it)), std::get<1>(it).data(), static_cast<uint32_t>(std::get<1>(it).size()));
+  MilkTea_nonnull(count);
+  *count = static_cast<uint32_t>(milkpowder_cast(self).items().size());
+})
+
+MilkTea_extern(MilkPowder_Sysex_GetItem, (const MilkPowder_Sysex_t *self, uint32_t index, MilkPowder_Sysex_Item_t *item), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(item);
+  auto size = static_cast<uint32_t>(milkpowder_cast(self).items().size());
+  if (index >= size) {
+    MilkTea_throwf(InvalidParam, "index: %" PRIu32 ", size: %" PRIu32, index, size);
   }
+  const auto &it = milkpowder_cast(self).items()[index];
+  *item = Make_Sysex_Item(
+    it.delta_,
+    static_cast<uint32_t>(it.args_.size()),
+    it.args_.data()
+  );
+})
+
+MilkTea_extern(MilkPowder_Sysex_AllItem, (MilkPowder_Sysex_t *self, MilkPowder_Sysex_Item_Consumer_t consumer), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(consumer.invoke_);
+  auto &items = milkpowder_cast(self).items();
+  std::for_each(items.begin(), items.end(), [consumer](MilkPowder::SysexImpl::Item &it) {
+    MilkTea_Function_Invoke(consumer, Make_Sysex_Item_mut(it.delta_, static_cast<uint32_t>(it.args_.size()), it.args_.data()));
+  });
 })
 
 MilkTea_extern(MilkPowder_Sysex_Dump, (const MilkPowder_Sysex_t *self, MilkPowder_Writer_t writer), {

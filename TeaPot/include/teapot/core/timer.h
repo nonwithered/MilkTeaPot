@@ -54,6 +54,12 @@ TeaPot_TimerTask_GetFuture(TeaPot_TimerTask_t *self, TeaPot_TimerFuture_t **futu
 MilkTea_api
 TeaPot_TimerTask_Run(TeaPot_TimerTask_t *self);
 
+MilkTea_Consumer_t(TeaPot_TimerTask_Consumer_t, TeaPot_TimerTask_t *)
+
+#ifndef __cplusplus
+typedef struct TeaPot_TimerTask_Consumer_t TeaPot_TimerTask_Consumer_t;
+#endif
+
 struct TeaPot_TimerWorker_t;
 
 #ifndef __cplusplus
@@ -74,8 +80,15 @@ enum TeaPot_TimerWorker_State_t {
 typedef enum TeaPot_TimerWorker_State_t TeaPot_TimerWorker_State_t;
 #endif // ifndef __cplusplus
 
+MilkTea_Closure_t(TeaPot_TimerWorker_Termination, bool, MilkTea_Exception_t, const char *)
+
+#ifndef __cplusplus
+typedef struct TeaPot_TimerWorker_Termination TeaPot_TimerWorker_Termination;
+#endif // ifndef __cplusplus
+
+
 MilkTea_api
-TeaPot_TimerWorker_Create(TeaPot_TimerWorker_t **self, MilkTea_ClosureToken_t obj, bool (MilkTea_call *on_terminate)(void *obj, MilkTea_Exception_t exception, const char *what));
+TeaPot_TimerWorker_Create(TeaPot_TimerWorker_t **self, TeaPot_TimerWorker_Termination termination);
 
 MilkTea_api
 TeaPot_TimerWorker_Destroy(TeaPot_TimerWorker_t *self);
@@ -93,7 +106,7 @@ MilkTea_api
 TeaPot_TimerWorker_Shutdown(TeaPot_TimerWorker_t *self, bool *success);
 
 MilkTea_api
-TeaPot_TimerWorker_ShutdownNow(TeaPot_TimerWorker_t *self, void *collector, void (MilkTea_call *collect)(void *collector, uint32_t size, TeaPot_TimerTask_t *tasks[]));
+TeaPot_TimerWorker_ShutdownNow(TeaPot_TimerWorker_t *self, TeaPot_TimerTask_Consumer_t consumer);
 
 MilkTea_api
 TeaPot_TimerWorker_AwaitTermination(TeaPot_TimerWorker_t *self, int64_t delay, bool *success);

@@ -67,12 +67,12 @@ void DumpSysex(const SysexImpl &self, std::vector<uint8_t> &vec) {
   DumpUsize(self.delta(), vec);
   DumpU8(0xf0, vec);
   const auto &items = self.items();
-  DumpArgs(std::get<1>(items[0]), vec);
+  DumpArgs(items[0].args_, vec);
   if (items.size() != 1) {
     std::for_each(items.begin() + 1, items.end(), [&vec](const auto &it) {
-      DumpUsize(static_cast<uint32_t>(std::get<0>(it)), vec);
+      DumpUsize(static_cast<uint32_t>(it.delta_), vec);
       DumpU8(0xf7, vec);
-      DumpArgs(std::get<1>(it), vec);
+      DumpArgs(it.args_, vec);
     });
   }
 }

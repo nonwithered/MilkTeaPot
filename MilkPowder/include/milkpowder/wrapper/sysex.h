@@ -8,11 +8,13 @@
 
 namespace MilkPowder {
 
+using SysexItem = Mapping::Sysex::raw_item_type;
+
 template<>
 class ConstInterface<Mapping::Sysex> {
   using mapping = Mapping::Sysex;
   using raw_type = mapping::raw_type;
- public:;
+ public:
   virtual const raw_type *get() const = 0;
  public:
   static ConstWrapper<mapping> From(ConstWrapper<Mapping::Message> another) {
@@ -20,17 +22,29 @@ class ConstInterface<Mapping::Sysex> {
     MilkTea_panic(mapping::raw_message_to(another.get(), &self));
     return self;
   }
-  std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> GetArgs() const {
-    std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> result;
-    std::function<void(uint32_t, const uint8_t *, uint32_t)> callback = [&result](uint32_t delta, const uint8_t *argv, uint32_t argc) -> void {
-      result.push_back(std::make_tuple(delta, std::vector<uint8_t>(argv, argv + argc)));
-    };
-    MilkTea_panic(mapping::raw_get_args(get(), &callback, MilkTea::ClosureToken<decltype(callback)>::Invoke));
+  uint32_t GetCount() const {
+    uint32_t result = 0;
+    MilkTea_panic(mapping::raw_get_count(get(), &result));
     return result;
+  }
+  SysexItem GetItem(uint32_t index) const {
+    mapping::raw_item_type result{};
+    MilkTea_panic(MilkPowder_Sysex_GetItem(get(), index, &result));
+    return SysexItem{
+      .delta_ = result.delta_,
+      .length_ = static_cast<uint32_t>(result.length_),
+      .args_ = result.args_,
+    };
   }
 };
 
 using SysexConstWrapper = ConstWrapper<Mapping::Sysex>;
+
+struct SysexItem_mut {
+  uint32_t &delta_;
+  uint32_t length_;
+  uint8_t *args_;
+};
 
 template<>
 class MutableInterface<Mapping::Sysex> {
@@ -44,18 +58,9 @@ class MutableInterface<Mapping::Sysex> {
     MilkTea_panic(mapping::raw_parse(&self, Mapping::Reader(reader)));
     return self;
   }
-  static MutableWrapper<mapping> Make(std::vector<std::tuple<uint32_t, std::vector<uint8_t>>> vec) {
+  static MutableWrapper<mapping> Make(const std::vector<SysexItem> &vec) {
     raw_type *self = nullptr;
-    uint32_t size = vec.size();
-    std::vector<uint32_t> delta(size);
-    std::vector<const uint8_t *> args(size);
-    std::vector<uint32_t> length(size);
-    for (uint32_t i = 0; i != size; ++i) {
-      delta[i] = std::get<0>(vec[i]);
-      args[i] = std::get<1>(vec[i]).data();
-      length[i] = std::get<1>(vec[i]).size();
-    }
-    MilkTea_panic(mapping::raw_create(&self, delta.data(), args.data(), length.data(), size));
+    MilkTea_panic(mapping::raw_create(&self, static_cast<uint32_t>(vec.size()), vec.data()));
     return self;
   }
   static MutableWrapper<mapping> From(MutableWrapper<Mapping::Message> &&another) {
@@ -63,6 +68,20 @@ class MutableInterface<Mapping::Sysex> {
     MilkTea_panic(mapping::raw_from_message(&self, another.get()));
     another.release();
     return self;
+  }
+  void AllItem(std::function<void(SysexItem_mut)> consumer) {
+    std::function<void(mapping::raw_item_mut_type)> consumer_ = [&consumer](mapping::raw_item_mut_type it) {
+      SysexItem_mut it_{
+        .delta_ = *it.delta_,
+        .length_ = it.length_,
+        .args_ = it.args_,
+      };
+      consumer(it_);
+    };
+    MilkTea_panic(mapping::raw_all_item(get(), mapping::raw_consumer_type{
+      .self_ = &consumer,
+      .invoke_ = MilkTea::FunctionFactory<decltype(consumer_)>::Invoke,
+    }));
   }
 };
 

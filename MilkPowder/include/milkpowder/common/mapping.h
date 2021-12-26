@@ -82,12 +82,17 @@ struct Meta {
 
 struct Sysex {
   using raw_type = MilkPowder_Sysex_t;
+  using raw_item_type = MilkPowder_Sysex_Item_t;
+  using raw_item_mut_type = MilkPowder_Sysex_Item_mut_t;
+  using raw_consumer_type = MilkPowder_Sysex_Item_Consumer_t;
   static constexpr auto raw_create = MilkPowder_Sysex_Create;
   static constexpr auto raw_destroy = MilkPowder_Sysex_Destroy;
   static constexpr auto raw_clone = MilkPowder_Sysex_Clone;
   static constexpr auto raw_parse = MilkPowder_Sysex_Parse;
   static constexpr auto raw_dump = MilkPowder_Sysex_Dump;
-  static constexpr auto raw_get_args = MilkPowder_Sysex_GetArgs;
+  static constexpr auto raw_get_count = MilkPowder_Sysex_GetCount;
+  static constexpr auto raw_get_item = MilkPowder_Sysex_GetItem;
+  static constexpr auto raw_all_item = MilkPowder_Sysex_AllItem;
   static constexpr auto raw_from_message = MilkPowder_Sysex_FromMessage;
   static constexpr auto raw_to_message = MilkPowder_Sysex_ToMessage;
   static constexpr auto raw_message_from = MilkPowder_Message_FromSysex;
@@ -99,10 +104,7 @@ struct Reader {
   using raw_type = MilkPowder_Reader_t;
   Reader(std::function<bool(uint8_t *)> f) : f_(f) {}
   operator raw_type(){
-    return {
-      .self_ = &f_,
-      .read_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
-    };
+    return MilkTea::FunctionFactory<decltype(f_)>::ToRawType<raw_type>(f_);
   }
  private:
   std::function<bool(uint8_t *)> f_;
@@ -112,10 +114,7 @@ struct Writer {
   using raw_type = MilkPowder_Writer_t;
   Writer(std::function<void(const uint8_t *, size_t)> f) : f_(f) {}
   operator raw_type() {
-    return {
-      .self_ = &f_,
-      .write_ = MilkTea::ClosureToken<decltype(f_)>::Invoke,
-    };
+    return MilkTea::FunctionFactory<decltype(f_)>::ToRawType<raw_type>(f_);
   }
  private:
   std::function<void(const uint8_t *, size_t)> f_;

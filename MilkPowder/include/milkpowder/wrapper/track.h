@@ -60,7 +60,7 @@ class MutableInterface<Mapping::Track> {
     };
     MilkTea_panic(mapping::raw_all_message(get(), Mapping::Message::raw_consumer_type{
       .self_ = &consumer,
-      .invoke_ = MilkTea::ClosureToken<decltype(consumer_)>::Invoke,
+      .invoke_ = MilkTea::FunctionFactory<decltype(consumer_)>::Invoke,
     }));
   }
 };

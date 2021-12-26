@@ -100,10 +100,10 @@ MilkTea_extern(TeaPot_TimerTask_Run, (TeaPot_TimerTask_t *self), {
   timer_cast(self)->Run();
 });
 
-MilkTea_extern(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, MilkTea_ClosureToken_t obj, bool (MilkTea_call *on_terminate)(void *obj, MilkTea_Exception_t exception, const char *what)), {
+MilkTea_extern(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, TeaPot_TimerWorker_Termination termination), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(on_terminate);
-  auto do_terminate = MilkTea::ClosureToken<bool(MilkTea_Exception_t, const char *)>::FromRawType(obj, on_terminate);
+  MilkTea_nonnull(termination.invoke_);
+  auto do_terminate = MilkTea::ClosureFactory<bool(MilkTea_Exception_t, const char *)>::FromRawType(termination.self_, termination.invoke_);
   auto worker = TeaPot::TimerWorkerImpl::Make([do_terminate](MilkTea::Exception::Type type, std::string_view what) -> bool {
     return do_terminate(MilkTea::Exception::ToRawType(type), what.data());
   });
@@ -145,19 +145,16 @@ MilkTea_extern(TeaPot_TimerWorker_Shutdown, (TeaPot_TimerWorker_t *self, bool *s
   *success = timer_cast(self)->Shutdown();
 })
 
-MilkTea_extern(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, void *collector, void (MilkTea_call *collect)(void *collector, uint32_t size, TeaPot_TimerTask_t *tasks[])), {
+MilkTea_extern(TeaPot_TimerWorker_ShutdownNow, (TeaPot_TimerWorker_t *self, TeaPot_TimerTask_Consumer_t consumer), {
   MilkTea_nonnull(self);
-  MilkTea_nonnull(collect);
+  MilkTea_nonnull(consumer.invoke_);
   bool success;
   std::vector<TeaPot::task_type> vec;
   std::tie(success, vec) = timer_cast(self)->ShutdownNow();
   if (success) {
-    auto sz = vec.size();
-    std::vector<TeaPot_TimerTask_t *> arr(sz);
-    for (decltype(sz) i = 0; i != sz; ++i) {
-      arr[i] = timer_cast(*vec[i].release());
-    }
-    collect(collector, static_cast<uint32_t>(sz), arr.data());
+    std::for_each(vec.begin(), vec.end(), [consumer](TeaPot::task_type &it) {
+      MilkTea_Function_Invoke(consumer, timer_cast(*it.release()));
+    });
   }
 });
 

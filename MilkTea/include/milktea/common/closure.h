@@ -9,12 +9,37 @@
 namespace MilkTea {
 
 template<typename Res, typename... Args>
-class ClosureToken {
+class FunctionFactory {
  public:
   static Res MilkTea_call Invoke(void *self, Args... args) {
     std::function<Res(Args...)> &callback_ = *reinterpret_cast<std::function<Res(Args...)> *>(self);
     return callback_(args...);
   }
+  template<typename raw_type>
+  static raw_type ToRawType(const std::function<Res(Args...)> &f) {
+    return raw_type{
+      .self_ = const_cast<std::function<Res(Args...)> *>(&f),
+      .invoke_ = FunctionFactory<Res(Args...)>::Invoke,
+    };
+  }
+  template<typename raw_type>
+  static std::function<Res(Args...)> FromRawType(raw_type f) {
+    MilkTea_nonnull(f.invoke_);
+    return [f](Args... args) -> Res {
+      return f.invoke_(f.self_, args...);
+    };
+  }
+};
+
+template<typename Res, typename... Args>
+class FunctionFactory<Res(Args...)> : public FunctionFactory<Res, Args...> {};
+
+template<typename Res, typename... Args>
+class FunctionFactory<std::function<Res(Args...)>> : public FunctionFactory<Res(Args...)> {};
+
+template<typename Res, typename... Args>
+class ClosureFactory {
+ public:
   static MilkTea_ClosureToken_t ToRawType(const std::function<Res(Args...)> &f) {
     return MilkTea_ClosureToken_t{
       .self_ = new std::function<Res(Args...)>(f),
@@ -32,14 +57,14 @@ class ClosureToken {
   static void MilkTea_call Deteler(void *self) {
     delete reinterpret_cast<std::function<Res(Args...)> *>(self);
   }
-  static constexpr char TAG[] = "MilkTea#ClosureToken";
+  static constexpr char TAG[] = "MilkTea#ClosureFactory";
 };
 
 template<typename Res, typename... Args>
-class ClosureToken<Res(Args...)> : public ClosureToken<Res, Args...> {};
+class ClosureFactory<Res(Args...)> : public ClosureFactory<Res, Args...> {};
 
 template<typename Res, typename... Args>
-class ClosureToken<std::function<Res(Args...)>> : public ClosureToken<Res(Args...)> {};
+class ClosureFactory<std::function<Res(Args...)>> : public ClosureFactory<Res(Args...)> {};
 
 } // namespace MilkTea
 
