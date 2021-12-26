@@ -2,6 +2,7 @@
 #define LIB_MILKTEA_CORE_EXCEPT_H_
 
 #include <milktea/core/macro.h>
+#include <milktea/core/closure.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,10 +30,7 @@ MilkTea_noreturn
 MilkTea_decl(void)
 MilkTea_Exception_Throw(MilkTea_Exception_t, const char *);
 
-struct MilkTea_Exception_Block_t {
-  void *self_;
-  void (MilkTea_call *invoke_)(void *);
-};
+MilkTea_Function_t(MilkTea_Exception_Block_t, void)
 
 #ifndef __cplusplus
 typedef struct MilkTea_Exception_Block_t MilkTea_Exception_Block_t;

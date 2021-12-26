@@ -9,14 +9,10 @@ struct Action {
   using raw_type = TeaPot_Action_t;
   using action_type = std::function<void()>;
   static action_type FromRawType(raw_type action) {
-    MilkTea_nonnull(action.run_);
-    return MilkTea::ClosureFactory<action_type>::FromRawType(action.self_, action.run_);
+    return MilkTea::ClosureFactory<action_type>::FromRawType<raw_type>(action);
   }
   static raw_type ToRawType(action_type action) {
-    return {
-      .self_ = MilkTea::ClosureFactory<action_type>::ToRawType(action),
-      .run_ = MilkTea::FunctionFactory<action_type>::Invoke,
-    };
+    return MilkTea::ClosureFactory<action_type>::ToRawType<raw_type>(action);
   }
 };
 
@@ -25,24 +21,14 @@ struct Executor {
   using wrapper_type = std::function<void(Action::raw_type)>;
   using executor_type = std::function<void(Action::action_type)>;
   static executor_type FromRawType(raw_type executor) {
-    static auto wrap_ = [](raw_type executor_) -> wrapper_type {
-      return MilkTea::ClosureFactory<wrapper_type>::FromRawType(executor_.self_, executor_.submit_);
-    };
-    MilkTea_nonnull(executor.submit_);
-    return [executor_ = wrap_(executor)](Action::action_type action) {
+    return [executor_ = MilkTea::ClosureFactory<wrapper_type>::FromRawType<raw_type>(executor)](Action::action_type action) {
       executor_(Action::ToRawType(action));
     };
   }
   static raw_type ToRawType(executor_type executor) {
-    static auto unwrap_ = [](executor_type executor_) -> wrapper_type {
-      return [executor_](Action::raw_type action) {
-        executor_(Action::FromRawType(action));
-      };
-    };
-    return {
-      .self_ = MilkTea::ClosureFactory<wrapper_type>::ToRawType(unwrap_(executor)),
-      .submit_ = MilkTea::FunctionFactory<wrapper_type>::Invoke,
-    };
+    return MilkTea::ClosureFactory<wrapper_type>::ToRawType<raw_type>([executor](Action::raw_type action) {
+      executor(Action::FromRawType(action));
+    });
   }
 };
 

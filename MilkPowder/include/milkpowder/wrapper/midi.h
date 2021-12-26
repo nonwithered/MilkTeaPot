@@ -66,10 +66,7 @@ class MutableInterface<Mapping::Midi> {
       });
       consumer(it_);
     };
-    MilkTea_panic(mapping::raw_all_track(get(), Mapping::Track::raw_consumer_type{
-      .self_ = &consumer,
-      .invoke_ = MilkTea::FunctionFactory<decltype(consumer_)>::Invoke,
-    }));
+    MilkTea_panic(mapping::raw_all_track(get(), MilkTea::FunctionFactory<decltype(consumer_)>::ToRawType<Mapping::Track::raw_consumer_type>(consumer_)));
   }
   void SetFormat(uint16_t format) {
     MilkTea_panic(mapping::raw_set_format(get(), format));

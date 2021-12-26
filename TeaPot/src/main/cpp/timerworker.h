@@ -16,8 +16,8 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   using time_point_type = TimerUnit::time_point_type;
   using clock_type = TimerUnit::clock_type;
  public:
-  static worker_type Make(std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate) {
-    auto worker = worker_type(new TimerWorkerImpl(on_terminate));
+  static worker_type Make(std::function<bool(MilkTea::Exception::Type, std::string_view)> termination) {
+    auto worker = worker_type(new TimerWorkerImpl(termination));
     worker->binder_.Bind(worker);
     return worker;
   }
@@ -112,9 +112,9 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     return future;
   }
  private:
-  explicit TimerWorkerImpl(std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate)
+  explicit TimerWorkerImpl(std::function<bool(MilkTea::Exception::Type, std::string_view)> termination)
   : state_(State::INIT),
-    on_terminate_(on_terminate),
+    termination_(termination),
     binder_() {}
   void Run() {
     auto type = MilkTea::Exception::Catch([this]() {
@@ -155,7 +155,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
         MilkTea_assert("OnTerminate assert");
       }
     });
-    return on_terminate_(type, what);
+    return termination_(type, what);
   }
   std::tuple<bool, action_type> Take() {
     std::unique_lock guard(lock_);
@@ -272,7 +272,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   std::recursive_mutex lock_;
   std::condition_variable_any state_cond_;
   std::condition_variable_any tasks_cond_;
-  std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate_;
+  std::function<bool(MilkTea::Exception::Type, std::string_view)> termination_;
   worker_binder binder_;
   MilkTea_NonCopy(TimerWorkerImpl)
   MilkTea_NonMove(TimerWorkerImpl)

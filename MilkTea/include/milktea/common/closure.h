@@ -9,12 +9,16 @@
 namespace MilkTea {
 
 template<typename Res, typename... Args>
+class ClosureFactory;
+
+template<typename Res, typename... Args>
 class FunctionFactory {
- public:
+  friend class ClosureFactory<Res, Args...>;
   static Res MilkTea_call Invoke(void *self, Args... args) {
     std::function<Res(Args...)> &callback_ = *reinterpret_cast<std::function<Res(Args...)> *>(self);
     return callback_(args...);
   }
+ public:
   template<typename raw_type>
   static raw_type ToRawType(const std::function<Res(Args...)> &f) {
     return raw_type{
@@ -26,7 +30,7 @@ class FunctionFactory {
   static std::function<Res(Args...)> FromRawType(raw_type f) {
     MilkTea_nonnull(f.invoke_);
     return [f](Args... args) -> Res {
-      return f.invoke_(f.self_, args...);
+      return MilkTea_Function_Invoke(f, args...);
     };
   }
 };
@@ -40,16 +44,22 @@ class FunctionFactory<std::function<Res(Args...)>> : public FunctionFactory<Res(
 template<typename Res, typename... Args>
 class ClosureFactory {
  public:
-  static MilkTea_ClosureToken_t ToRawType(const std::function<Res(Args...)> &f) {
-    return MilkTea_ClosureToken_t{
-      .self_ = new std::function<Res(Args...)>(f),
-      .deleter_ = Deteler,
+  template<typename raw_type>
+  static raw_type ToRawType(const std::function<Res(Args...)> &f) {
+    return raw_type{
+      .self_ = MilkTea_ClosureToken_t{
+        .self_ = new std::function<Res(Args...)>(f),
+        .deleter_ = Deteler,
+      },
+      .invoke_ = FunctionFactory<Res(Args...)>::Invoke,
     };
   }
-  static std::function<Res(Args...)> FromRawType(MilkTea_ClosureToken_t token, std::function<Res(void *, Args...)> invoke) {
-    MilkTea_nonnull(token.deleter_);
-    auto closure = std::shared_ptr<void>(token.self_, token.deleter_);
-    return [closure, invoke](Args... args) -> Res {
+  template<typename raw_type>
+  static std::function<Res(Args...)> FromRawType(raw_type f) {
+    MilkTea_nonnull(f.self_.deleter_);
+    auto closure = std::shared_ptr<void>(f.self_.self_, f.self_.deleter_);
+    MilkTea_nonnull(f.invoke_);
+    return [closure, invoke = f.invoke_](Args... args) -> Res {
       return invoke(closure.get(), args...);
     };
   }

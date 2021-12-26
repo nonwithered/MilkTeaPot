@@ -17,15 +17,12 @@ class TimerWorkerWrapper final {
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   using raw_type = TeaPot_TimerWorker_t;
-  explicit TimerWorkerWrapper(std::function<bool(MilkTea::Exception::Type, std::string_view)> on_terminate) : TimerWorkerWrapper() {
-    std::function<bool(MilkTea_Exception_t, const char *)> do_terminate = [on_terminate](MilkTea_Exception_t type, const char *what) -> bool {
-      return on_terminate(MilkTea::Exception::FromRawType(type), what);
+  explicit TimerWorkerWrapper(std::function<bool(MilkTea::Exception::Type, std::string_view)> termination) : TimerWorkerWrapper() {
+    std::function<bool(MilkTea_Exception_t, const char *)> termination_ = [termination](MilkTea_Exception_t type, const char *what) -> bool {
+      return termination(MilkTea::Exception::FromRawType(type), what);
     };
     raw_type *self = nullptr;
-    MilkTea_panic(TeaPot_TimerWorker_Create(&self, TeaPot_TimerWorker_Termination{
-      .self_ = MilkTea::ClosureFactory<decltype(do_terminate)>::ToRawType(do_terminate),
-      .invoke_ = MilkTea::FunctionFactory<decltype(do_terminate)>::Invoke,
-    }));
+    MilkTea_panic(TeaPot_TimerWorker_Create(&self, MilkTea::ClosureFactory<decltype(termination_)>::ToRawType<TeaPot_TimerWorker_Termination>(termination_)));
     std::swap(self_, self);
   }
   TimerWorkerWrapper(raw_type *self = nullptr) : self_(self) {}
@@ -60,14 +57,11 @@ class TimerWorkerWrapper final {
   std::tuple<bool, std::vector<TimerTaskWrapper>> ShutdownNow() {
     bool success = false;
     std::vector<TimerTaskWrapper> vec;
-    std::function<void(TeaPot_TimerTask_t *)> callback = [&success, &vec](TeaPot_TimerTask_t *task) -> void {
+    std::function<void(TeaPot_TimerTask_t *)> consumer = [&success, &vec](TeaPot_TimerTask_t *task) -> void {
       success = true;
       vec.emplace_back(task);
     };
-    MilkTea_panic(TeaPot_TimerWorker_ShutdownNow(get(), TeaPot_TimerTask_Consumer_t{
-      .self_ = &callback,
-      .invoke_ = MilkTea::FunctionFactory<decltype(callback)>::Invoke,
-    }));
+    MilkTea_panic(TeaPot_TimerWorker_ShutdownNow(get(), MilkTea::FunctionFactory<decltype(consumer)>::ToRawType<TeaPot_TimerTask_Consumer_t>(consumer)));
     return std::make_tuple(success, std::move(vec));
   }
   bool AwaitTermination(duration_type delay = duration_type()) {

@@ -103,7 +103,7 @@ MilkTea_extern(TeaPot_TimerTask_Run, (TeaPot_TimerTask_t *self), {
 MilkTea_extern(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, TeaPot_TimerWorker_Termination termination), {
   MilkTea_nonnull(self);
   MilkTea_nonnull(termination.invoke_);
-  auto do_terminate = MilkTea::ClosureFactory<bool(MilkTea_Exception_t, const char *)>::FromRawType(termination.self_, termination.invoke_);
+  auto do_terminate = MilkTea::ClosureFactory<bool(MilkTea_Exception_t, const char *)>::FromRawType<TeaPot_TimerWorker_Termination>(termination);
   auto worker = TeaPot::TimerWorkerImpl::Make([do_terminate](MilkTea::Exception::Type type, std::string_view what) -> bool {
     return do_terminate(MilkTea::Exception::ToRawType(type), what.data());
   });

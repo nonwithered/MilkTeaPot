@@ -58,10 +58,7 @@ class MutableInterface<Mapping::Track> {
       });
       consumer(it_);
     };
-    MilkTea_panic(mapping::raw_all_message(get(), Mapping::Message::raw_consumer_type{
-      .self_ = &consumer,
-      .invoke_ = MilkTea::FunctionFactory<decltype(consumer_)>::Invoke,
-    }));
+    MilkTea_panic(mapping::raw_all_message(get(), MilkTea::FunctionFactory<decltype(consumer_)>::ToRawType<Mapping::Message::raw_consumer_type>(consumer_)));
   }
 };
 
