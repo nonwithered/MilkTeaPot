@@ -24,10 +24,10 @@ MilkTea_Exception_t MilkTea_call Make_SoyBean_Factory_(SoyBean_Factory_t *factor
 
 template<typename T>
 void Init() {
-  MilkTea_panic(Milk_Init(Milk_Config_t{
+  MilkTea_invoke_panic(Milk_Init, Milk_Config_t{
     .Make_MilkTea_Logger_ = Make_MilkTea_Logger_<T>,
     .Make_SoyBean_Factory_ = Make_SoyBean_Factory_<T>,
-  }));
+  });
 }
 
 inline int Main(int argc, char *argv[]) {

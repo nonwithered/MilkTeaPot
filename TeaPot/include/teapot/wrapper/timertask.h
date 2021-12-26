@@ -18,16 +18,16 @@ class TimerTaskWrapper final {
     if (self_ == nullptr) {
       return;
     }
-    MilkTea_panic(TeaPot_TimerTask_Destroy(self_));
+    MilkTea_invoke_panic(TeaPot_TimerTask_Destroy, self_);
     self_ = nullptr;
   }
   TimerFutureWrapper GetFuture() {
     TeaPot_TimerFuture_t *future = nullptr;
-    MilkTea_panic(TeaPot_TimerTask_GetFuture(self_, &future));
+    MilkTea_invoke_panic(TeaPot_TimerTask_GetFuture, self_, &future);
     return future;
   }
   void Run() {
-    MilkTea_panic(TeaPot_TimerTask_Run(self_));
+    MilkTea_invoke_panic(TeaPot_TimerTask_Run, self_);
   }
  private:
   TeaPot_TimerTask_t *self_;

@@ -14,22 +14,22 @@ class ConstInterface<Mapping::Midi> {
  public:
   uint16_t GetFormat() const {
     uint16_t result = 0;
-    MilkTea_panic(mapping::raw_get_format(get(), &result));
+    MilkTea_invoke_panic(mapping::raw_get_format, get(), &result);
     return result;
   }
   uint16_t GetNtrks() const {
     uint16_t result = 0;
-    MilkTea_panic(mapping::raw_get_ntrks(get(), &result));
+    MilkTea_invoke_panic(mapping::raw_get_ntrks, get(), &result);
     return result;
   }
   uint16_t GetDivision() const {
     uint16_t result = 0;
-    MilkTea_panic(mapping::raw_get_division(get(), &result));
+    MilkTea_invoke_panic(mapping::raw_get_division, get(), &result);
     return result;
   }
   ConstWrapper<Mapping::Track> GetTrack(uint16_t index) const {
     const Mapping::Track::raw_type *result = nullptr;
-    MilkTea_panic(mapping::raw_get_track(get(), index, &result));
+    MilkTea_invoke_panic(mapping::raw_get_track, get(), index, &result);
     return result;
   }
 };
@@ -45,7 +45,7 @@ class MutableInterface<Mapping::Midi> {
  public:
   static MutableWrapper<Mapping::Midi> Parse(std::function<bool(uint8_t *)> reader) {
     raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_parse(&self, Mapping::Reader(reader)));
+    MilkTea_invoke_panic(mapping::raw_parse, &self, Mapping::Reader(reader));
     return self;
   }
   static MutableWrapper<Mapping::Midi> Make(uint16_t format, uint16_t division, std::vector<MutableWrapper<Mapping::Track>> tracks) {
@@ -55,7 +55,7 @@ class MutableInterface<Mapping::Midi> {
     for (uint16_t i = 0; i != ntrks; ++i) {
       vec[i] = tracks[i].release();
     }
-    MilkTea_panic(mapping::raw_create(&self, format, ntrks, division, vec.data()));
+    MilkTea_invoke_panic(mapping::raw_create, &self, format, ntrks, division, vec.data());
     return self;
   }
   void AllTrack(std::function<void(MutableWrapper<Mapping::Track> &)> consumer) {
@@ -66,13 +66,13 @@ class MutableInterface<Mapping::Midi> {
       });
       consumer(it_);
     };
-    MilkTea_panic(mapping::raw_all_track(get(), MilkTea::FunctionFactory<decltype(consumer_)>::ToRawType<Mapping::Track::raw_consumer_type>(consumer_)));
+    MilkTea_invoke_panic(mapping::raw_all_track, get(), MilkTea::FunctionFactory<decltype(consumer_)>::ToRawType<Mapping::Track::raw_consumer_type>(consumer_));
   }
   void SetFormat(uint16_t format) {
-    MilkTea_panic(mapping::raw_set_format(get(), format));
+    MilkTea_invoke_panic(mapping::raw_set_format, get(), format);
   }
   void SetDivision(uint16_t division) {
-    MilkTea_panic(mapping::raw_set_division(get(), division));
+    MilkTea_invoke_panic(mapping::raw_set_division, get(), division);
   }
 };
 

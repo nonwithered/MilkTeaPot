@@ -28,7 +28,7 @@ class ConstWrapper final : public ConstInterface<T> {
  public:
   ConstWrapper(const typename T::raw_type *self) : self_(self) {}
   void Dump(std::function<void(const uint8_t *, size_t)> writer) const {
-    MilkTea_panic(T::raw_dump(get(), Mapping::Writer(writer)));
+    MilkTea_invoke_panic(T::raw_dump, get(), Mapping::Writer(writer));
   }
 };
 
@@ -61,7 +61,7 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
     if (self == nullptr) {
       return;
     }
-    MilkTea_panic(T::raw_destroy(self));
+    MilkTea_invoke_panic(T::raw_destroy, self);
   }
   MutableWrapper(const ConstWrapper<T> &another) : MutableWrapper(nullptr) {
     const raw_type *another_ = another.get();
@@ -69,7 +69,7 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
       return;
     }
     raw_type *self = nullptr;
-    MilkTea_panic(T::raw_clone(another_, &self));
+    MilkTea_invoke_panic(T::raw_clone, another_, &self);
     std::swap(self_, self);
   }
   MutableWrapper(const MutableWrapper<T> &another) : MutableWrapper(nullptr) {
@@ -78,7 +78,7 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
       return;
     }
     raw_type *self = nullptr;
-    MilkTea_panic(T::raw_clone(another_, &self));
+    MilkTea_invoke_panic(T::raw_clone, another_, &self);
     std::swap(self_, self);
   }
   MutableWrapper(MutableWrapper<T> &&another) : MutableWrapper(nullptr) {
@@ -102,7 +102,7 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
     return self;
   }
   void Dump(std::function<void(const uint8_t *, size_t)> writer) const {
-    MilkTea_panic(T::raw_dump(get(), Mapping::Writer(writer)));
+    MilkTea_invoke_panic(T::raw_dump, get(), Mapping::Writer(writer));
   }
 };
 

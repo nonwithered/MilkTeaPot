@@ -17,7 +17,7 @@ class ConfigWrapper {
   SoyBean::FactoryWrapper make_soybean_factory() {
     MilkTea_nonnull(self_.Make_SoyBean_Factory_);
     SoyBean_Factory_t factory{};
-    MilkTea_panic(self_.Make_SoyBean_Factory_(&factory));
+    MilkTea_invoke_panic(self_.Make_SoyBean_Factory_, &factory);
     return factory;
   }
  private:

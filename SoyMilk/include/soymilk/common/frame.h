@@ -18,17 +18,17 @@ class FrameEventWrapper final {
   FrameEventWrapper(const raw_type *another) : self_(another) {}
   uint16_t GetNtrk() const {
     uint16_t result = 0;
-    MilkTea_panic(SoyMilk_FrameEvent_GetNtrk(get(), &result));
+    MilkTea_invoke_panic(SoyMilk_FrameEvent_GetNtrk, get(), &result);
     return result;
   }
   size_t GetLen() const {
     size_t result = 0;
-    MilkTea_panic(SoyMilk_FrameEvent_GetLen(get(), &result));
+    MilkTea_invoke_panic(SoyMilk_FrameEvent_GetLen, get(), &result);
     return result;
   }
   MilkPowder::MessageConstWrapper GetMsg(size_t idx) const {
     const MilkPowder::Mapping::Message::raw_type *result = nullptr;
-    MilkTea_panic(SoyMilk_FrameEvent_GetMsg(get(), idx, &result));
+    MilkTea_invoke_panic(SoyMilk_FrameEvent_GetMsg, get(), idx, &result);
     return result;
   }
   const raw_type *get() const {
@@ -46,17 +46,17 @@ class FrameBufferWrapper final {
   FrameBufferWrapper(const raw_type *self) : self_(self) {}
   duration_type GetTime() const {
     int64_t result = 0;
-    MilkTea_panic(SoyMilk_FrameBuffer_GetTime(get(), &result));
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetTime, get(), &result);
     return duration_type(result);
   }
   size_t GetLen() const {
     size_t result = 0;
-    MilkTea_panic(SoyMilk_FrameBuffer_GetLen(get(), &result));
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetLen, get(), &result);
     return result;
   }
   FrameEventWrapper GetItem(size_t idx) const {
     const FrameEventWrapper::raw_type *result = nullptr;
-    MilkTea_panic(SoyMilk_FrameBuffer_GetItem(get(), idx, &result));
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetItem, get(), idx, &result);
     return result;
   }
   const raw_type *get() const {
@@ -75,13 +75,13 @@ class FrameBufferHolder final {
     std::swap(self_, another.self_);
   }
   explicit FrameBufferHolder(FrameBufferWrapper another) : FrameBufferHolder() {
-    MilkTea_panic(SoyMilk_FrameBuffer_Clone(&self_, another.get()));
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Clone, &self_, another.get());
   }
   ~FrameBufferHolder() {
     if (self_ == nullptr) {
       return;
     }
-    MilkTea_panic(SoyMilk_FrameBuffer_Destroy(self_));
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Destroy, self_);
     self_ = nullptr;
   }
   operator FrameBufferWrapper() const {

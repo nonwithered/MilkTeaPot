@@ -19,17 +19,17 @@ class ConstInterface<Mapping::Sysex> {
  public:
   static ConstWrapper<mapping> From(ConstWrapper<Mapping::Message> another) {
     const raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_message_to(another.get(), &self));
+    MilkTea_invoke_panic(mapping::raw_message_to, another.get(), &self);
     return self;
   }
   uint32_t GetCount() const {
     uint32_t result = 0;
-    MilkTea_panic(mapping::raw_get_count(get(), &result));
+    MilkTea_invoke_panic(mapping::raw_get_count, get(), &result);
     return result;
   }
   SysexItem GetItem(uint32_t index) const {
     mapping::raw_item_type result{};
-    MilkTea_panic(MilkPowder_Sysex_GetItem(get(), index, &result));
+    MilkTea_invoke_panic(MilkPowder_Sysex_GetItem, get(), index, &result);
     return SysexItem{
       .delta_ = result.delta_,
       .length_ = static_cast<uint32_t>(result.length_),
@@ -55,17 +55,17 @@ class MutableInterface<Mapping::Sysex> {
  public:
   static MutableWrapper<mapping> Parse(std::function<bool(uint8_t *)> reader) {
     raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_parse(&self, Mapping::Reader(reader)));
+    MilkTea_invoke_panic(mapping::raw_parse, &self, Mapping::Reader(reader));
     return self;
   }
   static MutableWrapper<mapping> Make(const std::vector<SysexItem> &vec) {
     raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_create(&self, static_cast<uint32_t>(vec.size()), vec.data()));
+    MilkTea_invoke_panic(mapping::raw_create, &self, static_cast<uint32_t>(vec.size()), vec.data());
     return self;
   }
   static MutableWrapper<mapping> From(MutableWrapper<Mapping::Message> &&another) {
     raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_from_message(&self, another.get()));
+    MilkTea_invoke_panic(mapping::raw_from_message, &self, another.get());
     another.release();
     return self;
   }
@@ -78,7 +78,7 @@ class MutableInterface<Mapping::Sysex> {
       };
       consumer(it_);
     };
-    MilkTea_panic(mapping::raw_all_item(get(), MilkTea::FunctionFactory<decltype(consumer_)>::ToRawType<mapping::raw_consumer_type>(consumer_)));
+    MilkTea_invoke_panic(mapping::raw_all_item, get(), MilkTea::FunctionFactory<decltype(consumer_)>::ToRawType<mapping::raw_consumer_type>(consumer_));
   }
 };
 

@@ -21,22 +21,22 @@ class TimerFutureWrapper final {
     if (self_ == nullptr) {
       return;
     }
-    MilkTea_panic(TeaPot_TimerFuture_Destroy(self_));
+    MilkTea_invoke_panic(TeaPot_TimerFuture_Destroy, self_);
     self_ = nullptr;
   }
   bool Cancel() {
     bool success = false;
-    MilkTea_panic(TeaPot_TimerFuture_Cancel(self_, &success));
+    MilkTea_invoke_panic(TeaPot_TimerFuture_Cancel, self_, &success);
     return success;
   }
   State GetState() {
     TeaPot_TimerFuture_State_t state = TeaPot_TimerFuture_State_EXCEPTIONAL;
-    MilkTea_panic(TeaPot_TimerFuture_GetState(self_, &state));
+    MilkTea_invoke_panic(TeaPot_TimerFuture_GetState, self_, &state);
     return TeaPot::TimerFuture::FromRawType(state);
   }
   time_point_type GetTime() {
     int64_t time = 0;
-    MilkTea_panic(TeaPot_TimerFuture_GetTime(self_, &time));
+    MilkTea_invoke_panic(TeaPot_TimerFuture_GetTime, self_, &time);
     return time_point_type(duration_type(time));
   }
  private:

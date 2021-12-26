@@ -35,7 +35,7 @@ class FactoryWrapper final : public BaseFactory {
     if (self_.self_ == nullptr) {
       return;
     }
-    MilkTea_panic(SoyBean_Factory_Destroy(self_));
+    MilkTea_invoke_panic(SoyBean_Factory_Destroy, self_);
     self_ = {};
   }
   BaseFactory &Move() && final {
@@ -49,7 +49,7 @@ class FactoryWrapper final : public BaseFactory {
   }
   HandleWrapper make_handle() {
     SoyBean_Handle_t handle{};
-    MilkTea_panic(SoyBean_Handle_Create(&handle, self_));
+    MilkTea_invoke_panic(SoyBean_Handle_Create, &handle, self_);
     return handle;
   }
   SoyBean_Factory_t release() {

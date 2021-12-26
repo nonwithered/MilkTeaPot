@@ -14,18 +14,18 @@ class ConstInterface<Mapping::Message> {
  public:
   uint32_t GetDelta() const {
     uint32_t result = 0;
-    MilkTea_panic(mapping::raw_get_delta(get(), &result));
+    MilkTea_invoke_panic(mapping::raw_get_delta, get(), &result);
     return result;
   }
   uint8_t GetType() const {
     uint8_t result = 0;
-    MilkTea_panic(mapping::raw_get_type(get(), &result));
+    MilkTea_invoke_panic(mapping::raw_get_type, get(), &result);
     return result;
   }
   template<typename T>
   bool Is() const {
     bool result = false;
-    MilkTea_panic(T::raw_message_is(get(), &result));
+    MilkTea_invoke_panic(T::raw_message_is, get(), &result);
     return result;
   }
   bool IsEvent() const {
@@ -40,7 +40,7 @@ class ConstInterface<Mapping::Message> {
   template<typename T>
   static ConstWrapper<Mapping::Message> From(ConstWrapper<T> &&another) {
     const raw_type *self = nullptr;
-    MilkTea_panic(T::raw_to_message(another.get(), &self));
+    MilkTea_invoke_panic(T::raw_to_message, another.get(), &self);
     return self;
   }
 };
@@ -55,17 +55,17 @@ class MutableInterface<Mapping::Message> {
   virtual raw_type *get() = 0;
  public:
   void SetDelta(uint32_t delta) {
-    MilkTea_panic(mapping::raw_set_delta(get(), delta));
+    MilkTea_invoke_panic(mapping::raw_set_delta, get(), delta);
   }
   static MutableWrapper<Mapping::Message> Parse(std::function<bool(uint8_t *)> reader, uint8_t last = 0xff) {
     raw_type *self = nullptr;
-    MilkTea_panic(mapping::raw_parse(&self, Mapping::Reader(reader), last));
+    MilkTea_invoke_panic(mapping::raw_parse, &self, Mapping::Reader(reader), last);
     return self;
   }
   template<typename T>
   static MutableWrapper<Mapping::Message> From(MutableWrapper<T> &&another) {
     raw_type *self = nullptr;
-    MilkTea_panic(T::raw_message_from(&self, another.get()));
+    MilkTea_invoke_panic(T::raw_message_from, &self, another.get());
     another.release();
     return self;
   }

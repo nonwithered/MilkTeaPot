@@ -63,10 +63,14 @@ MilkTea_throwf(Assertion, ##__VA_ARGS__)
 })
 
 #define MilkTea_panic(e) MilkTea_block({ \
-  if (e != MilkTea_Exception_Nil) { \
-    MilkTea_Exception_Throw(e, MilkTea_Exception_What()); \
+  MilkTea_Exception_t e_ = e; \
+  if (e_ != MilkTea_Exception_Nil) { \
+    MilkTea_Exception_Throw(e_, MilkTea_Exception_What()); \
   } \
 })
+
+#define MilkTea_invoke_panic(f, ...) \
+MilkTea_panic(f(__VA_ARGS__))
 
 #ifdef __cplusplus
 } // extern "C"

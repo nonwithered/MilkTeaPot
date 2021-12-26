@@ -22,7 +22,7 @@ class TimerWorkerWrapper final {
       return termination(MilkTea::Exception::FromRawType(type), what);
     };
     raw_type *self = nullptr;
-    MilkTea_panic(TeaPot_TimerWorker_Create(&self, MilkTea::ClosureFactory<decltype(termination_)>::ToRawType<TeaPot_TimerWorker_Termination>(termination_)));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Create, &self, MilkTea::ClosureFactory<decltype(termination_)>::ToRawType<TeaPot_TimerWorker_Termination>(termination_));
     std::swap(self_, self);
   }
   TimerWorkerWrapper(raw_type *self = nullptr) : self_(self) {}
@@ -33,25 +33,25 @@ class TimerWorkerWrapper final {
     if (self_ == nullptr) {
       return;
     }
-    MilkTea_panic(TeaPot_TimerWorker_Destroy(get()));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Destroy, get());
     self_ = nullptr;
   }
   void Start() {
-    MilkTea_panic(TeaPot_TimerWorker_Start(get()));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Start, get());
   }
   State GetState() {
     TeaPot_TimerWorker_State_t state = TeaPot_TimerWorker_State_CLOSED;
-    MilkTea_panic(TeaPot_TimerWorker_GetState(get(), &state));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_GetState, get(), &state);
     return TimerWorker::FromRawType(state);
   }
   TimerFutureWrapper Post(duration_type delay, Action::action_type action) {
     TeaPot_TimerFuture_t *future = nullptr;
-    MilkTea_panic(TeaPot_TimerWorker_Post(get(), &future, delay.count(), Action::ToRawType(action)));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Post, get(), &future, delay.count(), Action::ToRawType(action));
     return future;
   }
   bool Shutdown() {
     bool success = false;
-    MilkTea_panic(TeaPot_TimerWorker_Shutdown(get(), &success));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Shutdown, get(), &success);
     return success;
   }
   std::tuple<bool, std::vector<TimerTaskWrapper>> ShutdownNow() {
@@ -61,12 +61,12 @@ class TimerWorkerWrapper final {
       success = true;
       vec.emplace_back(task);
     };
-    MilkTea_panic(TeaPot_TimerWorker_ShutdownNow(get(), MilkTea::FunctionFactory<decltype(consumer)>::ToRawType<TeaPot_TimerTask_Consumer_t>(consumer)));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_ShutdownNow, get(), MilkTea::FunctionFactory<decltype(consumer)>::ToRawType<TeaPot_TimerTask_Consumer_t>(consumer));
     return std::make_tuple(success, std::move(vec));
   }
   bool AwaitTermination(duration_type delay = duration_type()) {
     bool success = false;
-    MilkTea_panic(TeaPot_TimerWorker_AwaitTermination(get(), delay.count(), &success));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_AwaitTermination, get(), delay.count(), &success);
     return success;
   }
   raw_type *get() const {
@@ -85,7 +85,7 @@ class TimerWorkerWeakWrapper final {
  public:
   using raw_type = TeaPot_TimerWorker_Weak_t;
   TimerWorkerWeakWrapper(const TimerWorkerWrapper &another) : TimerWorkerWeakWrapper() {
-    MilkTea_panic(TeaPot_TimerWorker_Weak_Create(&self_, another.get()));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Weak_Create, &self_, another.get());
   }
   TimerWorkerWeakWrapper(TimerWorkerWeakWrapper &&another) : TimerWorkerWeakWrapper() {
     std::swap(self_, another.self_);
@@ -94,12 +94,12 @@ class TimerWorkerWeakWrapper final {
     if (self_ == nullptr) {
       return;
     }
-    MilkTea_panic(TeaPot_TimerWorker_Weak_Destroy(get()));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Weak_Destroy, get());
     self_ = nullptr;
   }
   TimerWorkerWrapper lock() {
     TimerWorkerWrapper::raw_type *lock_ = nullptr;
-    MilkTea_panic(TeaPot_TimerWorker_Weak_Try(get(), &lock_));
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Weak_Try, get(), &lock_);
     return lock_;
   }
   raw_type *get() const {

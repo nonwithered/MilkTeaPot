@@ -41,7 +41,7 @@ class HandleWrapper final : public BaseHandle {
     if (self_.self_ == nullptr) {
       return;
     }
-    MilkTea_panic(SoyBean_Handle_Destroy(self_));
+    MilkTea_invoke_panic(SoyBean_Handle_Destroy, self_);
     self_ = {};
   }
   BaseHandle &Move() && final {
@@ -51,25 +51,25 @@ class HandleWrapper final : public BaseHandle {
     delete this;
   }
   void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_NoteOff(self_, channel, note, pressure));
+    MilkTea_invoke_panic(SoyBean_Handle_NoteOff, self_, channel, note, pressure);
   }
   void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_NoteOn(self_, channel, note, pressure));
+    MilkTea_invoke_panic(SoyBean_Handle_NoteOn, self_, channel, note, pressure);
   }
   void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_AfterTouch(self_, channel, note, pressure));
+    MilkTea_invoke_panic(SoyBean_Handle_AfterTouch, self_, channel, note, pressure);
   }
   void ControlChange(uint8_t channel, uint8_t control, uint8_t argument) final {
-    MilkTea_panic(SoyBean_Handle_ControlChange(self_, channel, control, argument));
+    MilkTea_invoke_panic(SoyBean_Handle_ControlChange, self_, channel, control, argument);
   }
   void ProgramChange(uint8_t channel, uint8_t program) final {
-    MilkTea_panic(SoyBean_Handle_ProgramChange(self_, channel, program));
+    MilkTea_invoke_panic(SoyBean_Handle_ProgramChange, self_, channel, program);
   }
   void ChannelPressure(uint8_t channel, uint8_t pressure) final {
-    MilkTea_panic(SoyBean_Handle_ChannelPressure(self_, channel, pressure));
+    MilkTea_invoke_panic(SoyBean_Handle_ChannelPressure, self_, channel, pressure);
   }
   void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
-    MilkTea_panic(SoyBean_Handle_PitchBend(self_, channel, low, height));
+    MilkTea_invoke_panic(SoyBean_Handle_PitchBend, self_, channel, low, height);
   }
   SoyBean_Handle_t release() {
     SoyBean_Handle_t self = self_;
