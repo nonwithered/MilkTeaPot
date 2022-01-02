@@ -2,7 +2,7 @@
 #define LIB_MILKTEA_WRAPPER_EXCEPT_H_
 
 #define MilkTea_with_except(block) { \
-  return MilkTea::Exception::ToRawType(MilkTea::Exception::Catch([=]() block)); \
+  return MilkTea::Exception::ToRawType(MilkTea::Exception::Catch([&]() block)); \
 }
 
 #define MilkTea_extern(section, list, block) \

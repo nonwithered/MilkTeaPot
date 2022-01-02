@@ -27,7 +27,7 @@ typedef struct MilkTea_ClosureToken_t MilkTea_ClosureToken_t;
 
 #define MilkTea_Closure_t(S, R, ...) \
 struct S { \
-  struct MilkTea_ClosureToken_t self_; \
+  MilkTea_ClosureToken_t self_; \
   R (MilkTea_call *invoke_)(void *, ##__VA_ARGS__); \
 };
 

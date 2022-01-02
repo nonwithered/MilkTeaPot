@@ -43,13 +43,13 @@ struct MilkPowder_Sysex_Item_mut_t {
 typedef struct MilkPowder_Sysex_Item_mut_t MilkPowder_Sysex_Item_mut_t;
 #endif
 
-MilkTea_Function_t(MilkPowder_Reader_t, bool, uint8_t *byte)
+MilkTea_Function_t(MilkPowder_Reader_t, bool, uint8_t *)
 
 #ifndef __cplusplus
 typedef struct MilkPowder_Reader_t MilkPowder_Reader_t;
 #endif
 
-MilkTea_Function_t(MilkPowder_Writer_t, void, const uint8_t bytes[], size_t len)
+MilkTea_Function_t(MilkPowder_Writer_t, void, const uint8_t [], size_t)
 
 #ifndef __cplusplus
 typedef struct MilkPowder_Writer_t MilkPowder_Writer_t;
