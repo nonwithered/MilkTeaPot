@@ -26,7 +26,8 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     executor_(executor),
     timer_(std::forward<TeaPot::TimerWorkerWeakWrapper>(timer)),
     queue_(),
-    position_(),
+    tag_(),
+    position_(duration_type(-1)),
     idle_() {}
   ~PlayerImpl() = default;
   State state() const {
@@ -36,7 +37,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     ChangeState(State::INIT, State::PREPARING);
     return Post([weak = Weak(), midi_ = std::make_shared<decltype(midi)>(std::move(midi))]() {
       auto self = Lock(weak);
-      auto time = self->PerformPrepare(midi_->get());
+      auto time = self->queue_.Fill(midi_->get());
       self->Execute([self]() {
         self->ChangeState(State::PREPARING, State::PREPARED);
       });
@@ -48,7 +49,6 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     PerformStart([weak = Weak()]() {
       auto self = Lock(weak);
       self->tag(TeaPot::TimerUnit::Now());
-      self->position(duration_type(-1));
       self->Execute([self]() {
         self->ChangeState(State::STARTED, State::PLAYING);
       });
@@ -93,27 +93,27 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   }
   void Stop() {
     ChangeState(State::SUSPEND, State::PREPARED);
-    PerformStop([weak = Weak()]() {
+    Post([weak = Weak()]() {
       auto self = Lock(weak);
+      self->position(duration_type(-1));
       self->Renderer().OnStop();
     });
   }
   void Reset() {
     ChangeState(State::PREPARED, State::INIT);
-    PerformReset([weak = Weak()]() {
+    Post([weak = Weak()]() {
       auto self = Lock(weak);
+      self->queue_.Sweep();
       self->Renderer().OnReset();
     });
   }
  private:
   void CompleteInternal() {
-    time_point_type tag_ = tag();
-    Execute([weak = Weak(), tag_]() {
+    Execute([weak = Weak()]() {
       auto self = Lock(weak);
       auto state = self->state();
-      time_point_type current = self->tag();
-      if (state != State::PLAYING || current != tag_) {
-        MilkTea_logI("complete try but fail -- state: %s, current tag: %" PRIi64 ", expect tag: " PRIi64, StateName(state), current.time_since_epoch().count(), tag_.time_since_epoch().count());
+      if (self->state() != State::PLAYING) {
+        MilkTea_logI("complete try but fail -- state: %s" , StateName(state));
         return;
       }
       self->ChangeState(State::PLAYING, State::PREPARED);
@@ -124,11 +124,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   }
   void RenderInternal(const Codec::FrameBufferImpl &fbo) {
     position(fbo.time());
-    Renderer().OnRender(Codec::FrameBufferWrapper(fbo));
-  }
-  duration_type PerformPrepare(MilkPowder::MidiConstWrapper midi) {
-    queue_.Fill(midi);
-    return queue_.Length();
+    Renderer().OnRender(fbo.operator Codec::FrameBufferWrapper());
   }
   void PerformStart(std::function<void()> action) {
     // todo
@@ -140,12 +136,6 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     // todo
   }
   void PerformResume(std::function<void()> action) {
-    // todo
-  }
-  void PerformStop(std::function<void()> action) {
-    // todo
-  }
-  void PerformReset(std::function<void()> action) {
     // todo
   }
   TeaPot::TimerFutureWrapper Post(TeaPot::Action::action_type action, duration_type delay = duration_type::zero()) {
@@ -187,10 +177,10 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     idle_ = TeaPot::TimerUnit::Now();
   }
   time_point_type tag() const {
-    return queue().tag();
+    return tag_;
   }
   void tag(time_point_type time) {
-    queue().tag(time);
+    tag_ = time;
   }
   Codec::FrameBufferQueueImpl &queue() {
     return queue_;
@@ -223,6 +213,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   TeaPot::Executor::executor_type executor_;
   TeaPot::TimerWorkerWeakWrapper timer_;
   Codec::FrameBufferQueueImpl queue_;
+  time_point_type tag_;
   duration_type position_;
   time_point_type idle_;
   MilkTea_NonCopy(PlayerImpl)
