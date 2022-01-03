@@ -19,7 +19,7 @@ class FrameEventImpl final {
   const std::vector<MilkPowder::MessageMutableWrapper> &msg() const {
     return msg_;
   }
-  void Add(MilkPowder::MessageMutableWrapper msg) {
+  void Append(MilkPowder::MessageMutableWrapper msg) {
     msg_.emplace_back(std::move(msg));
   }
  private:
@@ -38,8 +38,9 @@ class FrameBufferImpl final {
   const std::vector<FrameEventImpl> &items() const {
     return items_;
   }
-  void Add(FrameEventImpl item) {
+  FrameEventImpl &Append(FrameEventImpl item) {
     items_.emplace_back(std::move(item));
+    return items_.back();
   }
   explicit operator FrameBufferWrapper() const {
     return reinterpret_cast<const FrameBufferWrapper::raw_type *>(this);

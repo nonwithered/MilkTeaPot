@@ -1,11 +1,12 @@
-#ifndef SOYMILK_DECODE_H_
-#define SOYMILK_DECODE_H_
+#ifndef SOYMILK_BUFFER_H_
+#define SOYMILK_BUFFER_H_
 
-#include <atomic>
+#include <vector>
 
 #include <soymilk/common.h>
 
 #include "frame.h"
+#include "sorter.h"
 
 namespace SoyMilk {
 
@@ -13,7 +14,7 @@ namespace Codec {
 
 class FrameBufferCursorImpl final {
   static constexpr char TAG[] = "SoyMilk::Codec::FrameBufferCursorImpl";
-  using iterator_type = std::vector<FrameBufferImpl>::const_iterator;
+  using iterator_type = std::list<FrameBufferImpl>::const_iterator;
  public:
   FrameBufferCursorImpl(iterator_type begin, iterator_type end)
   : tail_(end), iterator_(begin) {}
@@ -42,7 +43,7 @@ class FrameBufferQueueImpl final {
     if (!queue.empty()) {
       MilkTea_assert("fill but not empty");
     }
-    // todo
+    queue = FrameBufferSorterImpl::Sort(midi);
     if (queue.empty()) {
       MilkTea_logW("fill but empty");
       return duration_type(-1);
@@ -64,7 +65,7 @@ class FrameBufferQueueImpl final {
     return cursor_type(queue.begin(), queue.end());
   }
  private:
-  std::vector<FrameBufferImpl> queue_;
+  std::list<FrameBufferImpl> queue_;
   MilkTea_NonCopy(FrameBufferQueueImpl)
   MilkTea_NonMove(FrameBufferQueueImpl)
 };
@@ -72,4 +73,4 @@ class FrameBufferQueueImpl final {
 } // namespace Codec
 } // namespace SoyMilk
 
-#endif // ifndef SOYMILK_DECODE_H_
+#endif // ifndef SOYMILK_BUFFER_H_

@@ -7,7 +7,7 @@
 #include <soymilk/common.h>
 
 #include "frame.h"
-#include "decode.h"
+#include "buffer.h"
 
 namespace SoyMilk {
 
