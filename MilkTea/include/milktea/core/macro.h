@@ -81,4 +81,7 @@ MilkTea_symbol T MilkTea_call
 
 #define MilkTea_api MilkTea_decl(MilkTea_Exception_t)
 
+#define MilkTea_loop \
+while (true)
+
 #endif // ifndef LIB_MILKTEA_CORE_MACRO_H_

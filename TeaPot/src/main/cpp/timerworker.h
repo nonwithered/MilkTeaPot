@@ -61,7 +61,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   bool AwaitTermination(duration_type delay) {
     time_point_type target = CurrentTimePoint() + delay;
     std::unique_lock guard(lock_);
-    while (true) {
+    MilkTea_loop {
       State state = state_;
       if (state == State::TERMINATED || state == State::CLOSED) {
         return true;
@@ -118,7 +118,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     binder_() {}
   void Run() {
     auto type = MilkTea::Exception::Catch([this]() {
-      while (true) {
+      MilkTea_loop {
         auto [b, f] = Take();
         if (!b) {
           break;
@@ -159,7 +159,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   }
   std::tuple<bool, action_type> Take() {
     std::unique_lock guard(lock_);
-    while (true) {
+    MilkTea_loop {
       switch (state_) {
         case State::INIT:
           MilkTea_assert("Take assert State::INIT");

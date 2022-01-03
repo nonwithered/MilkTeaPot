@@ -14,8 +14,8 @@ SoyMilk::BaseRenderer &BaseRenderer_cast(void *self) {
 void MilkTea_call SoyMilk_BaseRenderer_Deleter(void *self) {
   std::move(BaseRenderer_cast(self)).Destroy();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnRender(void *self, const SoyMilk::Codec::FrameBufferWrapper::raw_type *fbo) {
-  BaseRenderer_cast(self).OnRender(fbo);
+void MilkTea_call SoyMilk_BaseRenderer_OnFrame(void *self, const SoyMilk::Codec::FrameBufferWrapper::raw_type *fbo) {
+  BaseRenderer_cast(self).OnFrame(fbo);
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnPrepare(void *self, int64_t time) {
   BaseRenderer_cast(self).OnPrepare(duration_type(time));
@@ -29,8 +29,8 @@ void MilkTea_call SoyMilk_BaseRenderer_OnPause(void *self, int64_t time) {
 void MilkTea_call SoyMilk_BaseRenderer_OnSeekBegin(void *self) {
   BaseRenderer_cast(self).OnSeekBegin();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnSeekEnd(void *self) {
-  BaseRenderer_cast(self).OnSeekEnd();
+void MilkTea_call SoyMilk_BaseRenderer_OnSeekEnd(void *self, int64_t time) {
+  BaseRenderer_cast(self).OnSeekEnd(duration_type(time));
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnResume(void *self) {
   BaseRenderer_cast(self).OnResume();
@@ -52,7 +52,7 @@ namespace SoyMilk {
 const SoyMilk_Player_Renderer_Interface_t &BaseRenderer::Interface() {
   static const SoyMilk_Player_Renderer_Interface_t interface_{
     .Deleter = SoyMilk_BaseRenderer_Deleter,
-    .OnRender = SoyMilk_BaseRenderer_OnRender,
+    .OnFrame = SoyMilk_BaseRenderer_OnFrame,
     .OnPrepare = SoyMilk_BaseRenderer_OnPrepare,
     .OnStart = SoyMilk_BaseRenderer_OnStart,
     .OnPause = SoyMilk_BaseRenderer_OnPause,

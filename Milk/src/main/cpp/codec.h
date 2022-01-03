@@ -207,7 +207,7 @@ class Codec final : public Command {
       itrs_vec[i] = messages[i].begin();
     }
     uint64_t delta = 0;
-    while (true) {
+    MilkTea_loop {
       size_t idx = 0;
       for (size_t i = 0; i != size; ++i) {
         auto itr = itrs_vec[i];

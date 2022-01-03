@@ -17,6 +17,7 @@ class TimerTaskImpl final {
   static constexpr char TAG[] = "TeaPot::TimerTaskImpl";
   using duration_type = TimerUnit::duration_type;
   using time_point_type = TimerUnit::time_point_type;
+  using State = TimerFuture::State;
  public:
   static task_type Make(future_type future, action_type action) {
     return task_type(new TimerTaskImpl(future, action));
@@ -31,16 +32,20 @@ class TimerTaskImpl final {
     return future_;
   }
   void Run() {
-    if (!future_->ChangeState(TimerFutureImpl::State::SCHEDULED, TimerFutureImpl::State::EXECUTED)) {
+    if (!future_->ChangeState(State::SCHEDULED, State::EXECUTED)) {
+        if (future_->state() == State::CANCELLED) {
+          MilkTea_logI("run but cancelled");
+          return;
+        }
         MilkTea_assert("Run -- assert SCHEDULED -> EXECUTED");
     }
     try {
       action_();
-      if (!future_->ChangeState(TimerFutureImpl::State::EXECUTED, TimerFutureImpl::State::NORMAL)) {
+      if (!future_->ChangeState(State::EXECUTED, State::NORMAL)) {
         MilkTea_assert("Run -- assert EXECUTED -> NORMAL");
       }
     } catch (std::exception &e) {
-      if (!future_->ChangeState(TimerFutureImpl::State::EXECUTED, TimerFutureImpl::State::EXCEPTIONAL)) {
+      if (!future_->ChangeState(State::EXECUTED, State::EXCEPTIONAL)) {
         MilkTea_assert("Run -- assert EXECUTED -> EXCEPTIONAL");
       }
       throw e;

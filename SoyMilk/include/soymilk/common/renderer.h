@@ -21,12 +21,12 @@ class BaseRenderer {
   virtual ~BaseRenderer() = default;
   virtual BaseRenderer *Move() && = 0;
   virtual void Destroy() && = 0;
-  virtual void OnRender(Codec::FrameBufferWrapper fbo) = 0;
+  virtual void OnFrame(Codec::FrameBufferWrapper fbo) = 0;
   virtual void OnPrepare(duration_type time) = 0;
   virtual void OnStart() = 0;
   virtual void OnPause(duration_type time) = 0;
   virtual void OnSeekBegin() = 0;
-  virtual void OnSeekEnd() = 0;
+  virtual void OnSeekEnd(duration_type time) = 0;
   virtual void OnResume() = 0;
   virtual void OnStop() = 0;
   virtual void OnReset() = 0;
@@ -56,8 +56,8 @@ class RendererWrapper final : public BaseRenderer {
   void Destroy() && final {
     delete this;
   }
-  void OnRender(Codec::FrameBufferWrapper fbo) final {
-    GetInterface().OnRender(get(), fbo.get());
+  void OnFrame(Codec::FrameBufferWrapper fbo) final {
+    GetInterface().OnFrame(get(), fbo.get());
   }
   void OnPrepare(duration_type time) final {
     GetInterface().OnPrepare(get(), time.count());
@@ -71,8 +71,8 @@ class RendererWrapper final : public BaseRenderer {
   void OnSeekBegin() final {
     GetInterface().OnSeekBegin(get());
   }
-  void OnSeekEnd() final {
-    GetInterface().OnSeekEnd(get());
+  void OnSeekEnd(duration_type time) final {
+    GetInterface().OnSeekEnd(get(), time.count());
   }
   void OnResume() final {
     GetInterface().OnResume(get());
