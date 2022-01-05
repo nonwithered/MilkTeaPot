@@ -84,6 +84,7 @@ class TimerWorkerWrapper final {
 class TimerWorkerWeakWrapper final {
  public:
   using raw_type = TeaPot_TimerWorker_Weak_t;
+  TimerWorkerWeakWrapper(raw_type *self = nullptr) : self_(self) {}
   TimerWorkerWeakWrapper(const TimerWorkerWrapper &another) : TimerWorkerWeakWrapper() {
     MilkTea_invoke_panic(TeaPot_TimerWorker_Weak_Create, &self_, another.get());
   }
@@ -109,7 +110,6 @@ class TimerWorkerWeakWrapper final {
     return get() != nullptr;
   }
  private:
-  TimerWorkerWeakWrapper(raw_type *self = nullptr) : self_(self) {}
   raw_type *self_;
   MilkTea_NonCopy(TimerWorkerWeakWrapper)
   MilkTea_NonMoveAssign(TimerWorkerWeakWrapper)

@@ -38,9 +38,9 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   State state() const {
     return state_;
   }
-  TeaPot::TimerFutureWrapper Prepare(MilkPowder::MidiMutableWrapper midi) {
+  TeaPot::TimerFutureWrapper Prepare(MilkPowder::MidiConstWrapper midi) {
     ChangeState(State::INIT, State::PREPARING);
-    return Post([midi_ = std::make_shared<decltype(midi)>(std::move(midi))](self_type &self) {
+    return Post([midi_ = std::make_shared<MilkPowder::MidiMutableWrapper>(midi)](self_type &self) {
       auto length = self.queue_.Fill(midi_->get());
       self.cursor_ = self.queue_.Cursor();
       self.Execute([](self_type &self) {
