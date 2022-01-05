@@ -53,32 +53,59 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
       }
     }
   }
+  std::function<void(duration_type)> OnPrepareListener;
   void OnPrepare(duration_type time) final {
-    std::cerr << "OnPrepare" << " " << time.count() << std::endl;
+    if (OnPrepareListener) {
+      OnPrepareListener(time);
+    }
   }
+  std::function<void()> OnStartListener;
   void OnStart() final {
-    std::cerr << "OnStart" << std::endl;
+    if (OnStartListener) {
+      OnStartListener();
+    }
   }
+  std::function<void(duration_type)> OnPauseListener;
   void OnPause(duration_type time) final {
-    std::cerr << "OnPause" << " " << time.count() << std::endl;
+    if (OnPauseListener) {
+      OnPauseListener(time);
+    }
   }
+  std::function<void()> OnSeekBeginListener;
   void OnSeekBegin() final {
-    std::cerr << "OnSeekBegin" << std::endl;
+    if (OnSeekBeginListener) {
+      OnSeekBeginListener();
+    }
   }
+  std::function<void(duration_type)> OnSeekEndListener;
   void OnSeekEnd(duration_type time) final {
-    std::cerr << "OnSeekEnd" << " " << time.count() << std::endl;
+    if (OnPrepareListener) {
+      OnPrepareListener(time);
+    }
   }
+  std::function<void()> OnResumeListener;
   void OnResume() final {
-    std::cerr << "OnResume" << std::endl;
+    if (OnResumeListener) {
+      OnResumeListener();
+    }
   }
+  std::function<void()> OnStopListener;
   void OnStop() final {
-    std::cerr << "OnStop" << std::endl;
+    if (OnStopListener) {
+      OnStopListener();
+    }
   }
+  std::function<void()> OnResetListener;
   void OnReset() final {
-    std::cerr << "OnReset" << std::endl;
+    if (OnResetListener) {
+      OnResetListener();
+    }
   }
+  std::function<void()> OnCompleteListener;
   void OnComplete() final {
-    std::cerr << "OnComplete" << std::endl;
+    if (OnCompleteListener) {
+      OnCompleteListener();
+    }
   }
  private:
   static SoyBean::HandleWrapper Make() {
@@ -121,6 +148,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
 
 class Play final : public Command {
   static constexpr char TAG[] = "Milk::Play";
+  using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   Play() : Command() {
     Callback("-h", &Play::ShowHelp);
@@ -139,9 +167,25 @@ class Play final : public Command {
       }
       midi = MilkPowder::MidiMutableWrapper::Parse(reader);
     }
-    auto handle = ConfigWrapper::Instance().make_soybean_factory().make_handle();
-    handle.NoteOn(0, 0x45, 0x7f);
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    TeaPot::TimerWorkerWrapper timer([](auto type, auto what) -> bool {
+      return false;
+    });
+    std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
+    RendererImpl renderer(midi.GetFormat(), midi.GetNtrks());
+    renderer.OnPrepareListener = [&](auto) {
+      player->Start();
+    };
+    renderer.OnCompleteListener = [&]() {
+      timer.Shutdown();
+    };
+    player.reset(new SoyMilk::PlayerWrapper(std::move(renderer), [&timer](auto action) {
+      timer.Post(action);
+    }, timer));
+    timer.Post([&]() {
+      player->Prepare(midi.get());
+    });
+    timer.Start();
+    timer.AwaitTermination();
   }
   std::string_view Usage() const final {
     return

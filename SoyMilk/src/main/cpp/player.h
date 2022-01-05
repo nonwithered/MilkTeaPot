@@ -194,7 +194,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     if (!timer) {
       MilkTea_throw(LogicError, "execute but timer is null");
     }
-    return timer.Post(delay, Command(action));
+    return timer.Post(Command(action), delay);
   }
   void Execute(command_type action) {
     executor_(Command(action));
@@ -204,7 +204,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
       auto self = weak.lock();
       if (!self) {
         MilkTea_logW("try lock weak but nullptr");
-        return []() {};
+        return;
       }
       action(*self);
     };

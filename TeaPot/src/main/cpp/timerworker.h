@@ -98,7 +98,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     time_point_type target = CurrentTimePoint() + delay;
     future_type future = TimerFutureImpl::Make(target);
     std::lock_guard guard(lock_);
-    if (state_ != State::RUNNING) {
+    if (state_ != State::RUNNING && state_ != State::INIT) {
       future->Cancel();
       return future;
     }

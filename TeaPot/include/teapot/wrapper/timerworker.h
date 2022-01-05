@@ -44,7 +44,7 @@ class TimerWorkerWrapper final {
     MilkTea_invoke_panic(TeaPot_TimerWorker_GetState, get(), &state);
     return TimerWorker::FromRawType(state);
   }
-  TimerFutureWrapper Post(duration_type delay, Action::action_type action) {
+  TimerFutureWrapper Post(Action::action_type action, duration_type delay = duration_type::zero()) {
     TeaPot_TimerFuture_t *future = nullptr;
     MilkTea_invoke_panic(TeaPot_TimerWorker_Post, get(), &future, delay.count(), Action::ToRawType(action));
     return future;
