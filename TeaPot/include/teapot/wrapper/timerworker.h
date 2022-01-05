@@ -75,6 +75,11 @@ class TimerWorkerWrapper final {
   operator bool() const {
     return get() != nullptr;
   }
+  raw_type *release() {
+    raw_type *self = self_;
+    self_ = nullptr;
+    return self;
+  }
  private:
   raw_type *self_;
   MilkTea_NonCopy(TimerWorkerWrapper)
@@ -108,6 +113,11 @@ class TimerWorkerWeakWrapper final {
   }
   operator bool() const {
     return get() != nullptr;
+  }
+  raw_type *release() {
+    raw_type *self = self_;
+    self_ = nullptr;
+    return self;
   }
  private:
   raw_type *self_;
