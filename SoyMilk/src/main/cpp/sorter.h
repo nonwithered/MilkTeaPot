@@ -113,6 +113,7 @@ class FrameBufferSorterImpl final {
         }
         FrameEventImpl item(i);
         item.Append(message);
+        SetTempoIfNeed(tick_clock, message);
         while (++index >= count) {
           message = track.GetMessage(index);
           auto delta = message.GetDelta();
@@ -120,6 +121,7 @@ class FrameBufferSorterImpl final {
             break;
           }
           item.Append(message);
+          SetTempoIfNeed(tick_clock, message);
         }
         indices[i] = index;
         fbo.Append(std::move(item));
@@ -151,26 +153,31 @@ class FrameBufferSorterImpl final {
         item = &iterator->Append(FrameEventImpl(index));
       }
       item->Append(message);
-      if (message.IsMeta()) {
-        auto meta = MilkPowder::MetaConstWrapper::From(message);
-        if (meta.GetType() == 0x51) {
-          const uint8_t *data = nullptr;
-          uint32_t length = meta.GetArgs(&data);
-          if (length != 0x03) {
-            auto args = MilkTea::ToStringHexFromBytes(data, length);
-            auto argc = length;
-            auto *argv = args.data();
-            MilkTea_throwf(InvalidParam, "try to set tempo but argc is %" PRIu32 " and argv is %s", argc, argv);
-          }
-          uint32_t tempo = 0;
-          for (uint32_t i = 0; i != length; ++i) {
-            tempo <<= 010;
-            tempo |= data[i];
-          }
-          tick_clock.SetTempo(tempo);
-        }
-      }
+      SetTempoIfNeed(tick_clock, message);
     }
+  }
+  static void SetTempoIfNeed(TickClock &tick_clock, MilkPowder::MessageConstWrapper message) {
+    if (!message.IsMeta()) {
+      return;
+    }
+    auto meta = MilkPowder::MetaConstWrapper::From(message);
+    if (meta.GetType() != 0x51) {
+      return;
+    }
+    const uint8_t *data = nullptr;
+    uint32_t length = meta.GetArgs(&data);
+    if (length != 0x03) {
+      auto args = MilkTea::ToStringHexFromBytes(data, length);
+      auto argc = length;
+      auto *argv = args.data();
+      MilkTea_throwf(InvalidParam, "try to set tempo but argc is %" PRIu32 " and argv is %s", argc, argv);
+    }
+    uint32_t tempo = 0;
+    for (uint32_t i = 0; i != length; ++i) {
+      tempo <<= 010;
+      tempo |= data[i];
+    }
+    tick_clock.SetTempo(tempo);
   }
   explicit FrameBufferSorterImpl(std::list<FrameBufferImpl> &queue) : queue_(queue) {}
   std::list<FrameBufferImpl> &queue_;

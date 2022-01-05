@@ -19,7 +19,17 @@ class Play final : public Command {
     Callback("--log", &Play::InitLog);
   }
  protected:
-  void Launch(std::list<std::string_view> &) final {
+  void Launch(std::list<std::string_view> &args) final {
+    MilkPowder::MidiMutableWrapper midi(nullptr);
+    {
+      auto filename = args.front();
+      MilkPowder::FileReader reader(filename);
+      if (reader.NonOpen()) {
+        std::cerr << "Failed to open: " << filename << std::endl;
+        return;
+      }
+      midi = MilkPowder::MidiMutableWrapper::Parse(reader);
+    }
     auto handle = ConfigWrapper::Instance().make_soybean_factory().make_handle();
     handle.NoteOn(0, 0x45, 0x7f);
     std::this_thread::sleep_for(std::chrono::seconds(5));
