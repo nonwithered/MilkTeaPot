@@ -20,15 +20,30 @@ template<typename T>
 class ConstWrapper final : public ConstInterface<T> {
   using raw_type = typename T::raw_type;
  private:
-  const raw_type *const self_;
+  const raw_type *self_;
  public:
   const raw_type *get() const final {
     return self_;
   }
  public:
-  ConstWrapper(const typename T::raw_type *self) : self_(self) {}
+  ConstWrapper(const raw_type *self) : self_(self) {}
+  ~ConstWrapper() {
+    self_ = nullptr;
+  }
+  ConstWrapper(const ConstWrapper<T> &another) : ConstWrapper(another.get()) {}
   void Dump(std::function<void(const uint8_t *, size_t)> writer) const {
     MilkTea_invoke_panic(T::raw_dump, get(), Mapping::Writer(writer));
+  }
+  const raw_type *release() {
+    return reset(nullptr);
+  }
+  const raw_type *reset(const raw_type *self) {
+    std::swap(self_, self);
+    return self;
+  }
+  void operator=(const ConstWrapper<T> &another) {
+    this->~ConstWrapper<T>();
+    new (this) ConstWrapper<T>(another);
   }
 };
 
@@ -97,7 +112,9 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
     new (this) MutableWrapper<T>(std::forward<MutableWrapper<T>>(another));
   }
   raw_type *release() {
-    raw_type *self = nullptr;
+    return reset(nullptr);
+  }
+  raw_type *reset(raw_type *self) {
     std::swap(self_, self);
     return self;
   }

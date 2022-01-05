@@ -59,15 +59,16 @@ class FrameBufferSorterImpl final {
       case 0x00:
         Collect(division, 0, midi.GetTrack(0));
         break;
-      case 0x01: {
+      case 0x01:
+      {
         std::vector<MilkPowder::TrackConstWrapper> tracks;
         for (uint16_t i = 0; i != ntrks; ++i) {
           tracks.push_back(midi.GetTrack(i));
         }
         TickClock tick_clock(division);
         Collect(tick_clock, ntrks, std::move(tracks));
-        break;
       }
+        break;
       case 0x02:
         for (uint16_t i = 0; i != ntrks; ++i) {
           Collect(division, i, midi.GetTrack(i));
@@ -77,19 +78,53 @@ class FrameBufferSorterImpl final {
   }
  private:
   void Collect(TickClock &tick_clock, uint16_t ntrks, std::vector<MilkPowder::TrackConstWrapper> tracks) {
-    std::vector<uint32_t> count(ntrks, 0);
-    std::vector<uint32_t> index(ntrks, 0);
+    std::vector<uint32_t> counts(ntrks, 0);
+    std::vector<uint32_t> indices(ntrks, 0);
     std::vector<duration_type> times(ntrks, duration_type::zero());
-    std::vector<FrameEventImpl> item;
     for (uint16_t i = 0; i != ntrks; ++i) {
-      count[i] = tracks[i].GetCount();
-      item.emplace_back(i);
+      counts[i] = tracks[i].GetCount();
     }
-    duration_type time = duration_type::zero();
     MilkTea_loop {
+      duration_type current = duration_type(-1);
       for (uint16_t i = 0; i != ntrks; ++i) {
-        // todo
+        auto index = indices[i];
+        if (index >= counts[i]) {
+          continue;
+        }
+        duration_type time = times[i] + tick_clock(tracks[i].GetMessage(index).GetDelta());
+        if (current < duration_type::zero() || time < current) {
+          current = time;
+        }
       }
+      if (current < duration_type::zero()) {
+        break;
+      }
+      FrameBufferImpl fbo(current);
+      for (uint16_t i = 0; i != ntrks; ++i) {
+        auto index = indices[i];
+        auto count = counts[i];
+        if (index >= count) {
+          continue;
+        }
+        auto track = tracks[i];
+        auto message = track.GetMessage(index);
+        if (current == times[i] + tick_clock(message.GetDelta())) {
+          times[i] = current;
+        }
+        FrameEventImpl item(i);
+        item.Append(message);
+        while (++index >= count) {
+          message = track.GetMessage(index);
+          auto delta = message.GetDelta();
+          if (delta != 0) {
+            break;
+          }
+          item.Append(message);
+        }
+        indices[i] = index;
+        fbo.Append(std::move(item));
+      }
+      queue_.push_back(std::move(fbo));
     }
   }
   void Collect(uint16_t division, uint16_t index, MilkPowder::TrackConstWrapper track) {
@@ -101,7 +136,7 @@ class FrameBufferSorterImpl final {
       auto message = track.GetMessage(i);
       auto delta = message.GetDelta();
       if (item == nullptr || delta != 0) {
-        time = tick_clock(delta) + time;
+        time = time + tick_clock(delta);
         auto tail = queue_.end();
         MilkTea_loop {
           if (iterator == tail || iterator->time() > time) {
