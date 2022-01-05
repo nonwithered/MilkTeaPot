@@ -6,9 +6,10 @@
 namespace SoyBean {
 
 class BaseHandle {
+  using raw_type = SoyBean_Handle_t;
  public:
-  virtual SoyBean_Handle_t ToRawType() && {
-    return SoyBean_Handle_t{
+  virtual raw_type ToRawType() && {
+    return raw_type{
       .self_ = &std::forward<BaseHandle>(*this).Move(),
       .interface_ = &Interface(),
     };
@@ -29,11 +30,12 @@ class BaseHandle {
 
 class HandleWrapper final : public BaseHandle {
   static constexpr char TAG[] = "SoyBean::HandleWrapper";
+  using raw_type = SoyBean_Handle_t;
  public:
-  SoyBean_Handle_t ToRawType() && final {
+  raw_type ToRawType() && final {
     return release();
   }
-  HandleWrapper(SoyBean_Handle_t another = {}) : self_(another) {}
+  HandleWrapper(raw_type another = {}) : self_(another) {}
   HandleWrapper(HandleWrapper &&another) : HandleWrapper() {
     std::swap(self_, another.self_);
   }
@@ -71,13 +73,13 @@ class HandleWrapper final : public BaseHandle {
   void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
     MilkTea_invoke_panic(SoyBean_Handle_PitchBend, self_, channel, low, height);
   }
-  SoyBean_Handle_t release() {
-    SoyBean_Handle_t self = self_;
+  raw_type release() {
+    raw_type self = self_;
     self_ = {};
     return self;
   }
  private:
-  SoyBean_Handle_t self_;
+  raw_type self_;
   MilkTea_NonCopy(HandleWrapper)
   MilkTea_NonMoveAssign(HandleWrapper)
 };

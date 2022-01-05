@@ -6,9 +6,10 @@
 namespace SoyBean {
 
 class BaseFactory {
+  using raw_type = SoyBean_Factory_t;
  public:
-  virtual SoyBean_Factory_t ToRawType() && {
-    return SoyBean_Factory_t{
+  virtual raw_type ToRawType() && {
+    return raw_type{
       .self_ = &std::forward<BaseFactory>(*this).Move(),
       .interface_ = &Interface(),
     };
@@ -23,11 +24,12 @@ class BaseFactory {
 
 class FactoryWrapper final : public BaseFactory {
   static constexpr char TAG[] = "SoyBean::FactoryWrapper";
+  using raw_type = SoyBean_Factory_t;
  public:
-  SoyBean_Factory_t ToRawType() && final {
+  raw_type ToRawType() && final {
     return release();
   }
-  FactoryWrapper(SoyBean_Factory_t another = {}) : self_(another) {}
+  FactoryWrapper(raw_type another = {}) : self_(another) {}
   FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper() {
     std::swap(self_, another.self_);
   }
@@ -52,13 +54,13 @@ class FactoryWrapper final : public BaseFactory {
     MilkTea_invoke_panic(SoyBean_Handle_Create, &handle, self_);
     return handle;
   }
-  SoyBean_Factory_t release() {
-    SoyBean_Factory_t self = self_;
+  raw_type release() {
+    raw_type self = self_;
     self_ = {};
     return self;
   }
 private:
-  SoyBean_Factory_t self_;
+  raw_type self_;
   MilkTea_NonCopy(FactoryWrapper)
   MilkTea_NonMoveAssign(FactoryWrapper)
 };

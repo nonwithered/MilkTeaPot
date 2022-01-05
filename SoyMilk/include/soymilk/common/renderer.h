@@ -39,6 +39,9 @@ class RendererWrapper final : public BaseRenderer {
   using raw_type = SoyMilk_Player_Renderer_t;
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
+  raw_type ToRawType() && final {
+    return release();
+  }
   RendererWrapper(raw_type another = {}) : self_(another) {}
   RendererWrapper(RendererWrapper &&another) : RendererWrapper() {
     std::swap(self_, another.self_);
@@ -85,6 +88,11 @@ class RendererWrapper final : public BaseRenderer {
   }
   void OnComplete() final {
     GetInterface().OnComplete(get());
+  }
+  raw_type release() {
+    raw_type self = self_;
+    self_ = {};
+    return self;
   }
  private:
   void *get() const {
