@@ -21,7 +21,7 @@ MilkTea_extern(SoyMilk_Player_Create, (SoyMilk_Player_t **self, SoyMilk_Player_R
   MilkTea_nonnull(renderer.interface_);
   MilkTea_nonnull(executor.invoke_);
   MilkTea_nonnull(timer);
-  *self = soymilk_cast(*new SoyMilk::PlayerImpl(renderer, executor.release(), timer));
+  *self = soymilk_cast(*new SoyMilk::PlayerImpl(renderer, TeaPot::Executor::FromRawType(executor), timer));
 })
 
 MilkTea_extern(SoyMilk_Player_Destroy, (SoyMilk_Player_t *self), {

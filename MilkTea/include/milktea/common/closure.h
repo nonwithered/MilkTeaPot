@@ -9,25 +9,29 @@
 namespace MilkTea {
 
 template<typename Res, typename... Args>
-class ClosureFactory;
+class BaseClosureFactory;
 
 template<typename Res, typename... Args>
-class FunctionFactory {
-  friend class ClosureFactory<Res, Args...>;
+class BaseFunctionFactory {
+  static constexpr char TAG[] = "MilkTea#BaseFunctionFactory";
+  friend class BaseClosureFactory<Res, Args...>;
+ public:
+  using function_type = std::function<Res(Args...)>;
+ private:
   static Res MilkTea_call Invoke(void *self, Args... args) {
-    std::function<Res(Args...)> &callback_ = *reinterpret_cast<std::function<Res(Args...)> *>(self);
+    function_type &callback_ = *reinterpret_cast<function_type *>(self);
     return callback_(args...);
   }
  public:
   template<typename raw_type>
-  static raw_type ToRawType(const std::function<Res(Args...)> &f) {
+  static raw_type ToRawType(const function_type &f) {
     return raw_type{
-      .self_ = const_cast<std::function<Res(Args...)> *>(&f),
-      .invoke_ = FunctionFactory<Res, Args...>::Invoke,
+      .self_ = const_cast<function_type *>(&f),
+      .invoke_ = BaseFunctionFactory<Res, Args...>::Invoke,
     };
   }
   template<typename raw_type>
-  static std::function<Res(Args...)> FromRawType(raw_type f) {
+  static function_type FromRawType(raw_type f) {
     MilkTea_nonnull(f.invoke_);
     return [f](Args... args) -> Res {
       return MilkTea_Function_Invoke(f, args...);
@@ -36,26 +40,23 @@ class FunctionFactory {
 };
 
 template<typename Res, typename... Args>
-class FunctionFactory<Res(Args...)> : public FunctionFactory<Res, Args...> {};
-
-template<typename Res, typename... Args>
-class FunctionFactory<std::function<Res(Args...)>> : public FunctionFactory<Res(Args...)> {};
-
-template<typename Res, typename... Args>
-class ClosureFactory {
+class BaseClosureFactory {
+  static constexpr char TAG[] = "MilkTea#BaseClosureFactory";
+ public:
+  using function_type = std::function<Res(Args...)>;
  public:
   template<typename raw_type>
-  static raw_type ToRawType(const std::function<Res(Args...)> &f) {
+  static raw_type ToRawType(const function_type &f) {
     return raw_type{
       .self_ = MilkTea_ClosureToken_t{
-        .self_ = new std::function<Res(Args...)>(f),
+        .self_ = new function_type(f),
         .deleter_ = Deteler,
       },
-      .invoke_ = FunctionFactory<Res, Args...>::Invoke,
+      .invoke_ = BaseFunctionFactory<Res, Args...>::Invoke,
     };
   }
   template<typename raw_type>
-  static std::function<Res(Args...)> FromRawType(raw_type f) {
+  static function_type FromRawType(raw_type f) {
     MilkTea_nonnull(f.self_.deleter_);
     auto closure = std::shared_ptr<void>(f.self_.self_, f.self_.deleter_);
     MilkTea_nonnull(f.invoke_);
@@ -65,74 +66,57 @@ class ClosureFactory {
   }
  private:
   static void MilkTea_call Deteler(void *self) {
-    delete reinterpret_cast<std::function<Res(Args...)> *>(self);
-  }
-  static constexpr char TAG[] = "MilkTea#ClosureFactory";
-};
-
-template<typename Res, typename... Args>
-class ClosureFactory<Res(Args...)> : public ClosureFactory<Res, Args...> {};
-
-template<typename Res, typename... Args>
-class ClosureFactory<std::function<Res(Args...)>> : public ClosureFactory<Res(Args...)> {};
-
-template<typename Res, typename... Args>
-struct ClosureAdapter;
-
-template<typename Res, typename... Args>
-struct FunctionAdapter final {
-  friend class ClosureAdapter<Res, Args...>;
- private:
-  using self_type = void *;
-  using invoke_type = Res (MilkTea_call *)(void *, Args...);
- public:
-  self_type self_;
-  invoke_type invoke_;
-  FunctionAdapter(self_type self, invoke_type invoke) : self_(self), invoke_(invoke) {};
-  FunctionAdapter() : FunctionAdapter(nullptr, nullptr) {};
-  FunctionAdapter(const std::function<Res(Args...)> &f) {
-    *this = FunctionFactory<Res, Args...>::template ToRawType<FunctionAdapter<Res, Args...>>(f);
-  }
-  operator std::function<Res(Args...)>() const {
-    return FunctionFactory<Res, Args...>::template FromRawType<FunctionAdapter<Res, Args...>>(*this);
-  }
-  std::function<Res(Args...)> release() {
-    FunctionAdapter another = *this;
-    *this = {};
-    return another;
+    delete reinterpret_cast<function_type *>(self);
   }
 };
 
 template<typename Res, typename... Args>
-struct ClosureAdapter final {
- private:
-  using self_type = MilkTea_ClosureToken_t;
-  using invoke_type = typename FunctionAdapter<Res, Args...>::invoke_type;
- public:
-  self_type self_;
-  invoke_type invoke_;
-  ClosureAdapter(self_type self, invoke_type invoke) : self_(self), invoke_(invoke) {};
-  ClosureAdapter() : ClosureAdapter({}, nullptr) {};
-  ClosureAdapter(const std::function<Res(Args...)> &f) {
-    *this = ClosureFactory<Res, Args...>::template ToRawType<ClosureAdapter<Res, Args...>>(f);
-  }
-  operator std::function<Res(Args...)>() const {
-    return ClosureFactory<Res, Args...>::template FromRawType<ClosureAdapter<Res, Args...>>(*this);
-  }
-  std::function<Res(Args...)> release() {
-    ClosureAdapter another = *this;
-    *this = {};
-    return another;
-  }
-};
+class FunctionFactory final : public BaseFunctionFactory<Res, Args...> {};
+
+template<typename Res, typename... Args>
+class FunctionFactory<Res(Args...)> final : public BaseFunctionFactory<Res, Args...> {};
+
+template<typename Res, typename... Args>
+class FunctionFactory<std::function<Res(Args...)>> final : public BaseFunctionFactory<Res(Args...)> {};
+
+template<typename Res, typename... Args>
+class ClosureFactory final : public BaseClosureFactory<Res, Args...> {};
+
+template<typename Res, typename... Args>
+class ClosureFactory<Res(Args...)> final : public BaseClosureFactory<Res, Args...> {};
+
+template<typename Res, typename... Args>
+class ClosureFactory<std::function<Res(Args...)>> final : public BaseClosureFactory<Res(Args...)> {};
 
 #undef MilkTea_Function_t
 #define MilkTea_Function_t(S, R, ...) \
-using S = MilkTea::FunctionAdapter<R, ##__VA_ARGS__>;
+struct S { \
+  using factory_type = MilkTea::FunctionFactory<R(__VA_ARGS__)>; \
+  void *self_; \
+  R (MilkTea_call *invoke_)(void *, ##__VA_ARGS__); \
+};
 
 #undef MilkTea_Closure_t
 #define MilkTea_Closure_t(S, R, ...) \
-using S = MilkTea::ClosureAdapter<R, ##__VA_ARGS__>;
+struct S { \
+  using factory_type = MilkTea::ClosureFactory<R(__VA_ARGS__)>; \
+  MilkTea_ClosureToken_t self_; \
+  R (MilkTea_call *invoke_)(void *, ##__VA_ARGS__); \
+};
+
+namespace FunctionAdapter {
+
+template<typename raw_type>
+typename raw_type::factory_type::function_type FromRawType(raw_type f) {
+  return raw_type::factory_type::template FromRawType<raw_type>(f);
+}
+
+template<typename raw_type>
+raw_type ToRawType(const typename raw_type::factory_type::function_type &f) {
+  return raw_type::factory_type::template ToRawType<raw_type>(f);
+}
+
+} // namespace FunctionAdapter
 
 } // namespace MilkTea
 

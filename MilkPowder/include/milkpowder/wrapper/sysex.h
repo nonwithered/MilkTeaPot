@@ -78,7 +78,7 @@ class MutableInterface<Mapping::Sysex> {
       };
       consumer(it_);
     };
-    MilkTea_invoke_panic(mapping::raw_all_item, get(), consumer_);
+    MilkTea_invoke_panic(mapping::raw_all_item, get(), MilkTea::FunctionAdapter::ToRawType<mapping::raw_consumer_type>(consumer_));
   }
 };
 

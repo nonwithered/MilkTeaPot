@@ -9,10 +9,10 @@ struct Action {
   using raw_type = TeaPot_Action_t;
   using action_type = std::function<void()>;
   static action_type FromRawType(raw_type action) {
-    return action;
+    return MilkTea::FunctionAdapter::FromRawType<raw_type>(action);
   }
   static raw_type ToRawType(action_type action) {
-    return action;
+    return MilkTea::FunctionAdapter::ToRawType<raw_type>(action);
   }
 };
 
@@ -21,12 +21,12 @@ struct Executor {
   using wrapper_type = std::function<void(Action::raw_type)>;
   using executor_type = std::function<void(Action::action_type)>;
   static executor_type FromRawType(raw_type executor) {
-    return [executor_ = executor.release()](Action::action_type action) {
+    return [executor_ = MilkTea::FunctionAdapter::FromRawType<raw_type>(executor)](Action::action_type action) {
       executor_(Action::ToRawType(action));
     };
   }
   static raw_type ToRawType(executor_type executor) {
-    return raw_type([executor](Action::raw_type action) {
+    return MilkTea::FunctionAdapter::ToRawType<raw_type>([executor](Action::raw_type action) {
       executor(Action::FromRawType(action));
     });
   }

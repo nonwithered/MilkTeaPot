@@ -104,7 +104,7 @@ struct Reader {
   using raw_type = MilkPowder_Reader_t;
   Reader(std::function<bool(uint8_t *)> f) : f_(f) {}
   operator raw_type(){
-    return f_;
+    return MilkTea::FunctionAdapter::ToRawType<raw_type>(f_);
   }
  private:
   std::function<bool(uint8_t *)> f_;
@@ -114,7 +114,7 @@ struct Writer {
   using raw_type = MilkPowder_Writer_t;
   Writer(std::function<void(const uint8_t *, size_t)> f) : f_(f) {}
   operator raw_type() {
-    return f_;
+    return MilkTea::FunctionAdapter::ToRawType<raw_type>(f_);
   }
  private:
   std::function<void(const uint8_t *, size_t)> f_;
