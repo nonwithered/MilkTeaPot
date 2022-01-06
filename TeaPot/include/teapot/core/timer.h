@@ -94,6 +94,9 @@ MilkTea_api
 TeaPot_TimerWorker_Destroy(TeaPot_TimerWorker_t *self);
 
 MilkTea_api
+TeaPot_TimerWorker_Close(TeaPot_TimerWorker_t *self);
+
+MilkTea_api
 TeaPot_TimerWorker_Start(TeaPot_TimerWorker_t *self);
 
 MilkTea_api

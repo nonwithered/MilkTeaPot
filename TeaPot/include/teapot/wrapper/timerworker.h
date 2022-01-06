@@ -30,11 +30,18 @@ class TimerWorkerWrapper final {
     std::swap(self_, another.self_);
   }
   ~TimerWorkerWrapper() {
-    if (self_ == nullptr) {
+    auto self = release();
+    if (self == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(TeaPot_TimerWorker_Destroy, get());
-    self_ = nullptr;
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Destroy, self);
+  }
+  void Close() {
+    auto self = release();
+    if (self == nullptr) {
+      return;
+    }
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Close, self);
   }
   void Start() {
     MilkTea_invoke_panic(TeaPot_TimerWorker_Start, get());

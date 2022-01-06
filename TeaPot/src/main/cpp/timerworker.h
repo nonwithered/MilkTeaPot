@@ -27,7 +27,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
         MilkTea_logW("Close before start");
         return;
       }
-      MilkTea_throwf(LogicError, "Detach need TERMINATED but now %s", StateName(state));
+      MilkTea_throwf(LogicError, "Close need TERMINATED but now %s", StateName(state));
     });
     worker->binder_.Unbind(std::forward<worker_type>(worker));
   }
@@ -133,12 +133,11 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
       switch (state) {
         case State::INIT:
           MilkTea_assert("TryTerminate assert State::INIT");
-        case State::RUNNING:
-          MilkTea_assert("TryTerminate assert State::RUNNING");
         case State::TIDYING:
         case State::TERMINATED:
         case State::CLOSED:
           return false;
+        case State::RUNNING:
         case State::SHUTDOWN:
         case State::STOP:
           return true;

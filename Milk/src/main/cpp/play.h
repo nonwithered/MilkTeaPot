@@ -177,10 +177,16 @@ class Play final : public Command {
     std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
     RendererImpl renderer(midi.GetFormat(), midi.GetNtrks());
     renderer.OnPrepareListener = [&](auto) {
-      player->Start();
+      std::cerr << "OnPrepareListener" << std::endl;
+      timer.Post([&]() {
+        player->Start();
+      });
     };
     renderer.OnCompleteListener = [&]() {
-      timer.Shutdown();
+      std::cerr << "OnCompleteListener" << std::endl;
+      timer.Post([&]() {
+        timer.Shutdown();
+      });
     };
     player.reset(new SoyMilk::PlayerWrapper(std::move(renderer), [&timer](auto action) {
       timer.Post(action);
@@ -190,6 +196,7 @@ class Play final : public Command {
     });
     timer.Start();
     timer.AwaitTermination();
+    timer.Close();
   }
   std::string_view Usage() const final {
     return

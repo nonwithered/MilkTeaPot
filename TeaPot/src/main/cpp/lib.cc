@@ -113,6 +113,11 @@ MilkTea_extern(TeaPot_TimerWorker_Create, (TeaPot_TimerWorker_t **self, TeaPot_T
 
 MilkTea_extern(TeaPot_TimerWorker_Destroy, (TeaPot_TimerWorker_t *self), {
   MilkTea_nonnull(self);
+  delete &timer_cast(self);
+})
+
+MilkTea_extern(TeaPot_TimerWorker_Close, (TeaPot_TimerWorker_t *self), {
+  MilkTea_nonnull(self);
   auto worker = std::move(timer_cast(self));
   delete &timer_cast(self);
   TeaPot::worker_raw::Close(std::move(worker));
