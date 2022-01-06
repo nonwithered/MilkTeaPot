@@ -59,7 +59,9 @@ class TimerBinderImpl final {
   static constexpr char TAG[] = "TeaPot::TimerBinderImpl";
   friend class TimerWorkerImpl;
  public:
-  TimerBinderImpl() = default;
+  TimerBinderImpl()
+  : worker_(),
+    lock_(std::make_shared<std::mutex>()) {}
  private:
   void WithGuard(std::function<void(worker_type)> callback) {
     auto guard = Guard();

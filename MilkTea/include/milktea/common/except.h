@@ -96,7 +96,8 @@ struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_EndOfFile> {
 
 } // namespace Mapping
 
-inline MilkTea_Exception_t ToRawType(Type type) {
+inline
+MilkTea_Exception_t ToRawType(Type type) {
   switch (type) {
     case Type::Nil: return MilkTea_Exception_t::MilkTea_Exception_Nil;
     case Type::Unknown: return MilkTea_Exception_t::MilkTea_Exception_Unknown;
@@ -109,7 +110,8 @@ inline MilkTea_Exception_t ToRawType(Type type) {
     default: return MilkTea_Exception_t::MilkTea_Exception_Nil;
   }
 }
-inline Type FromRawType(MilkTea_Exception_t type) {
+inline
+Type FromRawType(MilkTea_Exception_t type) {
   switch (type) {
     case MilkTea_Exception_t::MilkTea_Exception_Nil: return Type::Nil;
     case MilkTea_Exception_t::MilkTea_Exception_Unknown: return Type::Unknown;
@@ -120,6 +122,21 @@ inline Type FromRawType(MilkTea_Exception_t type) {
     case MilkTea_Exception_t::MilkTea_Exception_LogicError: return Type::LogicError;
     case MilkTea_Exception_t::MilkTea_Exception_EndOfFile: return Type::EndOfFile;
     default: return Type::Nil;
+  }
+}
+
+inline
+std::string_view TypeName(Type type) {
+  switch (type) {
+    case Type::Nil: return "Nil";
+    case Type::Unknown: return "Unknown";
+    case Type::Assertion: return "Assertion";
+    case Type::NullPointer: return "NullPointer";
+    case Type::Unsupported: return "Unsupported";
+    case Type::InvalidParam: return "InvalidParam";
+    case Type::LogicError: return "LogicError";
+    case Type::EndOfFile: return "EndOfFile";
+    default: return "";
   }
 }
 

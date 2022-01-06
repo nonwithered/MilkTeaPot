@@ -251,16 +251,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     return TimerUnit::Now();
   }
   static const char *StateName(State state) {
-    switch (state) {
-      case State::INIT: return "INIT";
-      case State::RUNNING: return "RUNNING";
-      case State::SHUTDOWN: return "SHUTDOWN";
-      case State::STOP: return "STOP";
-      case State::TIDYING: return "TIDYING";
-      case State::TERMINATED: return "TERMINATED";
-      case State::CLOSED: return "CLOSED";
-      default: MilkTea_assert("StateName assert");
-    }
+    return TimerWorker::StateName(state).data();
   }
   struct greater_task_raw {
     bool operator()(const task_raw lhs, const task_raw rhs) const {

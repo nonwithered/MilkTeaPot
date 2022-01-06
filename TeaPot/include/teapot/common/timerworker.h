@@ -46,6 +46,20 @@ TeaPot_TimerWorker_State_t ToRawType(State state) {
   }
 }
 
+inline
+std::string_view StateName(State state) {
+  switch (state) {
+    case State::INIT: return "INIT";
+    case State::RUNNING: return "RUNNING";
+    case State::SHUTDOWN: return "SHUTDOWN";
+    case State::STOP: return "STOP";
+    case State::TIDYING: return "TIDYING";
+    case State::TERMINATED: return "TERMINATED";
+    case State::CLOSED: return "CLOSED";
+    default: MilkTea_assert("StateName assert");
+  }
+}
+
 } // namespace TimerWorker
 } // namespace TeaPot
 

@@ -168,6 +168,10 @@ class Play final : public Command {
       midi = MilkPowder::MidiMutableWrapper::Parse(reader);
     }
     TeaPot::TimerWorkerWrapper timer([](auto type, auto what) -> bool {
+      if (type == MilkTea::Exception::Type::Nil) {
+        return false;
+      }
+      std::cerr << MilkTea::Exception::TypeName(type) << ": " << what << std::endl;
       return false;
     });
     std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
