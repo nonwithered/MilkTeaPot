@@ -39,15 +39,18 @@ typedef struct MilkTea_Exception_Block_t MilkTea_Exception_Block_t;
 MilkTea_api
 MilkTea_Exception_Catch(MilkTea_Exception_Block_t block);
 
-#define MilkTea_throw(type, what) MilkTea_block({ \
-  MilkTea_Exception_Throw(MilkTea_Exception_##type, what); \
+#ifndef MilkTea_throw_what_size
+#define MilkTea_throw_what_size 1024
+#endif // ifndef MilkTea_throw_what_size
+
+#define MilkTea_throwf(type, format, ...) MilkTea_block({ \
+  char what_[MilkTea_throw_what_size]; \
+  snprintf(what_, MilkTea_throw_what_size, "%s(%d): " format, TAG, __LINE__, ##__VA_ARGS__); \
+  MilkTea_Exception_Throw(MilkTea_Exception_##type, what_); \
 })
 
-#define MilkTea_throwf(type, ...) MilkTea_block({ \
-  const size_t size_ = snprintf(MilkTea_null, 0, ##__VA_ARGS__) + 1; \
-  char what_[size_]; \
-  snprintf(what_, size_, ##__VA_ARGS__); \
-  MilkTea_throw(type, what_); \
+#define MilkTea_throw(type, what) MilkTea_block({ \
+  MilkTea_throwf(type, "%s", what); \
 })
 
 #define MilkTea_assert(what) \

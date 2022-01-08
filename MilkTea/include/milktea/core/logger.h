@@ -62,6 +62,10 @@ MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *
 #include <stddef.h>
 #endif // ifdef __cplusplus
 
+#ifndef MilkTea_log_msg_size
+#define MilkTea_log_msg_size 1024
+#endif // ifndef MilkTea_log_msg_size
+
 #ifdef NDEBUG
 #define MilkTea_log(...) MilkTea_block({})
 #else // ifdef NDEBUG
@@ -70,9 +74,8 @@ MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *
   if (level_ > MilkTea_Logger_Level_##LEVEL) { \
     break; \
   } \
-  const size_t size_ = snprintf(NULL, 0, ##__VA_ARGS__) + 1; \
-  char msg_[size_]; \
-  snprintf(msg_, size_, ##__VA_ARGS__); \
+  char msg_[MilkTea_log_msg_size]; \
+  snprintf(msg_, MilkTea_log_msg_size, ##__VA_ARGS__); \
   MilkTea_Logger_Print(MilkTea_Logger_Level_##LEVEL, TAG, msg_); \
 })
 #endif // ifdef NDEBUG

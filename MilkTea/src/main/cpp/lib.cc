@@ -50,7 +50,7 @@ MilkTea_Exception_t MilkTea_Exception_Catch(MilkTea_Exception_Block_t block) {
     MilkTea::ExceptionImpl::What(e.what());
     return MilkTea::Exception::ToRawType(MilkTea::Exception::Type::Unknown);
   } catch (...) {
-    MilkTea::ExceptionImpl::What("");
+    MilkTea::ExceptionImpl::What("...");
     return MilkTea::Exception::ToRawType(MilkTea::Exception::Type::Unknown);
   }
   MilkTea::ExceptionImpl::What("");

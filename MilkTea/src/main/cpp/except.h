@@ -11,7 +11,9 @@ namespace MilkTea {
 class MilkTea_symbol ExceptionImpl final : public std::exception {
  public:
   static std::string_view What(std::string_view = nullptr);
-  ExceptionImpl(Exception::Type type, std::string what) : type_(type), what_(what) {}
+  ExceptionImpl(Exception::Type type, std::string_view what) : type_(type), what_(what) {}
+  ExceptionImpl(const ExceptionImpl &) = default;
+  ExceptionImpl(ExceptionImpl &&) = default;
   const char* what() const noexcept final {
     return what_.data();
   }

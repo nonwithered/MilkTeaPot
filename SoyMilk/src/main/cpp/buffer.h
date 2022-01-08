@@ -43,7 +43,13 @@ class FrameBufferQueueImpl final {
     if (!queue.empty()) {
       MilkTea_assert("fill but not empty");
     }
+
+    auto time_begin = TeaPot::TimerUnit::Now();
     queue = FrameBufferSorterImpl::Sort(midi);
+    auto time_end = TeaPot::TimerUnit::Now();
+    auto time_duration = time_end - time_begin;
+    MilkTea_logI("fill midi fbo queue during %" PRIi64 " ms", time_duration.count());
+
     if (queue.empty()) {
       MilkTea_logW("fill but empty");
       return duration_type(-1);

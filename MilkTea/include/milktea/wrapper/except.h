@@ -33,7 +33,7 @@ void Throw(Type type, std::string_view what) {
 }
 
 inline
-Type Catch(std::function<void()> block) {
+Type Catch(const std::function<void()> &block) {
   return FromRawType(MilkTea_Exception_Catch(FunctionFactory<void()>::ToRawType<MilkTea_Exception_Block_t>(block)));
 }
 

@@ -1,6 +1,9 @@
 #ifndef LIB_MILK_WRAPPER_CONFIG_H_
 #define LIB_MILK_WRAPPER_CONFIG_H_
 
+#include <cstdlib>
+#include <iostream>
+
 #include <milk/common.h>
 
 namespace Milk {
@@ -30,8 +33,11 @@ void Init() {
   });
 }
 
-inline int Main(int argc, char *argv[]) {
+inline int Main(int argc, char *argv[]) try {
   return Milk_Main(argc, argv);
+} catch (const std::exception &e) {
+  std::cerr << e.what() << std::endl;
+  return EXIT_FAILURE;
 }
 
 } // namespace Milk

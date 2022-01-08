@@ -12,14 +12,15 @@ namespace SoyMilk {
 namespace Codec {
 
 class TickClock final {
+  static constexpr char TAG[] = "SoyMilk::Codec::TickClock";
   using duration_type = TeaPot::TimerUnit::duration_type;
   using tempo_type = std::chrono::microseconds;
  public:
   explicit TickClock(uint16_t division)
   : division_(division),
     tempo_(60'000'000 / 120) {
-    if (division > 0x7f)  {
-      MilkTea_throwf(Unsupported, "try to decode midi but division is %" PRIx16, division);
+    if (division > 0x7fff)  {
+      MilkTea_throwf(Unsupported, "try to decode midi but division is %04" PRIx16, division);
     }
   }
   void SetTempo(uint32_t tempo) {
@@ -47,7 +48,7 @@ class FrameBufferSorterImpl final {
   void operator()(MilkPowder::MidiConstWrapper midi) {
     auto format = midi.GetFormat();
     if (format > 0x02) {
-        MilkTea_throwf(Unsupported, "try to decode midi but format is %" PRIx16, format);
+        MilkTea_throwf(Unsupported, "try to decode midi but format is %04" PRIx16, format);
     }
     auto ntrks = midi.GetNtrks();
     if (ntrks == 0) {
@@ -114,7 +115,7 @@ class FrameBufferSorterImpl final {
         FrameEventImpl item(i);
         item.Append(message);
         SetTempoIfNeed(tick_clock, message);
-        while (++index >= count) {
+        while (++index < count) {
           message = track.GetMessage(index);
           auto delta = message.GetDelta();
           if (delta != 0) {

@@ -176,8 +176,8 @@ class Play final : public Command {
     });
     std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
     RendererImpl renderer(midi.GetFormat(), midi.GetNtrks());
-    renderer.OnPrepareListener = [&](auto) {
-      std::cerr << "OnPrepareListener" << std::endl;
+    renderer.OnPrepareListener = [&](auto time) {
+      std::cerr << "OnPrepareListener " << time.count() << std::endl;
       timer.Post([&]() {
         player->Start();
       });

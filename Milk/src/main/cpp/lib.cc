@@ -33,13 +33,10 @@ MilkTea_extern(Milk_Init, (Milk_Config_t config), {
 })
 
 MilkTea_decl(int)
-Milk_Main(int argc, char *argv[]) try {
+Milk_Main(int argc, char *argv[]) {
   Milk::ConfigWrapper::Instance();
   Milk::Command::LaunchMain(Args(argc, argv), Cmds());
   return 0;
-} catch (std::exception &e) {
-  std::cerr << e.what() << std::endl;
-  throw e;
 }
 
 namespace Milk {
