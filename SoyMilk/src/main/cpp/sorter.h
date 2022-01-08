@@ -19,15 +19,21 @@ class TickClock final {
   explicit TickClock(uint16_t division)
   : division_(division),
     tempo_map_() {
-    if (division > 0x7fff)  {
-      MilkTea_throwf(Unsupported, "try to decode midi but division is %04" PRIx16, division);
+    if (BaseOnTimeCode()) {
+      return;
     }
     tempo_map_.emplace_back(0, 60'000'000 / 120);
   }
   void SetTempo(uint32_t tempo, uint32_t tick_current) {
+    if (BaseOnTimeCode()) {
+      return;
+    }
     tempo_map_.emplace_back(tick_current, tempo);
   }
   duration_type operator()(uint32_t tick_delta, uint32_t tick_last) const {
+    if (BaseOnTimeCode()) {
+      return ComputeByTimeCode(tick_delta);
+    }
     auto cursor_last = Find(tick_last);
     auto cursor_next = cursor_last + 1;
     auto tick_target = tick_last + tick_delta;
@@ -59,6 +65,15 @@ class TickClock final {
         return i;
       }
     }
+  }
+  bool BaseOnTimeCode() const {
+    return (division_ & 0x8000) != 0;
+  }
+  duration_type ComputeByTimeCode(uint32_t tick) const {
+    return std::chrono::duration_cast<duration_type>(std::chrono::seconds(1)) * tick / GetAccuracy();
+  }
+  uint32_t GetAccuracy() const {
+    return -(*reinterpret_cast<const int16_t *>(&division_) >> 010) * (division_ & 0x00ff);
   }
   static uint32_t GetTick(const std::tuple<uint32_t, uint32_t> &tuple) {
     return std::get<0>(tuple);
