@@ -211,6 +211,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   }
   void ChangeState(State expect, State target) {
     if (state_.compare_exchange_strong(expect, target)) {
+      MilkTea_logI("ChangeState from %s to %s", StateName(expect), StateName(target));
       return;
     }
     MilkTea_throwf(LogicError, "ChangeState fail -- expect: %s, target: %s, current: %s",

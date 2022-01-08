@@ -28,7 +28,16 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   RendererImpl(RendererImpl &&another)
   : format_(another.format_),
     ntrks_(another.ntrks_),
-    handle_(std::move(another.handle_)) {}
+    handle_(std::move(another.handle_)),
+    OnPrepareListener(another.OnPrepareListener),
+    OnStartListener(another.OnStartListener),
+    OnPauseListener(another.OnPauseListener),
+    OnSeekBeginListener(another.OnSeekBeginListener),
+    OnSeekEndListener(another.OnSeekEndListener),
+    OnResumeListener(another.OnResumeListener),
+    OnStopListener(another.OnStopListener),
+    OnResetListener(another.OnResetListener),
+    OnCompleteListener(another.OnCompleteListener) {}
   ~RendererImpl() final = default;
   RendererImpl *Move() && final {
     return new RendererImpl(std::forward<RendererImpl>(*this));
@@ -55,54 +64,63 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   }
   std::function<void(duration_type)> OnPrepareListener;
   void OnPrepare(duration_type time) final {
+    std::cerr << "OnPrepareListener" << " " << time.count() << std::endl;
     if (OnPrepareListener) {
       OnPrepareListener(time);
     }
   }
   std::function<void()> OnStartListener;
   void OnStart() final {
+    std::cerr << "OnStartListener" << std::endl;
     if (OnStartListener) {
       OnStartListener();
     }
   }
   std::function<void(duration_type)> OnPauseListener;
   void OnPause(duration_type time) final {
+    std::cerr << "OnPauseListener" << std::endl;
     if (OnPauseListener) {
       OnPauseListener(time);
     }
   }
   std::function<void()> OnSeekBeginListener;
   void OnSeekBegin() final {
+    std::cerr << "OnSeekBeginListener" << std::endl;
     if (OnSeekBeginListener) {
       OnSeekBeginListener();
     }
   }
   std::function<void(duration_type)> OnSeekEndListener;
   void OnSeekEnd(duration_type time) final {
-    if (OnPrepareListener) {
-      OnPrepareListener(time);
+    std::cerr << "OnSeekEndListener" << " " << time.count() << std::endl;
+    if (OnSeekEndListener) {
+      OnSeekEndListener(time);
     }
   }
   std::function<void()> OnResumeListener;
   void OnResume() final {
+    std::cerr << "OnResumeListener" << std::endl;
     if (OnResumeListener) {
       OnResumeListener();
     }
   }
   std::function<void()> OnStopListener;
   void OnStop() final {
+    std::cerr << "OnStopListener" << std::endl;
     if (OnStopListener) {
       OnStopListener();
     }
   }
   std::function<void()> OnResetListener;
   void OnReset() final {
+    std::cerr << "OnResetListener" << std::endl;
     if (OnResetListener) {
       OnResetListener();
     }
   }
   std::function<void()> OnCompleteListener;
   void OnComplete() final {
+    std::cerr << "OnCompleteListener" << std::endl;
     if (OnCompleteListener) {
       OnCompleteListener();
     }
@@ -177,13 +195,11 @@ class Play final : public Command {
     std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
     RendererImpl renderer(midi.GetFormat(), midi.GetNtrks());
     renderer.OnPrepareListener = [&](auto time) {
-      std::cerr << "OnPrepareListener " << time.count() << std::endl;
       timer.Post([&]() {
         player->Start();
       });
     };
     renderer.OnCompleteListener = [&]() {
-      std::cerr << "OnCompleteListener" << std::endl;
       timer.Post([&]() {
         timer.Shutdown();
       });
