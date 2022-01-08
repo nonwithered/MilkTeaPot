@@ -22,29 +22,52 @@ class TickClock final {
     if (division > 0x7fff)  {
       MilkTea_throwf(Unsupported, "try to decode midi but division is %04" PRIx16, division);
     }
-    tempo_map_.emplace_back(duration_type::zero(), 60'000'000 / 120);
+    tempo_map_.emplace_back(0, 60'000'000 / 120);
   }
-  void SetTempo(uint32_t tempo, duration_type time) {
-    tempo_map_.emplace_back(time, tempo);
+  void SetTempo(uint32_t tempo, uint32_t tick_current) {
+    tempo_map_.emplace_back(tick_current, tempo);
   }
-  duration_type operator()(uint32_t tick, duration_type last) {
-    return Compute(tick, Find(last));
+  duration_type operator()(uint32_t tick_delta, uint32_t tick_last) const {
+    auto cursor_last = Find(tick_last);
+    auto cursor_next = cursor_last + 1;
+    auto tick_target = tick_last + tick_delta;
+    auto tick_next = GetTick(*cursor_next);
+    if (cursor_next == tempo_map_.end() || tick_next >= tick_target) {
+      return Compute(tick_delta, GetTempo(*cursor_last));
+    }
+    uint32_t tick_until = tick_next - tick_last;
+    tick_delta -= tick_until;
+    duration_type time = Compute(tick_until, GetTempo(*cursor_last));
+    auto cursor_end = Find(tick_target);
+    for (auto i = cursor_next, n = cursor_end; i != n; ++i) {
+      tick_until = GetTick(*(i + 1)) - GetTick(*i);
+      tick_delta -= tick_until;
+      time += Compute(tick_until, GetTempo(*i));
+    }
+    time += Compute(tick_delta, GetTempo(*cursor_end));
+    return time;
   }
  private:
-  duration_type Compute(uint32_t tick, uint32_t tempo) {
+  duration_type Compute(uint32_t tick, uint32_t tempo) const {
     int64_t tempo_ = static_cast<int64_t>(static_cast<double>(tick) * tempo / division_);
     return std::chrono::duration_cast<duration_type>(tempo_type(tempo_));
   }
-  uint32_t Find(duration_type time) {
+  std::vector<std::tuple<uint32_t, uint32_t>>::const_iterator Find(uint32_t tick) const {
     for (auto i = tempo_map_.begin(), n = tempo_map_.end(); ; ++i) {
       auto next = i + 1;
-      if (next == n || std::get<0>(*next) > time) {
-        return std::get<1>(*i);
+      if (next == n || GetTick(*next) > tick) {
+        return i;
       }
     }
   }
+  static uint32_t GetTick(const std::tuple<uint32_t, uint32_t> &tuple) {
+    return std::get<0>(tuple);
+  }
+  static uint32_t GetTempo(const std::tuple<uint32_t, uint32_t> &tuple) {
+    return std::get<1>(tuple);
+  }
   const uint16_t division_;
-  std::vector<std::tuple<duration_type, uint32_t>> tempo_map_;
+  std::vector<std::tuple<uint32_t, uint32_t>> tempo_map_;
 };
 
 class FrameBufferSorterImpl final {
@@ -93,6 +116,7 @@ class FrameBufferSorterImpl final {
   void Collect(TickClock &tick_clock, uint16_t ntrks, std::vector<MilkPowder::TrackConstWrapper> tracks) {
     std::vector<uint32_t> counts(ntrks, 0);
     std::vector<uint32_t> indices(ntrks, 0);
+    std::vector<uint32_t> ticks(ntrks, 0);
     std::vector<duration_type> times(ntrks, duration_type::zero());
     for (uint16_t i = 0; i != ntrks; ++i) {
       counts[i] = tracks[i].GetCount();
@@ -106,8 +130,10 @@ class FrameBufferSorterImpl final {
         }
         auto track = tracks[i];
         auto message = track.GetMessage(index);
+        auto tick_delta = message.GetDelta();
         auto time_last = times[i];
-        duration_type time_msg = time_last + tick_clock(message.GetDelta(), time_last);
+        auto tick_last = ticks[i];
+        duration_type time_msg = time_last + tick_clock(tick_delta, tick_last);
         if (time_current < duration_type::zero() || time_msg < time_current) {
           time_current = time_msg;
         }
@@ -124,17 +150,21 @@ class FrameBufferSorterImpl final {
         }
         auto track = tracks[i];
         auto message = track.GetMessage(index);
+        auto tick_delta = message.GetDelta();
         {
           auto time_last = times[i];
-          duration_type time_msg = time_last + tick_clock(message.GetDelta(), time_last);
+          auto tick_last = ticks[i];
+          duration_type time_msg = time_last + tick_clock(tick_delta, tick_last);
           if (time_current != time_msg) {
             continue;
           }
         }
         times[i] = time_current;
+        uint32_t tick_current = ticks[i] + tick_delta;
+        ticks[i] = tick_current;
         FrameEventImpl item(i);
         item.Append(message);
-        SetTempoIfNeed(tick_clock, time_current, message);
+        SetTempoIfNeed(tick_clock, tick_current, message);
         while (++index < count) {
           message = track.GetMessage(index);
           auto delta = message.GetDelta();
@@ -142,7 +172,7 @@ class FrameBufferSorterImpl final {
             break;
           }
           item.Append(message);
-          SetTempoIfNeed(tick_clock, time_current, message);
+          SetTempoIfNeed(tick_clock, tick_current, message);
         }
         indices[i] = index;
         fbo.Append(std::move(item));
@@ -153,13 +183,15 @@ class FrameBufferSorterImpl final {
   void Collect(uint16_t division, uint16_t index, MilkPowder::TrackConstWrapper track) {
     TickClock tick_clock(division);
     auto time_current = duration_type::zero();
+    uint32_t tick_current = 0;
     FrameEventImpl *item = nullptr;
     auto iterator = queue_.begin();
     for (uint32_t i = 0, n = track.GetCount(); i != n; ++i) {
       auto message = track.GetMessage(i);
-      auto delta = message.GetDelta();
-      if (item == nullptr || delta != 0) {
-        time_current = time_current + tick_clock(delta, time_current);
+      auto tick_delta = message.GetDelta();
+      if (item == nullptr || tick_delta != 0) {
+        time_current = time_current + tick_clock(tick_delta, tick_current);
+        tick_current += tick_delta;
         auto tail = queue_.end();
         MilkTea_loop {
           if (iterator == tail || iterator->time() > time_current) {
@@ -174,10 +206,10 @@ class FrameBufferSorterImpl final {
         item = &iterator->Append(FrameEventImpl(index));
       }
       item->Append(message);
-      SetTempoIfNeed(tick_clock, time_current, message);
+      SetTempoIfNeed(tick_clock, tick_current, message);
     }
   }
-  static void SetTempoIfNeed(TickClock &tick_clock, duration_type time_current, MilkPowder::MessageConstWrapper message) {
+  static void SetTempoIfNeed(TickClock &tick_clock, uint32_t tick_current, MilkPowder::MessageConstWrapper message) {
     if (!message.IsMeta()) {
       return;
     }
@@ -198,7 +230,7 @@ class FrameBufferSorterImpl final {
       tempo <<= 010;
       tempo |= data[i];
     }
-    tick_clock.SetTempo(tempo, time_current);
+    tick_clock.SetTempo(tempo, tick_current);
   }
   explicit FrameBufferSorterImpl(std::list<FrameBufferImpl> &queue) : queue_(queue) {}
   std::list<FrameBufferImpl> &queue_;

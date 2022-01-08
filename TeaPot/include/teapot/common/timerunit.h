@@ -12,7 +12,7 @@ namespace TimerUnit {
 constexpr char TAG[] = "TeaPot::TimerUnit";
 
 using clock_type = std::chrono::system_clock;
-using duration_type = std::chrono::milliseconds;
+using duration_type = std::chrono::microseconds;
 using time_point_type = std::chrono::time_point<clock_type, duration_type>;
 
 inline
