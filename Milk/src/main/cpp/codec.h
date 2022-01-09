@@ -12,21 +12,19 @@ namespace Milk {
 
 class Codec final : public Command {
   static constexpr char TAG[] = "Milk::Codec";
+  using self_type = Codec;
  public:
   Codec() : Command(),
       callbacks_(),
-      help_(false),
-      version_(false),
       target_(""),
       format_(-1) {
-    Callback("-h", &Codec::ShowHelp);
-    Callback("--help", &Codec::ShowHelp);
-    Callback("--log", &Codec::InitLog);
-    Callback("-v", &Codec::ShowVersion);
-    Callback("--version", &Codec::ShowVersion);
-    Callback("-o", &Codec::InitTarget);
-    Callback("-fmt", &Codec::SetFormat);
-    Callback("--format", &Codec::SetFormat);
+    Callback(&self_type::InitTarget, {
+      "-o",
+    });
+    Callback(&self_type::SetFormat, {
+      "-fmt",
+      "--format",
+    });
   }
  protected:
   void Launch(std::list<std::string_view> &args) final {
@@ -57,48 +55,25 @@ class Codec final : public Command {
     return "";
   }
  private:
-  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
-  bool help_;
-  bool version_;
-  std::string_view target_;
-  int32_t format_;
-  bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
-    if (help_) {
-      return true;
-    } else {
-      help_ = true;
-    }
-    Command::ShowHelp();
-    return true;
-  }
-  bool ShowVersion(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
-    if (version_) {
-      return true;
-    } else {
-      version_ = true;
-    }
-    Command::ShowVersion();
-    return true;
-  }
-  bool SetFormat(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
-    if (itr == args.end()) {
+  bool SetFormat(ArgsCursor &cursor) {
+    if (!cursor) {
       std::cerr << "milk --format: need format value" << std::endl;
       return false;
-    } else if (*itr == "0") {
+    } else if (*cursor == "0") {
       format_ = 0;
-    } else if (*itr == "1") {
+    } else if (*cursor == "1") {
       format_ = 1;
-    } else if (*itr == "2") {
+    } else if (*cursor == "2") {
       format_ = 2;
     } else {
-      std::cerr << "milk --format: invalid format value: " << *itr << std::endl;
+      std::cerr << "milk --format: invalid format value: " << *cursor << std::endl;
       return false;
     }
-    itr = args.erase(itr);
+    ++cursor;
     return true;
   }
-  bool InitTarget(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
-    if (itr == args.end()) {
+  bool InitTarget(ArgsCursor &cursor) {
+    if (!cursor) {
       std::cerr << "milk -o: need target name" << std::endl;
       return false;
     }
@@ -106,8 +81,8 @@ class Codec final : public Command {
       std::cerr << "milk -o: target name has been set to " << target_ << std::endl;
       return false;
     }
-    target_ = *itr;
-    itr = args.erase(itr);
+    target_ = *cursor;
+    ++cursor;
     return true;
   }
   void TornApart(const std::list<std::string_view> &filenames) {
@@ -234,6 +209,9 @@ class Codec final : public Command {
     }
     return messages_vec;
   }
+  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
+  std::string_view target_;
+  int32_t format_;
 };
 
 } // namespace Milk

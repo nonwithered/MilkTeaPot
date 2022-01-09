@@ -172,12 +172,10 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
 
 class Play final : public Command {
   static constexpr char TAG[] = "Milk::Play";
+  using self_type = Play;
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   Play() : Command() {
-    Callback("-h", &Play::ShowHelp);
-    Callback("--help", &Play::ShowHelp);
-    Callback("--log", &Play::InitLog);
   }
  protected:
   void Launch(std::list<std::string_view> &args) final {
@@ -225,6 +223,12 @@ class Play final : public Command {
     };
     renderer.OnCompleteListener = [&]() {
       timer.Post([&]() {
+        player->Reset();
+        timer.Shutdown();
+      });
+    };
+    renderer.OnResetListener = [&]() {
+      timer.Post([&]() {
         timer.Shutdown();
       });
     };
@@ -237,6 +241,7 @@ class Play final : public Command {
     timer.Start();
     timer.AwaitTermination();
     timer.Close();
+    std::cout << "return" << std::endl;
   }
   std::string_view Usage() const final {
     return
@@ -245,22 +250,17 @@ class Play final : public Command {
 "    print this help message\n"
 "  --log {d, i, w, e, debug, info, warn, error}\n"
 "    init log level, or no log\n"
+"  -v, --version\n"
+"    print version code\n"
     ;
   }
   std::string_view Name() const final {
     return "play";
   }
- private:
-  bool help_;
-  bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
-    if (help_) {
-      return true;
-    } else {
-      help_ = true;
-    }
+  void Help() const final {
     std::cerr << Usage() << std::endl;
-    return true;
   }
+ private:
 };
 
 } // namespace Milk

@@ -34,15 +34,12 @@ class LoggerImpl : public MilkTea::BaseLogger {
   }
  private:
   static std::string Current() {
-    time_t t = time(nullptr);
-    tm *p = localtime(&t);
-    std::stringstream ss[2];
-    std::string s[2];
-    ss[0] << (p->tm_year + 1900) << "-" << (p->tm_mon + 1) << "-" << p->tm_mday;
-    ss[0] >> s[0];
-    ss[1] << p->tm_hour << ":" << p->tm_min << ":" << p->tm_sec;
-    ss[1] >> s[1];
-    return s[0] + " " + s[1];
+    auto t = std::time(nullptr);
+    auto *p = std::localtime(&t);
+    constexpr std::size_t kSize = 32;
+    std::array<char, kSize> str{};
+    std::strftime(str.data(), kSize, "%Y-%m-%d %H:%M:%S", p);
+    return str.data();
   }
 };
 

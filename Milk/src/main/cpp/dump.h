@@ -11,17 +11,18 @@ namespace Milk {
 
 class Dump final : public Command {
   static constexpr char TAG[] = "Milk::Dump";
+  using self_type = Dump;
  public:
   Dump() : Command(),
       callbacks_(),
-      help_(false),
       hex_(false) {
-    Callback("-h", &Dump::ShowHelp);
-    Callback("--help", &Dump::ShowHelp);
-    Callback("--log", &Dump::InitLog);
-    Callback("-x", &Dump::EnableHex);
-    Callback("-L", &Dump::DetailLevel);
-    Callback("--level", &Dump::DetailLevel);
+    Callback(&self_type::EnableHex, {
+      "-x",
+    });
+    Callback(&self_type::DetailLevel, {
+      "-L",
+      "--level",
+    });
   }
  protected:
   void Launch(std::list<std::string_view> &args) final {
@@ -36,6 +37,8 @@ class Dump final : public Command {
 "    print this help message\n"
 "  --log {d, i, w, e, debug, info, warn, error}\n"
 "    init log level, or no log\n"
+"  -v, --version\n"
+"    print version code\n"
 "  -x\n"
 "    show all numbers in hex\n"
 "  -L {h, d, e, v, header, data, events, verbose}\n"
@@ -47,41 +50,30 @@ class Dump final : public Command {
   std::string_view Name() const final {
     return "dump";
   }
- private:
-  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
-  bool help_;
-  bool hex_;
-  uint8_t detail_ = 0;
-  bool ShowHelp(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
-    if (help_) {
-      return true;
-    } else {
-      help_ = true;
-    }
+  void Help() const final {
     std::cerr << Usage() << std::endl;
-    return true;
   }
-  bool EnableHex(std::list<std::string_view>::iterator &, std::list<std::string_view> &) {
+ private:
+  void EnableHex() {
     hex_ = true;
-    return true;
   }
-  bool DetailLevel(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
-    if (itr == args.end()) {
+  bool DetailLevel(ArgsCursor &cursor) {
+    if (!cursor) {
       std::cerr << "milk dump --level: need detail level" << std::endl;
       return false;
-    } else if (*itr == "h" || *itr == "header") {
+    } else if (*cursor == "h" || *cursor == "header") {
       detail_ = 0;
-    } else if (*itr == "d" || *itr == "data") {
+    } else if (*cursor == "d" || *cursor == "data") {
       detail_ = 1;
-    } else if (*itr == "e" || *itr == "events") {
+    } else if (*cursor == "e" || *cursor == "events") {
       detail_ = 2;
-    } else if (*itr == "v" || *itr == "verbose") {
+    } else if (*cursor == "v" || *cursor == "verbose") {
       detail_ = 3;
     } else {
-      std::cerr << "milk dump --level: invalid detail level: " << *itr << std::endl;
+      std::cerr << "milk dump --level: invalid detail level: " << *cursor << std::endl;
       return false;
     }
-    itr = args.erase(itr);
+    ++cursor;
     return true;
   }
   void Preview(std::string_view filename) {
@@ -364,6 +356,9 @@ class Dump final : public Command {
   static uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
     return (bytes[0] << 010) | bytes[1];
   }
+  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
+  bool hex_;
+  uint8_t detail_ = 0;
 };
 
 } // namespace Milk

@@ -10,22 +10,6 @@ namespace {
 
 constexpr char TAG[] = "Milk";
 
-std::list<std::string_view> Args(int argc, char *argv[]) {
-  std::list<std::string_view> args;
-  for (int i = 1; i < argc; ++i) {
-    args.emplace_back(argv[i]);
-  }
-  return args;
-}
-
-std::vector<std::unique_ptr<Milk::Command>> Cmds() {
-  std::vector<std::unique_ptr<Milk::Command>> cmds;
-  cmds.emplace_back(new Milk::Codec());
-  cmds.emplace_back(new Milk::Dump());
-  cmds.emplace_back(new Milk::Play());
-  return cmds;
-}
-
 } // namespace
 
 MilkTea_extern(Milk_Init, (Milk_Config_t config), {
@@ -35,7 +19,17 @@ MilkTea_extern(Milk_Init, (Milk_Config_t config), {
 MilkTea_decl(int)
 Milk_Main(int argc, char *argv[]) {
   Milk::ConfigWrapper::Instance();
-  Milk::Command::LaunchMain(Args(argc, argv), Cmds());
+  Milk::Command::LaunchMain([argc, argv]() -> auto {
+    std::list<std::string_view> args;
+    for (int i = 1; i < argc; ++i) {
+      args.emplace_back(argv[i]);
+    }
+    return args;
+  }(), {
+    std::make_unique<Milk::Codec>(),
+    std::make_unique<Milk::Dump>(),
+    std::make_unique<Milk::Play>(),
+  });
   return 0;
 }
 

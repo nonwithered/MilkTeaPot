@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <initializer_list>
 
 #include <milkpowder.h>
 
@@ -15,82 +16,116 @@
 
 namespace Milk {
 
+class ArgsCursor final {
+  using container = std::list<std::string_view>;
+  using iterator = container::iterator;
+ public:
+  ArgsCursor(container &container, iterator &cursor) : container_(container), cursor_(cursor) {}
+  std::string_view operator*() const {
+    if (!operator bool()) {
+      return nullptr;
+    }
+    return *cursor_;
+  }
+  bool operator++() {
+    if (cursor_ == container_.end()) {
+      return false;
+    }
+    cursor_ = container_.erase(cursor_);
+    return true;
+  }
+  operator bool() const {
+    return cursor_ != container_.end();
+  }
+ private:
+  container &container_;
+  iterator &cursor_;
+};
+
 class Command {
   static constexpr char TAG[] = "Milk::Command";
+  using self_type = Command;
  public:
-  static void LaunchMain(std::list<std::string_view> args, const std::vector<std::unique_ptr<Milk::Command>> &arr) {
-    auto itr = arr.begin();
+  static void LaunchMain(std::list<std::string_view> args, std::initializer_list<std::unique_ptr<Milk::Command>> arr) {
+    auto i = arr.begin();
     if (!args.empty()) {
-      while (itr != arr.end()) {
-        if ((*itr)->Name() == args.front()) {
+      while (i != arr.end()) {
+        if ((*i)->Name() == args.front()) {
           break;
         }
-        ++itr;
+        ++i;
       }
-      if (itr != arr.end()) {
+      if (i != arr.end()) {
         args.pop_front();
       } else {
-        itr = arr.begin();
+        i = arr.begin();
       }
     }
-    (*itr)->show_help_ = [&arr]() -> void {
+    (*i)->show_help_ = [&arr]() -> void {
       for (auto &it : arr) {
         std::cerr << it->Usage() << std::endl;
       }
     };
-    (*itr)->LaunchInternal(args);
+    (*i)->LaunchInternal(args);
   }
   virtual ~Command() = default;
  protected:
-  static void ShowVersion() {
+  Command()
+  : help_(false),
+    version_(false) {
+    Callback(&self_type::ShowHelp, {
+      "-h",
+      "--help",
+    });
+    Callback(&self_type::InitLog, {
+      "--log",
+    });
+    Callback(&self_type::ShowVersion, {
+      "-v",
+      "--version",
+    });
+  }
+  static void Version() {
     std::cout << "version: " << kVersion << "\n" << std::endl;
-  }
-  void ShowHelp() {
-    show_help_();
-  }
-  bool InitLog(std::list<std::string_view>::iterator &itr, std::list<std::string_view> &args) {
-    MilkTea::Logger::Level level = MilkTea::Logger::Level::ASSERT;
-    if (itr == args.end()) {
-      std::cerr << "milk dump --log: need log level" << std::endl;
-      return false;
-    } else if (*itr == "d" || *itr == "debug") {
-      level = MilkTea::Logger::Level::DEBUG;
-    } else if (*itr == "i" || *itr == "info") {
-      level = MilkTea::Logger::Level::INFO;
-    } else if (*itr == "w" || *itr == "warn") {
-      level = MilkTea::Logger::Level::WARN;
-    } else if (*itr == "e" || *itr == "error") {
-      level = MilkTea::Logger::Level::ERROR;
-    }
-    if (level == MilkTea::Logger::Level::ASSERT) {
-      std::cerr << "milk dump --log: invalid log level: " << *itr << std::endl;
-      return false;
-    }
-    MilkTea::Logger::Config(ConfigWrapper::Instance().make_logger(level));
-    itr = args.erase(itr);
-    return true;
   }
   virtual void Launch(std::list<std::string_view> &) = 0;
   virtual std::string_view Usage() const = 0;
   virtual std::string_view Name() const = 0;
+  virtual void Help() const {
+    show_help_();
+  }
   template<typename CMD>
-  void Callback(std::string_view k, bool (CMD::* v)(std::list<std::string_view>::iterator &, std::list<std::string_view> &)) {
-    callbacks_[k] = [this, v](auto &itr, auto &args) -> bool {
-      return (dynamic_cast<CMD *>(this)->*v)(itr, args);
+  void Callback(void (CMD::* f)(), std::initializer_list<std::string_view> args) {
+    auto callback = [this, f](auto &) -> bool {
+      std::bind(f, dynamic_cast<CMD *>(this))();
+      return true;
     };
+    for (auto it : args) {
+      callbacks_[it] = callback;
+    }
+  }
+  template<typename CMD>
+  void Callback(bool (CMD::* f)(ArgsCursor &), std::initializer_list<std::string_view> args) {
+    auto callback = [this, f](auto &cursor) -> bool {
+      return (dynamic_cast<CMD *>(this)->*f)(cursor);
+    };
+    for (auto it : args) {
+      callbacks_[it] = callback;
+    }
   }
  private:
   void LaunchInternal(std::list<std::string_view> &args) {
-    for (auto itr = args.begin(); itr != args.end(); ) {
-      auto it = callbacks_.find(*itr);
-      if (it != callbacks_.end()) {
-        itr = args.erase(itr);
-        if (!it->second(itr, args)) {
-          ShowHelp();
-          return;
-        }
-      } else {
-        ++itr;
+    for (auto i = args.begin(); i != args.end(); ) {
+      auto it = callbacks_.find(*i);
+      if (it == callbacks_.end()) {
+        ++i;
+        continue;
+      }
+      i = args.erase(i);
+      auto cursor = ArgsCursor(args, i);
+      if (!it->second(cursor)) {
+        ShowHelp();
+        return;
       }
     }
     if (args.size() == 0) {
@@ -99,8 +134,48 @@ class Command {
     }
     Launch(args);
   }
-  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
+  void ShowHelp() {
+    if (help_) {
+      return;
+    } else {
+      help_ = true;
+    }
+    Help();
+  }
+  void ShowVersion() {
+    if (version_) {
+      return;
+    } else {
+      version_ = true;
+    }
+    Version();
+  }
+  bool InitLog(ArgsCursor &cursor) {
+    MilkTea::Logger::Level level = MilkTea::Logger::Level::ASSERT;
+    if (!cursor) {
+      std::cerr << "milk dump --log: need log level" << std::endl;
+      return false;
+    } else if (*cursor == "d" || *cursor == "debug") {
+      level = MilkTea::Logger::Level::DEBUG;
+    } else if (*cursor == "i" || *cursor == "info") {
+      level = MilkTea::Logger::Level::INFO;
+    } else if (*cursor == "w" || *cursor == "warn") {
+      level = MilkTea::Logger::Level::WARN;
+    } else if (*cursor == "e" || *cursor == "error") {
+      level = MilkTea::Logger::Level::ERROR;
+    }
+    if (level == MilkTea::Logger::Level::ASSERT) {
+      std::cerr << "milk dump --log: invalid log level: " << *cursor << std::endl;
+      return false;
+    }
+    MilkTea::Logger::Config(ConfigWrapper::Instance().make_logger(level));
+    ++cursor;
+    return true;
+  }
+  std::map<std::string_view, std::function<bool(ArgsCursor &)>> callbacks_;
   std::function<void()> show_help_;
+  bool help_;
+  bool version_;
 };
 
 } // namespace Milk
