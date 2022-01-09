@@ -15,10 +15,13 @@ enum SoyMilk_Player_State_t {
   SoyMilk_Player_State_PREPARING,
   SoyMilk_Player_State_PREPARED,
   SoyMilk_Player_State_STARTED,
+  SoyMilk_Player_State_RESUMED,
   SoyMilk_Player_State_PLAYING,
-  SoyMilk_Player_State_PAUSED,
   SoyMilk_Player_State_SUSPEND,
-  SoyMilk_Player_State_SEEKING
+  SoyMilk_Player_State_SEEKING,
+  SoyMilk_Player_State_PAUSED,
+  SoyMilk_Player_State_STOPPED,
+  SoyMilk_Player_State_RESET
 };
 
 #ifndef __cplusplus

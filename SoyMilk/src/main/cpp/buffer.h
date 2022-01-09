@@ -18,13 +18,17 @@ class FrameBufferCursorImpl final {
  public:
   FrameBufferCursorImpl(iterator_type begin, iterator_type end)
   : tail_(end), iterator_(begin) {}
-  const FrameBufferImpl *next() {
+  const FrameBufferImpl *operator*() const {
     if (iterator_ == tail_) {
       return nullptr;
     }
-    const FrameBufferImpl &fbo = *iterator_;
+    return &*iterator_;
+  }
+  void operator++() {
+    if (iterator_ == tail_) {
+      MilkTea_assert("next but tail");
+    }
     ++iterator_;
-    return &fbo;
   }
  private:
    iterator_type tail_;

@@ -6,8 +6,7 @@
 
 #include <soymilk/common.h>
 
-#include "frame.h"
-#include "buffer.h"
+#include "perform.h"
 
 namespace SoyMilk {
 
@@ -20,175 +19,113 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   using duration_type = TeaPot::TimerUnit::duration_type;
   using time_point_type = TeaPot::TimerUnit::time_point_type;
   using clock_type = TeaPot::TimerUnit::clock_type;
+  using executor_type = TeaPot::Executor::executor_type;
+  using renderer_type = RendererWrapper;
+  using timer_weak = TeaPot::TimerWorkerWeakWrapper;
+  using future_type = TeaPot::TimerFutureWrapper;
   using command_type = std::function<void(PlayerImpl &)>;
+  using action_type = TeaPot::Action::action_type;
  public:
   explicit PlayerImpl(RendererWrapper &&renderer, TeaPot::Executor::executor_type executor, TeaPot::TimerWorkerWeakWrapper &&timer)
   : state_(State::INIT),
     renderer_(std::forward<RendererWrapper>(renderer)),
     executor_(executor),
     timer_(std::forward<TeaPot::TimerWorkerWeakWrapper>(timer)),
-    queue_(),
-    cursor_(queue_.Cursor()),
-    fbo_(nullptr),
-    future_(nullptr),
-    tag_(),
-    position_(duration_type(-1)),
-    idle_() {}
+    perform_() {}
   ~PlayerImpl() = default;
+  void Init() {
+    Perform().post([weak = weak_from_this()](auto action, auto delay) -> auto {
+      auto self = Lock(weak);
+      if (!self) {
+        return future_type();
+      }
+      return self->Post([action](auto &self) {
+        action(self.Perform());
+      }, delay);
+    });
+    Perform().complete(Command([](auto &self) {
+      auto state = self.state();
+      if (state != State::PLAYING) {
+        MilkTea_logI("complete try but fail -- state: %s" , StateName(state));
+        return;
+      }
+      self.ChangeState(State::PLAYING, State::PREPARED);
+      self.Post([](self_type &self) {
+        self.Renderer().OnComplete();
+      });
+    }));
+    Perform().frame([weak = weak_from_this()](auto fbo) {
+      auto self = Lock(weak);
+      if (!self) {
+        return;
+      }
+      self->Renderer().OnFrame(std::move(fbo));
+    });
+  }
   State state() const {
     return state_;
   }
   TeaPot::TimerFutureWrapper Prepare(MilkPowder::MidiConstWrapper midi) {
     ChangeState(State::INIT, State::PREPARING);
-    return Post([midi_ = std::make_shared<MilkPowder::MidiMutableWrapper>(midi)](self_type &self) {
-      auto length = self.queue_.Fill(midi_->get());
-      self.cursor_ = self.queue_.Cursor();
-      self.Execute([](self_type &self) {
-        self.ChangeState(State::PREPARING, State::PREPARED);
-      });
+    return Post([midi_ = std::make_shared<MilkPowder::MidiMutableWrapper>(midi)](auto &self) {
+      auto length = self.Perform().Prepare(midi_->get());
+      self.ChangeStateAsync(State::PREPARING, State::PREPARED);
       self.Renderer().OnPrepare(length);
     });
   }
   void Start() {
     ChangeState(State::PREPARED, State::STARTED);
-    Post([](self_type &self) {
-      self.tag(TeaPot::TimerUnit::Now());
-      self.Execute([](self_type &self) {
-        self.ChangeState(State::STARTED, State::PLAYING);
-      });
+    Post([](auto &self) {
+      self.Perform().Start();
+      self.ChangeStateAsync(State::STARTED, State::SUSPEND);
       self.Renderer().OnStart();
-      self.PostLoop();
+    });
+  }
+  void Resume() {
+    ChangeState(State::SUSPEND, State::RESUMED);
+    Post([](auto &self) {
+      self.Perform().Resume();
+      self.ChangeStateAsync(State::RESUMED, State::PLAYING);
+      self.Renderer().OnResume();
+      self.Perform().Loop();
     });
   }
   void Pause() {
     ChangeState(State::PLAYING, State::PAUSED);
-    Post([](self_type &self) {
-      auto &future = self.future_;
-      if (future) {
-        future->Cancel();
-        future.release();
-      }
-      self.Post([](self_type &self) {
-        self.idle_now();
-        self.Execute([](self_type &self) {
-          self.ChangeState(State::PAUSED, State::SUSPEND);
-        });
-        auto duration = self.position();
-        self.Renderer().OnPause(duration);
+    Post([](auto &self) {
+      self.Post([command = self.Perform().Pause()](auto &self) {
+        auto pos = command(self.Perform());
+        self.ChangeStateAsync(State::PAUSED, State::PAUSED);
+        self.Renderer().OnPause(pos);
       });
     });
   }
   TeaPot::TimerFutureWrapper Seek(duration_type time) {
     ChangeState(State::SUSPEND, State::SEEKING);
-    return Post([time](self_type &self) {
+    return Post([time](auto &self) {
       self.Renderer().OnSeekBegin();
-      auto position = self.position();
-      self.PerformSeek(time);
-      auto duration = self.position();
-      self.tag((self.tag() + position) - duration);
-      self.Execute([](self_type &self) {
-        self.ChangeState(State::SEEKING, State::SUSPEND);
-      });
-      self.Renderer().OnSeekEnd(duration);
-    });
-  }
-  void Resume() {
-    ChangeState(State::SUSPEND, State::STARTED);
-    Post([](self_type &self) {
-      self.tag(self.tag() + self.idle_diff());
-      self.Execute([](self_type &self) {
-        self.ChangeState(State::STARTED, State::PLAYING);
-      });
-      self.Renderer().OnResume();
-      self.PostLoop();
+      auto pos = self.Perform().Seek(time);
+      self.ChangeStateAsync(State::SEEKING, State::SUSPEND);
+      self.Renderer().OnSeekEnd(pos);
     });
   }
   void Stop() {
-    ChangeState(State::SUSPEND, State::PREPARED);
-    Post([](self_type &self) {
-      self.cursor_ = self.queue_.Cursor();
-      self.position(duration_type(-1));
+    ChangeState(State::SUSPEND, State::STOPPED);
+    Post([](auto &self) {
+      self.Perform().Stop();
+      self.ChangeStateAsync(State::STOPPED, State::PREPARED);
       self.Renderer().OnStop();
     });
   }
   void Reset() {
-    ChangeState(State::PREPARED, State::INIT);
-    Post([](self_type &self) {
-      self.queue_.Sweep();
-      self.cursor_ = self.queue_.Cursor();
+    ChangeState(State::PREPARED, State::RESET);
+    Post([](auto &self) {
+      self.Perform().Reset();
+      self.ChangeStateAsync(State::RESET, State::INIT);
       self.Renderer().OnReset();
     });
   }
  private:
-  void PerformComplete() {
-    auto state_ = state();
-    if (state_ != State::PLAYING) {
-      MilkTea_logI("complete try but fail -- state: %s" , StateName(state_));
-      return;
-    }
-    ChangeState(State::PLAYING, State::PREPARED);
-    Post([](self_type &self) {
-      self.Renderer().OnComplete();
-    });
-  }
-  void PerformLoop() {
-    future_.release();
-    MilkTea_loop {
-      auto *fbo = TakeFrame();
-      if (fbo == nullptr) {
-        Execute([](self_type &self) {
-          self.PerformComplete();
-        });
-        return;
-      }
-      auto delay = tag() + fbo->time() - TeaPot::TimerUnit::Now();
-      if (delay > duration_type::zero()) {
-        PostLoop(delay);
-        return;
-      }
-      PerformFrame(*fbo);
-      fbo_ = nullptr;
-    }
-  }
-  void PostLoop(duration_type delay = duration_type::zero()) {
-    auto future = Post([](self_type &self) {
-      self.PerformLoop();
-    }, delay);
-    future_ = std::make_unique<decltype(future)>(std::move(future));
-  }
-  void PerformSeek(duration_type time) {
-    if (time < duration_type(-1)) {
-      time = duration_type(-1);
-    }
-    if (time < position()) {
-      position(duration_type(-1));
-      cursor_ = queue_.Cursor();
-      fbo_ = nullptr;
-    }
-    MilkTea_loop {
-      auto *fbo = TakeFrame();
-      if (fbo == nullptr) {
-        return;
-      }
-      if (fbo->time() >= time) {
-        return;
-      }
-      PerformFrame(*fbo);
-      fbo_ = nullptr;
-    }
-  }
-  void PerformFrame(const Codec::FrameBufferImpl &fbo) {
-    position(fbo.time());
-    Renderer().OnFrame(fbo.operator Codec::FrameBufferWrapper());
-  }
-  const Codec::FrameBufferImpl *TakeFrame() {
-    const Codec::FrameBufferImpl *fbo = fbo_;
-    if (fbo == nullptr) {
-      fbo = cursor_.next();
-      fbo_ = fbo;
-    }
-    return fbo;
-  }
   TeaPot::TimerFutureWrapper Post(command_type action, duration_type delay = duration_type::zero()) {
     auto timer = timer_.lock();
     if (!timer) {
@@ -199,76 +136,57 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   void Execute(command_type action) {
     executor_(Command(action));
   }
-  TeaPot::Action::action_type Command(command_type action) {
+  action_type Command(command_type action) {
     return [weak = weak_from_this(), action]() {
-      auto self = weak.lock();
+      auto self = Lock(weak);
       if (!self) {
-        MilkTea_logW("try lock weak but nullptr");
         return;
       }
       action(*self);
     };
   }
-  void ChangeState(State expect, State target) {
-    if (state_.compare_exchange_strong(expect, target)) {
+  void ChangeState(const State expect, const State target) {
+    State current = expect;
+    if (state_.compare_exchange_strong(current, target)) {
       MilkTea_logI("ChangeState from %s to %s", StateName(expect), StateName(target));
       return;
     }
     MilkTea_throwf(LogicError, "ChangeState fail -- expect: %s, target: %s, current: %s",
       StateName(expect),
       StateName(target),
-      StateName(state())
+      StateName(current)
     );
   }
-  RendererWrapper &Renderer() {
+  renderer_type &Renderer() {
     return renderer_;
   }
-  duration_type position() const {
-    return position_;
+  PerformImpl &Perform() {
+    return perform_;
   }
-  void position(duration_type duration) {
-    position_ = duration;
+  void ChangeStateAsync(State expect, State target) {
+    Execute([expect, target](self_type &self) {
+      self.ChangeState(expect, target);
+    });
   }
-  duration_type idle_diff() const {
-    return TeaPot::TimerUnit::Now() - idle_;
-  }
-  void idle_now() {
-    idle_ = TeaPot::TimerUnit::Now();
-  }
-  time_point_type tag() const {
-    return tag_;
-  }
-  void tag(time_point_type time) {
-    tag_ = time;
+  static player_type Lock(player_weak weak) {
+    auto self = weak.lock();
+    if (!self) {
+      MilkTea_logW("try lock weak but nullptr");
+    }
+    return self;
   }
   static const char *StateName(State state) {
-    switch (state) {
-      case State::INIT: return "INIT";
-      case State::PREPARING: return "PREPARING";
-      case State::PREPARED: return "PREPARED";
-      case State::STARTED: return "STARTED";
-      case State::PLAYING: return "PLAYING";
-      case State::PAUSED: return "PAUSED";
-      case State::SUSPEND: return "SUSPEND";
-      case State::SEEKING: return "SEEKING";
-      default: MilkTea_assert("StateName assert");
-    }
+    return Player::StateName(state).data();
   }
   std::atomic<State> state_;
-  RendererWrapper renderer_;
-  TeaPot::Executor::executor_type executor_;
-  TeaPot::TimerWorkerWeakWrapper timer_;
-  Codec::FrameBufferQueueImpl queue_;
-  Codec::FrameBufferCursorImpl cursor_;
-  const Codec::FrameBufferImpl *fbo_;
-  std::unique_ptr<TeaPot::TimerFutureWrapper> future_;
-  time_point_type tag_;
-  duration_type position_;
-  time_point_type idle_;
+  renderer_type renderer_;
+  executor_type executor_;
+  timer_weak timer_;
+  PerformImpl perform_;
   MilkTea_NonCopy(PlayerImpl)
   MilkTea_NonMove(PlayerImpl)
 };
 
-} // namespace SoyBean_Windows
+} // namespace SoyMilk
 
 #endif // ifndef SOYMILK_PLAYER_H_

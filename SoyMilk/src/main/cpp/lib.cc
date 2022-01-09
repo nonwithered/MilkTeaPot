@@ -21,7 +21,9 @@ MilkTea_extern(SoyMilk_Player_Create, (SoyMilk_Player_t **self, SoyMilk_Player_R
   MilkTea_nonnull(renderer.interface_);
   MilkTea_nonnull(executor.invoke_);
   MilkTea_nonnull(timer);
-  *self = soymilk_cast(*new std::shared_ptr<SoyMilk::PlayerImpl>(new SoyMilk::PlayerImpl(renderer, TeaPot::Executor::FromRawType(executor), timer)));
+  auto player = std::make_shared<SoyMilk::PlayerImpl>(renderer, TeaPot::Executor::FromRawType(executor), timer);
+  player->Init();
+  *self = soymilk_cast(*new std::shared_ptr<SoyMilk::PlayerImpl>(std::move(player)));
 })
 
 MilkTea_extern(SoyMilk_Player_Destroy, (SoyMilk_Player_t *self), {

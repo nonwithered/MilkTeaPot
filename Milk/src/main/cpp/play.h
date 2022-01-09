@@ -199,6 +199,11 @@ class Play final : public Command {
         player->Start();
       });
     };
+    renderer.OnStartListener = [&]() {
+      timer.Post([&]() {
+        player->Resume();
+      });
+    };
     renderer.OnCompleteListener = [&]() {
       timer.Post([&]() {
         timer.Shutdown();

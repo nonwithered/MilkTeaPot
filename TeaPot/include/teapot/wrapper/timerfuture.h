@@ -9,11 +9,12 @@ class TimerFutureWrapper final {
   static constexpr char TAG[] = "TeaPot::TimerFutureWrapper";
   friend class TimerTaskWrapper;
   friend class TimerWorkerWrapper;
+  using raw_type = TeaPot_TimerFuture_t;
   using State = TeaPot::TimerFuture::State;
   using duration_type = TeaPot::TimerUnit::duration_type;
   using time_point_type = TeaPot::TimerUnit::time_point_type;
  public:
-  TimerFutureWrapper(TeaPot_TimerFuture_t *self = nullptr) : self_(self) {}
+  TimerFutureWrapper(raw_type *self = nullptr) : self_(self) {}
   TimerFutureWrapper(TimerFutureWrapper &&another) : TimerFutureWrapper() {
     std::swap(self_, another.self_);
   }
@@ -39,8 +40,16 @@ class TimerFutureWrapper final {
     MilkTea_invoke_panic(TeaPot_TimerFuture_GetTime, self_, &time);
     return time_point_type(duration_type(time));
   }
+  raw_type *release() {
+    raw_type *self = self_;
+    self_ = nullptr;
+    return self;
+  }
+  raw_type *get() const {
+    return self_;
+  }
  private:
-  TeaPot_TimerFuture_t *self_;
+  raw_type *self_;
   MilkTea_NonCopy(TimerFutureWrapper)
   MilkTea_NonMoveAssign(TimerFutureWrapper)
 };
