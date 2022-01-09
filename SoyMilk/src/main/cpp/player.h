@@ -44,14 +44,16 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
       }, delay);
     });
     Perform().complete(Command([](auto &self) {
-      auto state = self.state();
-      if (state != State::PLAYING) {
-        MilkTea_logI("complete try but fail -- state: %s" , StateName(state));
-        return;
-      }
-      self.ChangeState(State::PLAYING, State::PREPARED);
-      self.Post([](self_type &self) {
-        self.Renderer().OnComplete();
+      self.Execute([](auto &self) {
+        auto state = self.state();
+        if (state != State::PLAYING) {
+          MilkTea_logI("complete try but fail -- state: %s" , StateName(state));
+          return;
+        }
+        self.ChangeState(State::PLAYING, State::PREPARED);
+        self.Post([](self_type &self) {
+          self.Renderer().OnComplete();
+        });
       });
     }));
     Perform().frame([weak = weak_from_this()](auto fbo) {

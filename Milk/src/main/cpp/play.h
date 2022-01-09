@@ -16,7 +16,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   RendererImpl(uint16_t format, uint16_t ntrks)
   : format_(format),
     ntrks_(ntrks),
-    handle_() {
+    handle_(),
+    seek_(nullptr) {
     if (format == 0x02) {
       for (uint16_t i = 0; i != ntrks; ++i) {
         handle_.push_back(Make());
@@ -37,7 +38,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
     OnResumeListener(another.OnResumeListener),
     OnStopListener(another.OnStopListener),
     OnResetListener(another.OnResetListener),
-    OnCompleteListener(another.OnCompleteListener) {}
+    OnCompleteListener(another.OnCompleteListener),
+    seek_(another.seek_) {}
   ~RendererImpl() final = default;
   RendererImpl *Move() && final {
     return new RendererImpl(std::forward<RendererImpl>(*this));
@@ -46,6 +48,9 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
     delete this;
   }
   void OnFrame(SoyMilk::Codec::FrameBufferWrapper fbo) final {
+    if (*seek_) {
+      return;
+    }
     for (size_t i = 0, n = fbo.GetLen(); i != n; ++i) {
       auto item = fbo.GetItem(i);
       for (size_t j = 0, m = item.GetLen(); j != m; ++j) {
@@ -125,6 +130,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
       OnCompleteListener();
     }
   }
+  bool *seek_;
  private:
   static SoyBean::HandleWrapper Make() {
     return ConfigWrapper::Instance().make_soybean_factory().make_handle();
@@ -194,12 +200,25 @@ class Play final : public Command {
     });
     std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
     RendererImpl renderer(midi.GetFormat(), midi.GetNtrks());
+    duration_type pos = duration_type::zero();
+    bool seek = false;
+    renderer.seek_ = &seek;
     renderer.OnPrepareListener = [&](auto time) {
+      pos = time - duration_type(10'000'000);
       timer.Post([&]() {
         player->Start();
       });
     };
     renderer.OnStartListener = [&]() {
+      timer.Post([&]() {
+        player->Seek(pos);
+      });
+    };
+    renderer.OnSeekBeginListener = [&]() {
+      seek = true;
+    };
+    renderer.OnSeekEndListener = [&](auto time) {
+      seek = false;
       timer.Post([&]() {
         player->Resume();
       });
