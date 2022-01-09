@@ -23,8 +23,8 @@ void MilkTea_call SoyMilk_BaseRenderer_OnPrepare(void *self, int64_t time) {
 void MilkTea_call SoyMilk_BaseRenderer_OnStart(void *self) {
   BaseRenderer_cast(self).OnStart();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnPause(void *self, int64_t time) {
-  BaseRenderer_cast(self).OnPause(duration_type(time));
+void MilkTea_call SoyMilk_BaseRenderer_OnResume(void *self) {
+  BaseRenderer_cast(self).OnResume();
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnSeekBegin(void *self) {
   BaseRenderer_cast(self).OnSeekBegin();
@@ -32,8 +32,8 @@ void MilkTea_call SoyMilk_BaseRenderer_OnSeekBegin(void *self) {
 void MilkTea_call SoyMilk_BaseRenderer_OnSeekEnd(void *self, int64_t time) {
   BaseRenderer_cast(self).OnSeekEnd(duration_type(time));
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnResume(void *self) {
-  BaseRenderer_cast(self).OnResume();
+void MilkTea_call SoyMilk_BaseRenderer_OnPause(void *self, int64_t time) {
+  BaseRenderer_cast(self).OnPause(duration_type(time));
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnStop(void *self) {
   BaseRenderer_cast(self).OnStop();
@@ -55,10 +55,10 @@ const SoyMilk_Player_Renderer_Interface_t &BaseRenderer::Interface() {
     .OnFrame = SoyMilk_BaseRenderer_OnFrame,
     .OnPrepare = SoyMilk_BaseRenderer_OnPrepare,
     .OnStart = SoyMilk_BaseRenderer_OnStart,
-    .OnPause = SoyMilk_BaseRenderer_OnPause,
+    .OnResume = SoyMilk_BaseRenderer_OnResume,
     .OnSeekBegin = SoyMilk_BaseRenderer_OnSeekBegin,
     .OnSeekEnd = SoyMilk_BaseRenderer_OnSeekEnd,
-    .OnResume = SoyMilk_BaseRenderer_OnResume,
+    .OnPause = SoyMilk_BaseRenderer_OnPause,
     .OnStop = SoyMilk_BaseRenderer_OnStop,
     .OnReset = SoyMilk_BaseRenderer_OnReset,
     .OnComplete = SoyMilk_BaseRenderer_OnComplete,

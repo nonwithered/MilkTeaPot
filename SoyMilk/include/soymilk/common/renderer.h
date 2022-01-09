@@ -24,10 +24,10 @@ class BaseRenderer {
   virtual void OnFrame(Codec::FrameBufferWrapper fbo) = 0;
   virtual void OnPrepare(duration_type time) = 0;
   virtual void OnStart() = 0;
-  virtual void OnPause(duration_type time) = 0;
+  virtual void OnResume() = 0;
   virtual void OnSeekBegin() = 0;
   virtual void OnSeekEnd(duration_type time) = 0;
-  virtual void OnResume() = 0;
+  virtual void OnPause(duration_type time) = 0;
   virtual void OnStop() = 0;
   virtual void OnReset() = 0;
   virtual void OnComplete() = 0;
@@ -68,8 +68,8 @@ class RendererWrapper final : public BaseRenderer {
   void OnStart() final {
     GetInterface().OnStart(get());
   }
-  void OnPause(duration_type time) final {
-    GetInterface().OnPause(get(), time.count());
+  void OnResume() final {
+    GetInterface().OnResume(get());
   }
   void OnSeekBegin() final {
     GetInterface().OnSeekBegin(get());
@@ -77,8 +77,8 @@ class RendererWrapper final : public BaseRenderer {
   void OnSeekEnd(duration_type time) final {
     GetInterface().OnSeekEnd(get(), time.count());
   }
-  void OnResume() final {
-    GetInterface().OnResume(get());
+  void OnPause(duration_type time) final {
+    GetInterface().OnPause(get(), time.count());
   }
   void OnStop() final {
     GetInterface().OnStop(get());
@@ -104,6 +104,60 @@ class RendererWrapper final : public BaseRenderer {
   raw_type self_;
   MilkTea_NonCopy(RendererWrapper)
   MilkTea_NonMoveAssign(RendererWrapper)
+};
+
+class RendererProxy final : public BaseRenderer {
+  using duration_type = TeaPot::TimerUnit::duration_type;
+  using base_type = BaseRenderer;
+  using self_type = RendererProxy;
+ public:
+  RendererProxy(base_type &another) : self_(another) {}
+  RendererProxy(const self_type &another) : self_(another.self_) {}
+  RendererProxy(self_type &&another) :self_(another.self_) {}
+ public:
+  ~RendererProxy() final {
+  }
+  base_type *Move() && final {
+    return new self_type(std::forward<self_type>(*this));
+  }
+  void Destroy() && final {
+    delete this;
+  }
+  void OnFrame(Codec::FrameBufferWrapper fbo) final {
+    get().OnFrame(std::move(fbo));
+  }
+  void OnPrepare(duration_type time) final {
+    get().OnPrepare(time);
+  }
+  void OnStart() final {
+    get().OnStart();
+  }
+  void OnResume() final {
+    get().OnResume();
+  }
+  void OnSeekBegin() final {
+    get().OnSeekBegin();
+  }
+  void OnSeekEnd(duration_type time) final {
+    get().OnSeekEnd(time);
+  }
+  void OnPause(duration_type time) final {
+    get().OnPause(time);
+  }
+  void OnStop() final {
+    get().OnStop();
+  }
+  void OnReset() final {
+    get().OnReset();
+  }
+  void OnComplete() final {
+    get().OnComplete();
+  }
+ private:
+  base_type &get() {
+    return self_;
+  }
+  base_type &self_;
 };
 
 } // namespace SoyMilk
