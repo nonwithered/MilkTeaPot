@@ -1,11 +1,5 @@
 #include <milk.h>
 
-#include "config.h"
-#include "codec.h"
-#include "dump.h"
-#include "play.h"
-
-#include "control.h"
 #include "launch.h"
 
 namespace {
@@ -20,18 +14,7 @@ MilkTea_extern(Milk_Init, (Milk_Config_t config), {
 
 MilkTea_decl(int)
 Milk_Main(int argc, char *argv[]) {
-  auto e = MilkTea::Exception::Catch([=]() {
-    Milk::ConfigWrapper::Instance();
-    Milk::Launch(Milk::ControllerInfo::Make<Milk::CodecController>(), {
-      Milk::ControllerInfo::Make<Milk::DumpController>(),
-      Milk::ControllerInfo::Make<Milk::PlayController>(),
-    }).Main(argc, argv);
-  });
-  if (e == MilkTea::Exception::Type::Nil) {
-    return EXIT_SUCCESS;
-  }
-  std::cerr << MilkTea::Exception::TypeName(e) << ": " << MilkTea::Exception::What() << std::endl;
-  return EXIT_FAILURE;
+  return Milk::Launcher::Launch(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 namespace Milk {

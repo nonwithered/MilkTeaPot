@@ -4,6 +4,10 @@
 #include <vector>
 
 #include "control.h"
+#include "config.h"
+#include "codec.h"
+#include "dump.h"
+#include "play.h"
 
 namespace Milk {
 
@@ -35,9 +39,30 @@ class ControllerInfo final {
   factory_type factory_;
 };
 
-class Launch final {
+class Launcher final {
+  template<typename Controller>
+  static ControllerInfo Info() {
+    return ControllerInfo::Make<Controller>();
+  }
  public:
-  Launch(ControllerInfo info, std::initializer_list<ControllerInfo> infos)
+  static bool Launch(int argc, char *argv[]) {
+    auto e = MilkTea::Exception::Catch([argc, argv]() {
+      ConfigWrapper::Instance();
+      Launcher(
+        Info<CodecController>(), {
+          Info<DumpController>(),
+          Info<PlayController>(),
+        }
+      ).Main(argc, argv);
+    });
+    if (e == MilkTea::Exception::Type::Nil) {
+      return true;
+    }
+    std::cerr << MilkTea::Exception::TypeName(e) << ": " << MilkTea::Exception::What() << std::endl;
+    return false;
+  }
+ private:
+  Launcher(ControllerInfo info, std::initializer_list<ControllerInfo> infos)
   : info_(std::move(info)),
     infos_(std::move(infos)) {}
   void Main(int argc, char *argv[]) {
@@ -58,7 +83,6 @@ class Launch final {
     }
     info_.Create(std::move(help_text))->Launch(args);
   }
- private:
   static std::list<std::string_view> Args(int argc, char *argv[]) {
     std::list<std::string_view> args;
     for (int i = 1; i < argc; ++i) {
