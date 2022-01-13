@@ -6,27 +6,40 @@ namespace {
 
 constexpr char TAG[] = "MilkTea";
 
-} // namespace
+MilkTea::BaseLogger *GlobalLogger(MilkTea::LoggerWrapper *instance = nullptr) {
+  static auto instance_ = std::unique_ptr<MilkTea::LoggerWrapper>(nullptr);
+  if (instance != nullptr) {
+    instance_.reset(instance);
+  }
+  return instance_.get();
+}
 
-MilkTea::BaseLogger *GlobalInstance(MilkTea::LoggerWrapper *instance = nullptr);
+} // namespace
 
 extern "C" {
 
 bool MilkTea_Logger_Config(MilkTea_Logger_t logger) {
-  auto *logger_ = new MilkTea::LoggerWrapper(logger);
-  if (GlobalInstance(logger_) == nullptr) {
-    delete logger_;
+  if (GlobalLogger() != nullptr) {
     return false;
   }
+  GlobalLogger(new MilkTea::LoggerWrapper(logger));
   return true;
 }
 
 MilkTea_Logger_Level_t MilkTea_Logger_GetLevel() {
-  return MilkTea::Logger::ToRawType(GlobalInstance()->level());
+  auto *logger = GlobalLogger();
+  if (logger == nullptr) {
+    return MilkTea::Logger::ToRawType(MilkTea::Logger::Level::ASSERT);
+  }
+  return MilkTea::Logger::ToRawType(logger->level());
 }
 
 void MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *msg) {
-  GlobalInstance()->Print(MilkTea::Logger::FromRawType(level), tag, msg);
+  auto *logger = GlobalLogger();
+  if (logger == nullptr) {
+    return;
+  }
+  logger->Print(MilkTea::Logger::FromRawType(level), tag, msg);
 }
 
 const char *MilkTea_Exception_What() {

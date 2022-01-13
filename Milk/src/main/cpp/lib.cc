@@ -1,10 +1,12 @@
 #include <milk.h>
 
 #include "config.h"
-#include "launch.h"
 #include "codec.h"
 #include "dump.h"
 #include "play.h"
+
+#include "control.h"
+#include "launch.h"
 
 namespace {
 
@@ -18,19 +20,18 @@ MilkTea_extern(Milk_Init, (Milk_Config_t config), {
 
 MilkTea_decl(int)
 Milk_Main(int argc, char *argv[]) {
-  Milk::ConfigWrapper::Instance();
-  Milk::Command::LaunchMain([argc, argv]() -> auto {
-    std::list<std::string_view> args;
-    for (int i = 1; i < argc; ++i) {
-      args.emplace_back(argv[i]);
-    }
-    return args;
-  }(), {
-    std::make_unique<Milk::Codec>(),
-    std::make_unique<Milk::Dump>(),
-    std::make_unique<Milk::Play>(),
+  auto e = MilkTea::Exception::Catch([=]() {
+    Milk::ConfigWrapper::Instance();
+    Milk::Launch(Milk::ControllerInfo::Make<Milk::CodecController>(), {
+      Milk::ControllerInfo::Make<Milk::DumpController>(),
+      Milk::ControllerInfo::Make<Milk::PlayController>(),
+    }).Main(argc, argv);
   });
-  return 0;
+  if (e == MilkTea::Exception::Type::Nil) {
+    return EXIT_SUCCESS;
+  }
+  std::cerr << MilkTea::Exception::TypeName(e) << ": " << MilkTea::Exception::What() << std::endl;
+  return EXIT_FAILURE;
 }
 
 namespace Milk {

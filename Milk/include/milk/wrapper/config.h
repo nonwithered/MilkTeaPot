@@ -33,11 +33,8 @@ void Init() {
   });
 }
 
-inline int Main(int argc, char *argv[]) try {
+inline int Main(int argc, char *argv[]) {
   return Milk_Main(argc, argv);
-} catch (const std::exception &e) {
-  std::cerr << e.what() << std::endl;
-  return EXIT_FAILURE;
 }
 
 } // namespace Milk

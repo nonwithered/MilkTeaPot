@@ -5,53 +5,48 @@
 #include <memory>
 #include <functional>
 
-#include "launch.h"
+#include <milkpowder.h>
+
+#include "control.h"
 
 namespace Milk {
 
-class Dump final : public Command {
-  static constexpr char TAG[] = "Milk::Dump";
-  using self_type = Dump;
+class DumpController final : public BaseController {
+  static constexpr char TAG[] = "Milk::DumpController";
+  using self_type = DumpController;
  public:
-  Dump() : Command(),
-      callbacks_(),
-      hex_(false) {
-    Callback(&self_type::EnableHex, {
+  static constexpr auto kName = "dump";
+  static constexpr auto kUsage = R"(
+Usage: milk dump [OPTIONS] [FILES]
+  -h, --help
+    print this help message
+  --log {d, i, w, e, debug, info, warn, error}
+    init log level, or no log
+  -v, --version
+    print version code
+  -x
+    show all numbers in hex
+  -L {h, d, e, v, header, data, events, verbose}
+  --level {h, d, e, v, header, data, events, verbose}
+    detail level
+    only headers by default
+)";
+  DumpController(std::string help_text) : BaseController(std::move(help_text)),
+      hex_(false),
+      detail_(0) {
+    Config(&self_type::EnableHex, {
       "-x",
     });
-    Callback(&self_type::DetailLevel, {
+    Config(&self_type::DetailLevel, {
       "-L",
       "--level",
     });
   }
  protected:
-  void Launch(std::list<std::string_view> &args) final {
+  void Main(std::list<std::string_view> &args) final {
     for (auto it : args) {
       Preview(it);
     }
-  }
-  std::string_view Usage() const final {
-    return
-"Usage: milk dump [OPTIONS] [FILES]\n"
-"  -h, --help\n"
-"    print this help message\n"
-"  --log {d, i, w, e, debug, info, warn, error}\n"
-"    init log level, or no log\n"
-"  -v, --version\n"
-"    print version code\n"
-"  -x\n"
-"    show all numbers in hex\n"
-"  -L {h, d, e, v, header, data, events, verbose}\n"
-"  --level {h, d, e, v, header, data, events, verbose}\n"
-"    detail level\n"
-"    only headers by default\n"
-    ;
-  }
-  std::string_view Name() const final {
-    return "dump";
-  }
-  void Help() const final {
-    std::cerr << Usage() << std::endl;
   }
  private:
   void EnableHex() {
@@ -356,9 +351,8 @@ class Dump final : public Command {
   static uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
     return (bytes[0] << 010) | bytes[1];
   }
-  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   bool hex_;
-  uint8_t detail_ = 0;
+  uint8_t detail_;
 };
 
 } // namespace Milk

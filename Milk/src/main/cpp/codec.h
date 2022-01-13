@@ -6,53 +6,50 @@
 #include <functional>
 #include <vector>
 
-#include "launch.h"
+#include <milkpowder.h>
+
+#include "control.h"
 
 namespace Milk {
 
-class Codec final : public Command {
-  static constexpr char TAG[] = "Milk::Codec";
-  using self_type = Codec;
+class CodecController final : public BaseController {
+  static constexpr char TAG[] = "Milk::CodecController";
+  using self_type = CodecController;
  public:
-  Codec() : Command(),
-      callbacks_(),
+  static constexpr auto kName = "";
+  static constexpr auto kUsage = R"(
+Usage: milk [OPTIONS] [FILES]
+  -h, --help
+    print this help message
+  --log {d, i, w, e, debug, info, warn, error}
+    init log level, or no log
+  -v, --version
+    print version code
+  -o
+    name of target file
+    or torn apart all files if this option is not set
+  -fmt {0, 1, 2}
+  --format {0, 1, 2}
+    header format of output files
+)";
+  CodecController(std::string help_text) : BaseController(std::move(help_text)),
       target_(""),
       format_(-1) {
-    Callback(&self_type::InitTarget, {
+    Config(&self_type::InitTarget, {
       "-o",
     });
-    Callback(&self_type::SetFormat, {
+    Config(&self_type::SetFormat, {
       "-fmt",
       "--format",
     });
   }
  protected:
-  void Launch(std::list<std::string_view> &args) final {
+  void Main(std::list<std::string_view> &args) final {
     if (target_ == "") {
       TornApart(args);
     } else {
       GenTarget(args, target_);
     }
-  }
-  std::string_view Usage() const final {
-    return
-"Usage: milk [OPTIONS] [FILES]\n"
-"  -h, --help\n"
-"    print this help message\n"
-"  --log {d, i, w, e, debug, info, warn, error}\n"
-"    init log level, or no log\n"
-"  -v, --version\n"
-"    print version code\n"
-"  -o\n"
-"    name of target file\n"
-"    or torn apart all files if this option is not set\n"
-"  -fmt {0, 1, 2}\n"
-"  --format {0, 1, 2}\n"
-"    header format of output files\n"
-    ;
-  }
-  std::string_view Name() const final {
-    return "";
   }
  private:
   bool SetFormat(ArgsCursor &cursor) {
@@ -209,7 +206,6 @@ class Codec final : public Command {
     }
     return messages_vec;
   }
-  std::map<std::string_view, std::function<bool(std::list<std::string_view>::iterator &, std::list<std::string_view> &)>> callbacks_;
   std::string_view target_;
   int32_t format_;
 };

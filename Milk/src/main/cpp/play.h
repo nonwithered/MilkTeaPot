@@ -4,9 +4,10 @@
 #include <thread>
 #include <chrono>
 
+#include <milkpowder.h>
 #include <soymilk.h>
 
-#include "launch.h"
+#include "control.h"
 
 namespace Milk {
 
@@ -170,15 +171,25 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   std::vector<SoyBean::HandleWrapper> handle_;
 };
 
-class Play final : public Command {
-  static constexpr char TAG[] = "Milk::Play";
-  using self_type = Play;
+class PlayController final : public BaseController {
+  static constexpr char TAG[] = "Milk::PlayController";
+  using self_type = PlayController;
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
-  Play() : Command() {
+  static constexpr auto kName = "play";
+  static constexpr auto kUsage = R"(
+Usage: milk play
+  -h, --help
+    print this help message
+  --log {d, i, w, e, debug, info, warn, error}
+    init log level, or no log
+  -v, --version
+    print version code
+)";
+  PlayController(std::string help_text) : BaseController(std::move(help_text)) {
   }
  protected:
-  void Launch(std::list<std::string_view> &args) final {
+  void Main(std::list<std::string_view> &args) final {
     MilkPowder::MidiMutableWrapper midi(nullptr);
     {
       auto filename = args.front();
@@ -242,23 +253,6 @@ class Play final : public Command {
     timer.AwaitTermination();
     timer.Close();
     std::cout << "return" << std::endl;
-  }
-  std::string_view Usage() const final {
-    return
-"Usage: milk play\n"
-"  -h, --help\n"
-"    print this help message\n"
-"  --log {d, i, w, e, debug, info, warn, error}\n"
-"    init log level, or no log\n"
-"  -v, --version\n"
-"    print version code\n"
-    ;
-  }
-  std::string_view Name() const final {
-    return "play";
-  }
-  void Help() const final {
-    std::cerr << Usage() << std::endl;
   }
  private:
 };

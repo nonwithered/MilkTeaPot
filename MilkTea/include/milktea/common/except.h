@@ -19,82 +19,8 @@ enum class Type {
   Unsupported,
   InvalidParam,
   LogicError,
-  EndOfFile,
+  IOError,
 };
-
-namespace Mapping {
-
-template<Type T>
-struct ToRawType;
-template<>
-struct ToRawType<Type::Nil> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_Nil;
-};
-template<>
-struct ToRawType<Type::Unknown> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_Unknown;
-};
-template<>
-struct ToRawType<Type::Assertion> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_Assertion;
-};
-template<>
-struct ToRawType<Type::NullPointer> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_NullPointer;
-};
-template<>
-struct ToRawType<Type::Unsupported> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_Unsupported;
-};
-template<>
-struct ToRawType<Type::InvalidParam> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_InvalidParam;
-};
-template<>
-struct ToRawType<Type::LogicError> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_LogicError;
-};
-template<>
-struct ToRawType<Type::EndOfFile> {
-  static constexpr auto target = MilkTea_Exception_t::MilkTea_Exception_EndOfFile;
-};
-
-template<MilkTea_Exception_t T>
-struct FromRawType;
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_Nil> {
-  static constexpr auto target = Type::Nil;
-};
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_Unknown> {
-  static constexpr auto target = Type::Unknown;
-};
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_Assertion> {
-  static constexpr auto target = Type::Assertion;
-};
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_NullPointer> {
-  static constexpr auto target = Type::NullPointer;
-};
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_Unsupported> {
-  static constexpr auto target = Type::Unsupported;
-};
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_InvalidParam> {
-  static constexpr auto target = Type::InvalidParam;
-};
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_LogicError> {
-  static constexpr auto target = Type::LogicError;
-};
-template<>
-struct FromRawType<MilkTea_Exception_t::MilkTea_Exception_EndOfFile> {
-  static constexpr auto target = Type::EndOfFile;
-};
-
-} // namespace Mapping
 
 inline
 MilkTea_Exception_t ToRawType(Type type) {
@@ -106,7 +32,7 @@ MilkTea_Exception_t ToRawType(Type type) {
     case Type::Unsupported: return MilkTea_Exception_t::MilkTea_Exception_Unsupported;
     case Type::InvalidParam: return MilkTea_Exception_t::MilkTea_Exception_InvalidParam;
     case Type::LogicError: return MilkTea_Exception_t::MilkTea_Exception_LogicError;
-    case Type::EndOfFile: return MilkTea_Exception_t::MilkTea_Exception_EndOfFile;
+    case Type::IOError: return MilkTea_Exception_t::MilkTea_Exception_IOError;
     default: return MilkTea_Exception_t::MilkTea_Exception_Nil;
   }
 }
@@ -120,7 +46,7 @@ Type FromRawType(MilkTea_Exception_t type) {
     case MilkTea_Exception_t::MilkTea_Exception_Unsupported: return Type::Unsupported;
     case MilkTea_Exception_t::MilkTea_Exception_InvalidParam: return Type::InvalidParam;
     case MilkTea_Exception_t::MilkTea_Exception_LogicError: return Type::LogicError;
-    case MilkTea_Exception_t::MilkTea_Exception_EndOfFile: return Type::EndOfFile;
+    case MilkTea_Exception_t::MilkTea_Exception_IOError: return Type::IOError;
     default: return Type::Nil;
   }
 }
@@ -135,7 +61,7 @@ std::string_view TypeName(Type type) {
     case Type::Unsupported: return "Unsupported";
     case Type::InvalidParam: return "InvalidParam";
     case Type::LogicError: return "LogicError";
-    case Type::EndOfFile: return "EndOfFile";
+    case Type::IOError: return "IOError";
     default: return "";
   }
 }

@@ -15,7 +15,7 @@ constexpr char TAG[] = "MilkPowder::Parse";
 uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
   auto ret = callback();
   if (!std::get<1>(ret)) {
-    MilkTea_throw(EndOfFile, "");
+    MilkTea_throw(IOError, "unexpected EOF");
   }
   return std::get<0>(ret);
 }

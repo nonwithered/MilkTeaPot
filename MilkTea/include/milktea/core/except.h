@@ -16,7 +16,7 @@ enum MilkTea_Exception_t {
   MilkTea_Exception_Unsupported,
   MilkTea_Exception_InvalidParam,
   MilkTea_Exception_LogicError,
-  MilkTea_Exception_EndOfFile
+  MilkTea_Exception_IOError
 };
 
 #ifndef __cplusplus
