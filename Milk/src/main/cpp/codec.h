@@ -32,9 +32,10 @@ Usage: milk [OPTIONS] [FILES]
   --format {0, 1, 2}
     header format of output files
 )";
-  CodecController(std::string help_text) : BaseController(std::move(help_text)),
-      target_(""),
-      format_(-1) {
+  CodecController(std::string help_text)
+  : BaseController(std::move(help_text)),
+    target_(""),
+    format_(-1) {
     Config(&self_type::InitTarget, {
       "-o",
     });
@@ -45,6 +46,11 @@ Usage: milk [OPTIONS] [FILES]
   }
  protected:
   void Main(std::list<std::string_view> &args) final {
+    Printer printer;
+    if (args.empty()) {
+      printer << "milk: no input files" << Printer::endl;
+      return;
+    }
     if (target_ == "") {
       TornApart(args);
     } else {

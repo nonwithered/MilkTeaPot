@@ -186,10 +186,16 @@ Usage: milk play
   -v, --version
     print version code
 )";
-  PlayController(std::string help_text) : BaseController(std::move(help_text)) {
+  PlayController(std::string help_text)
+  : BaseController(std::move(help_text)) {
   }
  protected:
   void Main(std::list<std::string_view> &args) final {
+    Printer printer;
+    if (args.empty()) {
+      printer << "milk play: no input files" << Printer::endl;
+      return;
+    }
     MilkPowder::MidiMutableWrapper midi(nullptr);
     {
       auto filename = args.front();
@@ -252,7 +258,7 @@ Usage: milk play
     timer.Start();
     timer.AwaitTermination();
     timer.Close();
-    std::cout << "return" << std::endl;
+    printer << "return" << Printer::endl;
   }
  private:
 };

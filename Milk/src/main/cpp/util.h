@@ -1,14 +1,10 @@
 #ifndef MILK_UTIL_H_
 #define MILK_UTIL_H_
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <ctime>
-#include <iostream>
-
 #include <milktea.h>
 #include <soybean.h>
+
+#include "print.h"
 
 namespace Milk {
 
