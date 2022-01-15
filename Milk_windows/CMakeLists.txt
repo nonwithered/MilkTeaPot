@@ -15,6 +15,6 @@ endforeach(it)
 add_executable(${PROJECT_NAME} ${src_paths})
 
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE milk_static
+    PRIVATE milk_console_static
     PRIVATE soybean_windows_static
 )

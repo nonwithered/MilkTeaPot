@@ -30,10 +30,10 @@ class ContextWrapper final : public BaseContext {
   void SetLogLevel(MilkTea::Logger::Level level) final {
     MilkTea_invoke_panic(interface().SetLogLevel, self(), MilkTea::Logger::ToRawType(level));
   }
-  std::unique_ptr<SoyBean::BaseFactory> GetSoyBeanFactory() final {
+  SoyBean::FactoryWrapper GetSoyBeanFactory() final {
     SoyBean_Factory_t result = {};
     MilkTea_invoke_panic(interface().GetSoyBeanFactory, self(), &result);
-    return std::make_unique<SoyBean::FactoryWrapper>(result);
+    return result;
   }
   BasePrinter &GetPrinterOut() final {
     return out_;

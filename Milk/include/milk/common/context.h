@@ -21,7 +21,7 @@ class BaseContext {
     };
   }
   virtual void SetLogLevel(MilkTea::Logger::Level) = 0;
-  virtual std::unique_ptr<SoyBean::BaseFactory> GetSoyBeanFactory() = 0;
+  virtual SoyBean::FactoryWrapper GetSoyBeanFactory() = 0;
   virtual BasePrinter &GetPrinterOut() = 0;
   virtual BasePrinter &GetPrinterErr() = 0;
   virtual std::unique_ptr<BaseFileReader> GetFileReader(const char [], size_t) = 0;

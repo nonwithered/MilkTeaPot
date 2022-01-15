@@ -19,7 +19,6 @@ MilkTea_Exception_t MilkTea_call Milk_BaseFileReader_Interface_Destroy(void *sel
 })
 
 MilkTea_Exception_t MilkTea_call Milk_BaseFileReader_Interface_Read(void *self, uint8_t bytes[], size_t *len) MilkTea_with_except({
-  MilkTea_nonnull(bytes);
   MilkTea_nonnull(len);
   *len = BaseFileReader_cast(self).Read(bytes, *len);
 })

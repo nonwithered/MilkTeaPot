@@ -15,11 +15,7 @@ MilkTea_Exception_t MilkTea_call Milk_Context_Interface_SetLogLevel(void *self, 
 
 MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetSoyBeanFactory(void *self, SoyBean_Factory_t *factory) MilkTea_with_except({
   MilkTea_nonnull(factory);
-  auto *factory_ = BaseContext_cast(self).GetSoyBeanFactory().release();
-  MilkTea::Defer defer([factory_]() {
-    std::move(*factory_).Destroy();
-  });
-  *factory = std::move(*factory_).ToRawType();
+  *factory = BaseContext_cast(self).GetSoyBeanFactory().ToRawType();
 })
 
 MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterOut(void *self, Milk_Printer_t *printer) MilkTea_with_except({

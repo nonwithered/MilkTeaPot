@@ -39,6 +39,7 @@ add_subdirectory(MilkPowder)
 add_subdirectory(SoyBean)
 add_subdirectory(SoyMilk)
 add_subdirectory(Milk)
+add_subdirectory(Milk_console)
 
 if(NOT MilkTeaPot_system_flag MATCHES "OFF")
     message("${PROJECT_NAME}: MilkTeaPot_system_flag_linux = ${MilkTeaPot_system_flag_linux}")

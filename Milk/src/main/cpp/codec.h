@@ -103,7 +103,8 @@ Usage: milk [OPTIONS] [FILES]
         std::vector<MilkPowder::TrackMutableWrapper> tracks = { midi.GetTrack(idx) };
         auto target = MilkPowder::MidiMutableWrapper::Make(format, division, std::move(tracks));
         {
-          auto writer = Context().GetFileWriter(filename.data(), filename.size());
+          std::string name = std::string() + filename.data() + "." + MilkTea::ToStringHexFromU16(idx) + ".mid";
+          auto writer = Context().GetFileWriter(name.data(), name.size());
           target.Dump(*writer);
         }
       }

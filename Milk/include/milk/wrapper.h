@@ -7,6 +7,7 @@
 
 namespace Milk {
 
+inline
 int Main(int argc, char *argv[], BaseContext &context) {
   return Milk_Main(argc, argv, context.ToRawType());
 }

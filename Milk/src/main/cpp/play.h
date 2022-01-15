@@ -14,17 +14,17 @@ namespace Milk {
 class RendererImpl final : public SoyMilk::BaseRenderer {
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
-  RendererImpl(std::unique_ptr<SoyBean::BaseFactory> factory, uint16_t format, uint16_t ntrks)
+  RendererImpl(SoyBean::FactoryWrapper factory, uint16_t format, uint16_t ntrks)
   : format_(format),
     ntrks_(ntrks),
     handle_(),
     seek_(nullptr) {
     if (format == 0x02) {
       for (uint16_t i = 0; i != ntrks; ++i) {
-        handle_.push_back(factory->Create());
+        handle_.push_back(factory.Create());
       }
     } else {
-      handle_.push_back(factory->Create());
+      handle_.push_back(factory.Create());
     }
   }
   RendererImpl(RendererImpl &&another)
