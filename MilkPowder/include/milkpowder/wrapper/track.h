@@ -35,9 +35,10 @@ class MutableInterface<Mapping::Track> {
  public:;
   virtual raw_type *get() = 0;
  public:
-  static MutableWrapper<Mapping::Track> Parse(std::function<bool(uint8_t *)> reader) {
+  static MutableWrapper<Mapping::Track> Parse(std::function<size_t(uint8_t [], size_t)> reader) {
+    MilkPowder::Mapping::ByteReader reader_ = reader;
     raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_parse, &self, Mapping::Reader(reader));
+    MilkTea_invoke_panic(mapping::raw_parse, &self, reader_);
     return self;
   }
   static MutableWrapper<Mapping::Track> Make(std::vector<MutableWrapper<Mapping::Message>> messages) {

@@ -57,9 +57,10 @@ class MutableInterface<Mapping::Message> {
   void SetDelta(uint32_t delta) {
     MilkTea_invoke_panic(mapping::raw_set_delta, get(), delta);
   }
-  static MutableWrapper<Mapping::Message> Parse(std::function<bool(uint8_t *)> reader, uint8_t last = 0xff) {
+  static MutableWrapper<Mapping::Message> Parse(std::function<size_t(uint8_t [], size_t)> reader, uint8_t last = 0xff) {
+    MilkPowder::Mapping::ByteReader reader_ = reader;
     raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_parse, &self, Mapping::Reader(reader), last);
+    MilkTea_invoke_panic(mapping::raw_parse, &self, reader_, last);
     return self;
   }
   template<typename T>

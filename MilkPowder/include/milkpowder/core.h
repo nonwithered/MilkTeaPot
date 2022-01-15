@@ -43,16 +43,16 @@ struct MilkPowder_Sysex_Item_mut_t {
 typedef struct MilkPowder_Sysex_Item_mut_t MilkPowder_Sysex_Item_mut_t;
 #endif
 
-MilkTea_Function_t(MilkPowder_Reader_t, bool, uint8_t *)
+MilkTea_Function_t(MilkPowder_ByteReader_t, MilkTea_Exception_t, uint8_t [], size_t *)
 
 #ifndef __cplusplus
-typedef struct MilkPowder_Reader_t MilkPowder_Reader_t;
+typedef struct MilkPowder_ByteReader_t MilkPowder_ByteReader_t;
 #endif
 
-MilkTea_Function_t(MilkPowder_Writer_t, void, const uint8_t [], size_t)
+MilkTea_Function_t(MilkPowder_ByteWriter_t, MilkTea_Exception_t, const uint8_t [], size_t)
 
 #ifndef __cplusplus
-typedef struct MilkPowder_Writer_t MilkPowder_Writer_t;
+typedef struct MilkPowder_ByteWriter_t MilkPowder_ByteWriter_t;
 #endif
 
 MilkTea_Consumer_t(MilkPowder_Track_Consumer_t, MilkPowder_Track_t *)
@@ -76,7 +76,7 @@ typedef struct MilkPowder_Sysex_Item_Consumer_t MilkPowder_Sysex_Item_Consumer_t
 // Midi
 
 MilkTea_api
-MilkPowder_Midi_Parse(MilkPowder_Midi_t **self, MilkPowder_Reader_t reader);
+MilkPowder_Midi_Parse(MilkPowder_Midi_t **self, MilkPowder_ByteReader_t reader);
 
 MilkTea_api
 MilkPowder_Midi_Create(MilkPowder_Midi_t **self, uint16_t format, uint16_t ntrks, uint16_t division, MilkPowder_Track_t *items[]);
@@ -109,12 +109,12 @@ MilkTea_api
 MilkPowder_Midi_AllTrack(MilkPowder_Midi_t *self, MilkPowder_Track_Consumer_t consumer);
 
 MilkTea_api
-MilkPowder_Midi_Dump(const MilkPowder_Midi_t *self, MilkPowder_Writer_t writer);
+MilkPowder_Midi_Dump(const MilkPowder_Midi_t *self, MilkPowder_ByteWriter_t writer);
 
 // Track
 
 MilkTea_api
-MilkPowder_Track_Parse(MilkPowder_Track_t **self, MilkPowder_Reader_t reader);
+MilkPowder_Track_Parse(MilkPowder_Track_t **self, MilkPowder_ByteReader_t reader);
 
 MilkTea_api
 MilkPowder_Track_Create(MilkPowder_Track_t **self, MilkPowder_Message_t *items[], uint32_t length);
@@ -135,12 +135,12 @@ MilkTea_api
 MilkPowder_Track_AllMessage(MilkPowder_Track_t *self, MilkPowder_Message_Consumer_t consumer);
 
 MilkTea_api
-MilkPowder_Track_Dump(const MilkPowder_Track_t *self, MilkPowder_Writer_t writer);
+MilkPowder_Track_Dump(const MilkPowder_Track_t *self, MilkPowder_ByteWriter_t writer);
 
 // Message
 
 MilkTea_api
-MilkPowder_Message_Parse(MilkPowder_Message_t **self, MilkPowder_Reader_t reader, uint8_t last);
+MilkPowder_Message_Parse(MilkPowder_Message_t **self, MilkPowder_ByteReader_t reader, uint8_t last);
 
 MilkTea_api
 MilkPowder_Message_Clone(const MilkPowder_Message_t *self, MilkPowder_Message_t **another);
@@ -158,7 +158,7 @@ MilkTea_api
 MilkPowder_Message_GetType(const MilkPowder_Message_t *self, uint8_t *type);
 
 MilkTea_api
-MilkPowder_Message_Dump(const MilkPowder_Message_t *self, MilkPowder_Writer_t writer);
+MilkPowder_Message_Dump(const MilkPowder_Message_t *self, MilkPowder_ByteWriter_t writer);
 
 MilkTea_api
 MilkPowder_Message_FromEvent(MilkPowder_Message_t **self, MilkPowder_Event_t *item);
@@ -190,7 +190,7 @@ MilkPowder_Message_ToSysex(const MilkPowder_Message_t *self, const MilkPowder_Sy
 // Event
 
 MilkTea_api
-MilkPowder_Event_Parse(MilkPowder_Event_t **self, MilkPowder_Reader_t reader, uint8_t last);
+MilkPowder_Event_Parse(MilkPowder_Event_t **self, MilkPowder_ByteReader_t reader, uint8_t last);
 
 MilkTea_api
 MilkPowder_Event_Create(MilkPowder_Event_t **self, uint32_t delta, uint8_t type, uint8_t arg0, uint8_t arg1);
@@ -208,7 +208,7 @@ MilkTea_api
 MilkPowder_Event_GetArgs(const MilkPowder_Event_t *self, uint8_t *args);
 
 MilkTea_api
-MilkPowder_Event_Dump(const MilkPowder_Event_t *self, MilkPowder_Writer_t writer);
+MilkPowder_Event_Dump(const MilkPowder_Event_t *self, MilkPowder_ByteWriter_t writer);
 
 MilkTea_api
 MilkPowder_Event_FromMessage(MilkPowder_Event_t **self, MilkPowder_Message_t *item);
@@ -219,7 +219,7 @@ MilkPowder_Event_ToMessage(const MilkPowder_Event_t *self, const MilkPowder_Mess
 // Meta
 
 MilkTea_api
-MilkPowder_Meta_Parse(MilkPowder_Meta_t **self, MilkPowder_Reader_t reader);
+MilkPowder_Meta_Parse(MilkPowder_Meta_t **self, MilkPowder_ByteReader_t reader);
 
 MilkTea_api
 MilkPowder_Meta_Create(MilkPowder_Meta_t **self, uint32_t delta, uint8_t type, const uint8_t args[], uint32_t length);
@@ -237,7 +237,7 @@ MilkTea_api
 MilkPowder_Meta_GetArgs(const MilkPowder_Meta_t *self, const uint8_t **args, uint32_t *length);
 
 MilkTea_api
-MilkPowder_Meta_Dump(const MilkPowder_Meta_t *self, MilkPowder_Writer_t writer);
+MilkPowder_Meta_Dump(const MilkPowder_Meta_t *self, MilkPowder_ByteWriter_t writer);
 
 MilkTea_api
 MilkPowder_Meta_FromMessage(MilkPowder_Meta_t **self, MilkPowder_Message_t *item);
@@ -248,7 +248,7 @@ MilkPowder_Meta_ToMessage(const MilkPowder_Meta_t *self, const MilkPowder_Messag
 // Sysex
 
 MilkTea_api
-MilkPowder_Sysex_Parse(MilkPowder_Sysex_t **self, MilkPowder_Reader_t reader);
+MilkPowder_Sysex_Parse(MilkPowder_Sysex_t **self, MilkPowder_ByteReader_t reader);
 
 MilkTea_api
 MilkPowder_Sysex_Create(MilkPowder_Sysex_t **self, uint32_t size, const MilkPowder_Sysex_Item_t items[]);
@@ -269,7 +269,7 @@ MilkTea_api
 MilkPowder_Sysex_AllItem(MilkPowder_Sysex_t *self, MilkPowder_Sysex_Item_Consumer_t consumer);
 
 MilkTea_api
-MilkPowder_Sysex_Dump(const MilkPowder_Sysex_t *self, MilkPowder_Writer_t writer);
+MilkPowder_Sysex_Dump(const MilkPowder_Sysex_t *self, MilkPowder_ByteWriter_t writer);
 
 MilkTea_api
 MilkPowder_Sysex_FromMessage(MilkPowder_Sysex_t **self, MilkPowder_Message_t *item);

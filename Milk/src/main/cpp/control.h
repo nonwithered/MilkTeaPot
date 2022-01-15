@@ -7,8 +7,9 @@
 #include <list>
 #include <memory>
 
+#include "context.h"
+#include "printer.h"
 #include "util.h"
-#include "config.h"
 
 namespace Milk {
 
@@ -35,6 +36,9 @@ class BaseController {
     Main(args);
   }
  protected:
+  static constexpr std::nullptr_t End() {
+    return nullptr;
+  }
   virtual void Main(std::list<std::string_view> &) = 0;
   class ArgsCursor final {
     using container = std::list<std::string_view>;
@@ -61,7 +65,10 @@ class BaseController {
     container &container_;
     iterator &cursor_;
   };
-  BaseController(std::string help_text) :
+  BaseController(BaseContext &context, std::string help_text) :
+    context_(context),
+    out_(context.GetPrinterOut()),
+    err_(context.GetPrinterErr()),
     help_text_(std::move(help_text)),
     help_(false),
     version_(false),
@@ -96,6 +103,15 @@ class BaseController {
     for (auto it : args) {
       callbacks_[it] = callback;
     }
+  }
+  BaseContext &Context() {
+    return context_;
+  }
+  BufferPrinter &Out() {
+    return out_;
+  }
+  BufferPrinter &Err() {
+    return err_;
   }
  private:
   void ShowVersion() {
@@ -132,10 +148,13 @@ class BaseController {
       std::cerr << "milk dump --log: invalid log level: " << *cursor << std::endl;
       return false;
     }
-    MilkTea::Logger::Config(ConfigWrapper::Instance().make_logger(level));
+    Context().SetLogLevel(level);
     ++cursor;
     return true;
   }
+  BaseContext &context_;
+  BufferPrinter out_;
+  BufferPrinter err_;
   const std::string help_text_;
   bool help_;
   bool version_;

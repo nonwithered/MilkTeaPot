@@ -32,8 +32,8 @@ Usage: milk [OPTIONS] [FILES]
   --format {0, 1, 2}
     header format of output files
 )";
-  CodecController(std::string help_text)
-  : BaseController(std::move(help_text)),
+  CodecController(BaseContext &context, std::string help_text)
+  : BaseController(context, std::move(help_text)),
     target_(""),
     format_(-1) {
     Config(&self_type::InitTarget, {
@@ -46,9 +46,8 @@ Usage: milk [OPTIONS] [FILES]
   }
  protected:
   void Main(std::list<std::string_view> &args) final {
-    Printer printer;
     if (args.empty()) {
-      printer << "milk: no input files" << Printer::endl;
+      Err() << "milk: no input files" << End();
       return;
     }
     if (target_ == "") {
@@ -60,7 +59,7 @@ Usage: milk [OPTIONS] [FILES]
  private:
   bool SetFormat(ArgsCursor &cursor) {
     if (!cursor) {
-      std::cerr << "milk --format: need format value" << std::endl;
+      Err() << "milk --format: need format value" << End();
       return false;
     } else if (*cursor == "0") {
       format_ = 0;
@@ -69,7 +68,7 @@ Usage: milk [OPTIONS] [FILES]
     } else if (*cursor == "2") {
       format_ = 2;
     } else {
-      std::cerr << "milk --format: invalid format value: " << *cursor << std::endl;
+      Err() << "milk --format: invalid format value: " << *cursor << End();
       return false;
     }
     ++cursor;
@@ -77,11 +76,11 @@ Usage: milk [OPTIONS] [FILES]
   }
   bool InitTarget(ArgsCursor &cursor) {
     if (!cursor) {
-      std::cerr << "milk -o: need target name" << std::endl;
+      Err() << "milk -o: need target name" << End();
       return false;
     }
     if (target_ != "") {
-      std::cerr << "milk -o: target name has been set to " << target_ << std::endl;
+      Err() << "milk -o: target name has been set to " << target_ << End();
       return false;
     }
     target_ = *cursor;
@@ -90,15 +89,10 @@ Usage: milk [OPTIONS] [FILES]
   }
   void TornApart(const std::list<std::string_view> &filenames) {
     for (auto filename : filenames) {
-      MilkPowder::MidiMutableWrapper midi(nullptr);
-      {
-        MilkPowder::FileReader reader(filename);
-        if (reader.NonOpen()) {
-          std::cerr << "Failed to open: " << filename << std::endl;
-          return;
-        }
-        midi = MilkPowder::MidiMutableWrapper::Parse(reader);
-      }
+      auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
+        auto reader = Context().GetFileReader(filename.data(), filename.size());
+        return MilkPowder::MidiMutableWrapper::Parse(*reader);
+      }();
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
       uint16_t division = midi.GetDivision();
@@ -108,12 +102,10 @@ Usage: milk [OPTIONS] [FILES]
       for (uint16_t idx = 0; idx != ntrks; ++idx) {
         std::vector<MilkPowder::TrackMutableWrapper> tracks = { midi.GetTrack(idx) };
         auto target = MilkPowder::MidiMutableWrapper::Make(format, division, std::move(tracks));
-        MilkPowder::FileWriter writer(std::string(filename) + "." + MilkTea::ToStringHexFromU16(idx) + ".mid");
-        if (writer.NonOpen()) {
-          std::cerr << "Failed to open: " << filename << std::endl;
-          return;
+        {
+          auto writer = Context().GetFileWriter(filename.data(), filename.size());
+          target.Dump(*writer);
         }
-        target.Dump(writer);
       }
     }
   }
@@ -122,15 +114,10 @@ Usage: milk [OPTIONS] [FILES]
     int32_t d = -1;
     std::vector<MilkPowder::TrackMutableWrapper> tracks;
     for (auto filename : filenames) {
-      MilkPowder::MidiMutableWrapper midi(nullptr);
-      {
-        MilkPowder::FileReader reader(filename);
-        if (reader.NonOpen()) {
-          std::cerr << "Failed to open: " << filename << std::endl;
-          return;
-        }
-        midi = MilkPowder::MidiMutableWrapper::Parse(reader);
-      }
+      auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
+        auto reader = Context().GetFileReader(filename.data(), filename.size());
+        return MilkPowder::MidiMutableWrapper::Parse(*reader);
+      }();
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
       uint16_t division = midi.GetDivision();
@@ -148,12 +135,10 @@ Usage: milk [OPTIONS] [FILES]
       MergeTracks(tracks);
     }
     auto target = MilkPowder::MidiMutableWrapper::Make(static_cast<uint16_t>(f), static_cast<uint16_t>(d), std::move(tracks));
-    MilkPowder::FileWriter writer(name);
-    if (writer.NonOpen()) {
-      std::cerr << "Failed to open: " << name << std::endl;
-      return;
+    {
+      auto writer = Context().GetFileWriter(name.data(), name.size());
+      target.Dump(*writer);
     }
-    target.Dump(writer);
   }
   static void MergeTracks(std::vector<MilkPowder::TrackMutableWrapper> &tracks) {
     tracks = { MilkPowder::TrackMutableWrapper::Make(MergeMsgs(GetMsgs(tracks))) };

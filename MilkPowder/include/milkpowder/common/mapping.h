@@ -100,24 +100,41 @@ struct Sysex {
   static constexpr auto raw_message_to = MilkPowder_Message_ToSysex;
 };
 
-struct Reader {
-  using raw_type = MilkPowder_Reader_t;
-  Reader(std::function<bool(uint8_t *)> f) : f_(f) {}
+class ByteReader final {
+  static constexpr char TAG[] = "MilkPowder::Mapping::ByteReader";
+  using raw_type = MilkPowder_ByteReader_t;
+  using call_type = std::function<size_t(uint8_t [], size_t)>;
+ public:
+  ByteReader(call_type call) {
+    call_ = [call](uint8_t bytes[], size_t *len) -> MilkTea_Exception_t MilkTea_with_except({
+      MilkTea_nonnull(bytes);
+      MilkTea_nonnull(len);
+      *len = call(bytes, *len);
+    });
+  }
   operator raw_type(){
-    return MilkTea::FunctionAdapter::ToRawType<raw_type>(f_);
+    return MilkTea::FunctionAdapter::ToRawType<raw_type>(call_);
   }
  private:
-  std::function<bool(uint8_t *)> f_;
+  std::function<MilkTea_Exception_t(uint8_t [], size_t *)> call_;
 };
 
-struct Writer {
-  using raw_type = MilkPowder_Writer_t;
-  Writer(std::function<void(const uint8_t *, size_t)> f) : f_(f) {}
-  operator raw_type() {
-    return MilkTea::FunctionAdapter::ToRawType<raw_type>(f_);
+class ByteWriter final {
+  static constexpr char TAG[] = "MilkPowder::Mapping::ByteWriter";
+  using raw_type = MilkPowder_ByteWriter_t;
+  using call_type = std::function<void(const uint8_t [], size_t)>;
+ public:
+  ByteWriter(call_type call) {
+    call_ = [call](const uint8_t bytes[], size_t len) -> MilkTea_Exception_t MilkTea_with_except({
+      MilkTea_nonnull(bytes);
+      call(bytes, len);
+    });
+  }
+  operator raw_type(){
+    return MilkTea::FunctionAdapter::ToRawType<raw_type>(call_);
   }
  private:
-  std::function<void(const uint8_t *, size_t)> f_;
+  std::function<MilkTea_Exception_t(const uint8_t [], size_t)> call_;
 };
 
 } // namespace Mapping

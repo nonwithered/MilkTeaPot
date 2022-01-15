@@ -5,6 +5,8 @@
 
 #ifdef __cplusplus
 
+#include <milk/common/context.h>
+
 #endif // ifdef __cplusplus
 
 #endif // ifndef LIB_MILK_COMMON_H_

@@ -1,12 +1,13 @@
-#ifndef LIB_SOYBEAN_WRAPPER_FACTORY_H_
-#define LIB_SOYBEAN_WRAPPER_FACTORY_H_
+#ifndef LIB_SOYBEAN_COMMON_FACTORY_H_
+#define LIB_SOYBEAN_COMMON_FACTORY_H_
 
-#include <soybean/wrapper/handle.h>
+#include <soybean/common/handle.h>
 
 namespace SoyBean {
 
 class BaseFactory {
   using raw_type = SoyBean_Factory_t;
+  using interface_type = SoyBean_Factory_Interface_t;
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
@@ -17,9 +18,9 @@ class BaseFactory {
   virtual ~BaseFactory() = default;
   virtual BaseFactory &Move() && = 0;
   virtual void Destroy() && = 0;
-  virtual BaseHandle &Create() = 0;
+  virtual std::unique_ptr<BaseHandle> Create() = 0;
  private:
-  static MilkTea_decl(const SoyBean_Factory_Interface_t &) Interface();
+  static MilkTea_decl(const interface_type &) Interface();
 };
 
 class FactoryWrapper final : public BaseFactory {
@@ -30,15 +31,13 @@ class FactoryWrapper final : public BaseFactory {
     return release();
   }
   FactoryWrapper(raw_type another = {}) : self_(another) {}
-  FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper() {
-    std::swap(self_, another.self_);
-  }
+  FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper(another.release()) {}
   ~FactoryWrapper() final {
-    if (self_.self_ == nullptr) {
+    auto self = release();
+    if (self.self_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(SoyBean_Factory_Destroy, self_);
-    self_ = {};
+    MilkTea_invoke_panic(SoyBean_Factory_Destroy, self);
   }
   BaseFactory &Move() && final {
     return *new FactoryWrapper(std::forward<FactoryWrapper>(*this));
@@ -46,18 +45,18 @@ class FactoryWrapper final : public BaseFactory {
   void Destroy() && final {
     delete this;
   }
-  BaseHandle &Create() final {
-    return *new HandleWrapper(make_handle());
-  }
-  HandleWrapper make_handle() {
-    SoyBean_Handle_t handle{};
-    MilkTea_invoke_panic(SoyBean_Handle_Create, &handle, self_);
-    return handle;
+  std::unique_ptr<BaseHandle>Create() final {
+    SoyBean_Handle_t result = {};
+    MilkTea_invoke_panic(SoyBean_Handle_Create, &result, get());
+    return std::make_unique<HandleWrapper>(result);
   }
   raw_type release() {
-    raw_type self = self_;
-    self_ = {};
-    return self;
+    raw_type result = {};
+    std::swap(self_, result);
+    return result;
+  }
+  raw_type get() {
+    return self_;
   }
 private:
   raw_type self_;
@@ -67,4 +66,4 @@ private:
 
 } // namespace SoyBean
 
-#endif // ifndef LIB_SOYBEAN_WRAPPER_FACTORY_H_
+#endif // ifndef LIB_SOYBEAN_COMMON_FACTORY_H_

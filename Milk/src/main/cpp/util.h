@@ -4,8 +4,6 @@
 #include <milktea.h>
 #include <soybean.h>
 
-#include "print.h"
-
 namespace Milk {
 
 static constexpr char kVersion[] = "0.0.1-SNAPSHOT";

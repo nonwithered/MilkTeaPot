@@ -40,9 +40,10 @@ class MutableInterface<Mapping::Event> {
  public:;
   virtual raw_type *get() = 0;
  public:
-  static MutableWrapper<mapping> Parse(std::function<bool(uint8_t *)> reader, uint8_t last = 0xff) {
+  static MutableWrapper<mapping> Parse(std::function<size_t(uint8_t [], size_t)> reader, uint8_t last = 0xff) {
+    MilkPowder::Mapping::ByteReader reader_ = reader;
     raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_parse, &self, Mapping::Reader(reader), last);
+    MilkTea_invoke_panic(mapping::raw_parse, &self, reader_, last);
     return self;
   }
   static MutableWrapper<mapping> Make(uint32_t delta, uint8_t type, std::array<uint8_t, 2> args) {

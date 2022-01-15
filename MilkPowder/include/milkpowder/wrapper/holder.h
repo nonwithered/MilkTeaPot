@@ -31,8 +31,9 @@ class ConstWrapper final : public ConstInterface<T> {
     self_ = nullptr;
   }
   ConstWrapper(const ConstWrapper<T> &another) : ConstWrapper(another.get()) {}
-  void Dump(std::function<void(const uint8_t *, size_t)> writer) const {
-    MilkTea_invoke_panic(T::raw_dump, get(), Mapping::Writer(writer));
+  void Dump(std::function<void(const uint8_t [], size_t)> writer) const {
+    MilkPowder::Mapping::ByteWriter writer_ = writer;
+    MilkTea_invoke_panic(T::raw_dump, get(), writer_);
   }
   const raw_type *release() {
     return reset(nullptr);
@@ -118,8 +119,9 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
     std::swap(self_, self);
     return self;
   }
-  void Dump(std::function<void(const uint8_t *, size_t)> writer) const {
-    MilkTea_invoke_panic(T::raw_dump, get(), Mapping::Writer(writer));
+  void Dump(std::function<void(const uint8_t [], size_t)> writer) const {
+    MilkPowder::Mapping::ByteWriter writer_ = writer;
+    MilkTea_invoke_panic(T::raw_dump, get(), writer_);
   }
 };
 

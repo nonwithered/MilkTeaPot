@@ -5,8 +5,13 @@
 
 #ifdef __cplusplus
 
-#include <milk/wrapper/logger.h>
-#include <milk/wrapper/config.h>
+namespace Milk {
+
+int Main(int argc, char *argv[], BaseContext &context) {
+  return Milk_Main(argc, argv, context.ToRawType());
+}
+
+} // namespace Milk
 
 #endif // ifdef __cplusplus
 

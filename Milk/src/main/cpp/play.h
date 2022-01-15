@@ -14,17 +14,17 @@ namespace Milk {
 class RendererImpl final : public SoyMilk::BaseRenderer {
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
-  RendererImpl(uint16_t format, uint16_t ntrks)
+  RendererImpl(std::unique_ptr<SoyBean::BaseFactory> factory, uint16_t format, uint16_t ntrks)
   : format_(format),
     ntrks_(ntrks),
     handle_(),
     seek_(nullptr) {
     if (format == 0x02) {
       for (uint16_t i = 0; i != ntrks; ++i) {
-        handle_.push_back(Make());
+        handle_.push_back(factory->Create());
       }
     } else {
-      handle_.push_back(Make());
+      handle_.push_back(factory->Create());
     }
   }
   RendererImpl(RendererImpl &&another)
@@ -70,74 +70,71 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   }
   std::function<void(duration_type)> OnPrepareListener;
   void OnPrepare(duration_type time) final {
-    std::cerr << "OnPrepareListener" << " " << time.count() << std::endl;
+//    Err() << "OnPrepareListener" << " " << time.count() << End();
     if (OnPrepareListener) {
       OnPrepareListener(time);
     }
   }
   std::function<void()> OnStartListener;
   void OnStart() final {
-    std::cerr << "OnStartListener" << std::endl;
+//    Err() << "OnStartListener" << End();
     if (OnStartListener) {
       OnStartListener();
     }
   }
   std::function<void(duration_type)> OnPauseListener;
   void OnPause(duration_type time) final {
-    std::cerr << "OnPauseListener" << std::endl;
+//    Err() << "OnPauseListener" << End();
     if (OnPauseListener) {
       OnPauseListener(time);
     }
   }
   std::function<void()> OnSeekBeginListener;
   void OnSeekBegin() final {
-    std::cerr << "OnSeekBeginListener" << std::endl;
+//    Err() << "OnSeekBeginListener" << End();
     if (OnSeekBeginListener) {
       OnSeekBeginListener();
     }
   }
   std::function<void(duration_type)> OnSeekEndListener;
   void OnSeekEnd(duration_type time) final {
-    std::cerr << "OnSeekEndListener" << " " << time.count() << std::endl;
+//    Err() << "OnSeekEndListener" << " " << time.count() << End();
     if (OnSeekEndListener) {
       OnSeekEndListener(time);
     }
   }
   std::function<void()> OnResumeListener;
   void OnResume() final {
-    std::cerr << "OnResumeListener" << std::endl;
+//    Err() << "OnResumeListener" << End();
     if (OnResumeListener) {
       OnResumeListener();
     }
   }
   std::function<void()> OnStopListener;
   void OnStop() final {
-    std::cerr << "OnStopListener" << std::endl;
+//    Err() << "OnStopListener" << End();
     if (OnStopListener) {
       OnStopListener();
     }
   }
   std::function<void()> OnResetListener;
   void OnReset() final {
-    std::cerr << "OnResetListener" << std::endl;
+//    Err() << "OnResetListener" << End();
     if (OnResetListener) {
       OnResetListener();
     }
   }
   std::function<void()> OnCompleteListener;
   void OnComplete() final {
-    std::cerr << "OnCompleteListener" << std::endl;
+//    Err() << "OnCompleteListener" << End();
     if (OnCompleteListener) {
       OnCompleteListener();
     }
   }
   bool *seek_;
  private:
-  static SoyBean::HandleWrapper Make() {
-    return ConfigWrapper::Instance().make_soybean_factory().make_handle();
-  }
   void OnFrame(uint16_t index, MilkPowder::EventConstWrapper event) {
-    auto &handle = handle_[index];
+    auto &handle = *handle_[index].get();
     uint8_t type = event.GetType();
     uint8_t channel = type & 0x0f;
     type &= 0xf0;
@@ -168,7 +165,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   }
   const uint16_t format_;
   const uint16_t ntrks_;
-  std::vector<SoyBean::HandleWrapper> handle_;
+  std::vector<std::unique_ptr<SoyBean::BaseHandle>> handle_;
 };
 
 class PlayController final : public BaseController {
@@ -186,35 +183,29 @@ Usage: milk play
   -v, --version
     print version code
 )";
-  PlayController(std::string help_text)
-  : BaseController(std::move(help_text)) {
+  PlayController(BaseContext &context, std::string help_text)
+  : BaseController(context, std::move(help_text)) {
   }
  protected:
   void Main(std::list<std::string_view> &args) final {
-    Printer printer;
     if (args.empty()) {
-      printer << "milk play: no input files" << Printer::endl;
+      Err() << "milk play: no input files" << End();
       return;
     }
-    MilkPowder::MidiMutableWrapper midi(nullptr);
-    {
+    auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
       auto filename = args.front();
-      MilkPowder::FileReader reader(filename);
-      if (reader.NonOpen()) {
-        std::cerr << "Failed to open: " << filename << std::endl;
-        return;
-      }
-      midi = MilkPowder::MidiMutableWrapper::Parse(reader);
-    }
-    TeaPot::TimerWorkerWrapper timer([](auto type, auto what) -> bool {
+      auto reader = Context().GetFileReader(filename.data(), filename.size());
+      return MilkPowder::MidiMutableWrapper::Parse(*reader);
+    }();
+    TeaPot::TimerWorkerWrapper timer([this](auto type, auto what) -> bool {
       if (type == MilkTea::Exception::Type::Nil) {
         return false;
       }
-      std::cerr << MilkTea::Exception::TypeName(type) << ": " << what << std::endl;
+      Err() << MilkTea::Exception::TypeName(type) << ": " << what << End();
       return false;
     });
     std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
-    RendererImpl renderer(midi.GetFormat(), midi.GetNtrks());
+    RendererImpl renderer(Context().GetSoyBeanFactory(), midi.GetFormat(), midi.GetNtrks());
     duration_type pos = duration_type::zero();
     bool seek = false;
     renderer.seek_ = &seek;
@@ -258,7 +249,7 @@ Usage: milk play
     timer.Start();
     timer.AwaitTermination();
     timer.Close();
-    printer << "return" << Printer::endl;
+    Out() << "return" << End();
   }
  private:
 };

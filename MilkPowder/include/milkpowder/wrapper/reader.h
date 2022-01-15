@@ -8,34 +8,18 @@
 
 namespace MilkPowder {
 
-class FileReader final {
+class ByteReader final {
+  using call_type = std::function<MilkTea_Exception_t(uint8_t[], size_t &)>;
  public:
-  explicit FileReader(std::string_view filename)
-    : ifs_(filename.data(), std::ios::binary) {
-  }
-  bool NonOpen() const {
-    return !ifs_.is_open();
-  }
-  size_t Read(uint8_t *buf, size_t size) {
-    if (ifs_.eof()) {
-      return 0;
-    }
-    if (buf != nullptr) {
-      ifs_.read(reinterpret_cast<char *>(buf), size);
-    } else {
-      ifs_.ignore(size);
-    }
-    return ifs_.gcount();
-  }
-  operator std::function<bool(uint8_t *)>() {
-    return [this](uint8_t *byte) -> bool {
-      return Read(byte, 1);
-    };
+  ByteReader(call_type call) : call_(call) {}
+  size_t operator()(uint8_t bytes[], size_t len) {
+    MilkTea_invoke_panic(call_, bytes, len);
+    return len;
   }
  private:
-  std::ifstream ifs_;
-  MilkTea_NonCopy(FileReader)
-  MilkTea_NonMove(FileReader)
+  call_type call_;
+  MilkTea_NonCopy(ByteReader)
+  MilkTea_NonMove(ByteReader)
 };
 
 } // namespace MilkPowder

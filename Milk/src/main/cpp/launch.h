@@ -3,8 +3,8 @@
 
 #include <vector>
 
+#include "context.h"
 #include "control.h"
-#include "config.h"
 #include "codec.h"
 #include "dump.h"
 #include "play.h"
@@ -12,12 +12,12 @@
 namespace Milk {
 
 class ControllerInfo final {
-  using factory_type = std::function<BaseController *(std::string)>;
+  using factory_type = std::function<BaseController *(BaseContext &, std::string)>;
  public:
   template<typename Controller>
   static ControllerInfo Make() {
-    return ControllerInfo(Controller::kName, Controller::kUsage, [](auto s) -> Controller * {
-      return new Controller(s);
+    return ControllerInfo(Controller::kName, Controller::kUsage, [](auto &context, auto s) -> Controller * {
+      return new Controller(context, s);
     });
   }
   std::string_view name() const {
@@ -26,8 +26,8 @@ class ControllerInfo final {
   std::string_view usage() const {
     return usage_;
   }
-  std::unique_ptr<BaseController> Create(std::string help_text) const {
-    return std::unique_ptr<BaseController>(factory_(help_text));
+  std::unique_ptr<BaseController> Create(BaseContext &context, std::string help_text) const {
+    return std::unique_ptr<BaseController>(factory_(context, help_text));
   }
  private:
   ControllerInfo(std::string_view name, std::string_view usage, factory_type factory)
@@ -45,10 +45,9 @@ class Launcher final {
     return ControllerInfo::Make<Controller>();
   }
  public:
-  static bool Launch(int argc, char *argv[]) {
-    auto e = MilkTea::Exception::Catch([argc, argv]() {
-      ConfigWrapper::Instance();
-      Launcher(
+  static bool Launch(int argc, char *argv[], ContextWrapper context) {
+    auto e = MilkTea::Exception::Catch([&context, argc, argv]() {
+      Launcher(context,
         Info<CodecController>(), {
           Info<DumpController>(),
           Info<PlayController>(),
@@ -62,8 +61,9 @@ class Launcher final {
     return false;
   }
  private:
-  Launcher(ControllerInfo info, std::initializer_list<ControllerInfo> infos)
-  : info_(std::move(info)),
+  Launcher(BaseContext &context, ControllerInfo info, std::initializer_list<ControllerInfo> infos)
+  : context_(context),
+    info_(std::move(info)),
     infos_(std::move(infos)) {}
   void Main(int argc, char *argv[]) {
     auto args = Args(argc, argv);
@@ -72,7 +72,7 @@ class Launcher final {
       for (const auto &it : infos_) {
         if (it.name() == mode) {
           args.pop_front();
-          it.Create(std::string(it.usage()))->Launch(args);
+          it.Create(context_, std::string(it.usage()))->Launch(args);
           return;
         }
       }
@@ -81,7 +81,7 @@ class Launcher final {
     for (const auto &it : infos_) {
       help_text += it.usage();
     }
-    info_.Create(std::move(help_text))->Launch(args);
+    info_.Create(context_, std::move(help_text))->Launch(args);
   }
   static std::list<std::string_view> Args(int argc, char *argv[]) {
     std::list<std::string_view> args;
@@ -90,8 +90,10 @@ class Launcher final {
     }
     return args;
   }
+  BaseContext &context_;
   ControllerInfo info_;
   std::vector<ControllerInfo> infos_;
+
 };
 
 } // namespace Milk

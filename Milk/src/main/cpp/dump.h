@@ -14,7 +14,6 @@ namespace Milk {
 class DumpController final : public BaseController {
   static constexpr char TAG[] = "Milk::DumpController";
   using self_type = DumpController;
-  static constexpr auto endl = Printer::endl;
  public:
   static constexpr auto kName = "dump";
   static constexpr auto kUsage = R"(
@@ -32,9 +31,8 @@ Usage: milk dump [OPTIONS] [FILES]
     detail level
     only headers by default
 )";
-  DumpController(std::string help_text)
-  : BaseController(std::move(help_text)),
-    printer_(),
+  DumpController(BaseContext &context, std::string help_text)
+  : BaseController(context, std::move(help_text)),
     hex_(false),
     detail_(0) {
     Config(&self_type::EnableHex, {
@@ -48,7 +46,7 @@ Usage: milk dump [OPTIONS] [FILES]
  protected:
   void Main(std::list<std::string_view> &args) final {
     if (args.empty()) {
-      printer() << "milk dump: no input files" << Printer::endl;
+      Err() << "milk dump: no input files" << End();
       return;
     }
     for (auto it : args) {
@@ -61,7 +59,7 @@ Usage: milk dump [OPTIONS] [FILES]
   }
   bool DetailLevel(ArgsCursor &cursor) {
     if (!cursor) {
-      std::cerr << "milk dump --level: need detail level" << std::endl;
+      Err() << "milk dump --level: need detail level" << End();
       return false;
     } else if (*cursor == "h" || *cursor == "header") {
       detail_ = 0;
@@ -72,92 +70,88 @@ Usage: milk dump [OPTIONS] [FILES]
     } else if (*cursor == "v" || *cursor == "verbose") {
       detail_ = 3;
     } else {
-      std::cerr << "milk dump --level: invalid detail level: " << *cursor << std::endl;
+      Err() << "milk dump --level: invalid detail level: " << *cursor << End();
       return false;
     }
     ++cursor;
     return true;
   }
   void Preview(std::string_view filename) {
-    MilkPowder::FileReader reader(filename);
-    if (reader.NonOpen()) {
-      std::cerr << "Failed to open: " << filename << std::endl;
-      return;
-    }
+    auto reader = Context().GetFileReader(filename.data(), filename.size());
     switch (detail_) {
       case 0:
       case 1:
-        PreviewHead(reader);
+        PreviewHead(*reader);
         break;
       case 2:
       case 3:
-        PreviewBody(reader);
+        PreviewBody(*reader);
         break;
       default:
         break;
     }
   }
-  void PreviewHead(MilkPowder::FileReader &reader) {
+  void PreviewHead(BaseFileReader &reader) {
     uint8_t buf[5];
     size_t count;
     // header type
     count = reader.Read(buf, 4);
     if (count < 4) {
-      std::cerr << "Failed to read header type 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
+      Err() << "Failed to read header type 0x" << MilkTea::ToStringHexFromBytes(buf, count) << End();
       return;
     }
     buf[4] = '\0';
     std::string type(reinterpret_cast<char *>(buf));
     if (type != "MThd") {
-      std::cerr << "Error header type " << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << std::endl;
+      Err() << "Error header type " << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << End();
       return;
     }
     // header length
     count = reader.Read(buf, 4);
     if (count < 4) {
-      std::cerr << "Failed to read header length 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
+      Err() << "Failed to read header length 0x" << MilkTea::ToStringHexFromBytes(buf, count) << End();
       return;
     }
     uint32_t length = InternalFromBytesToU32(buf);
     if (length != 6) {
-      std::cerr << "Error header length " << InternalToStringFromU32(length) << std::endl;
+      Err() << "Error header length " << InternalToStringFromU32(length) << End();
       return;
     }
     // header format
     count = reader.Read(buf, 2);
     if (count < 2) {
-      std::cerr << "Failed to read header format 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
+      Err() << "Failed to read header format 0x" << MilkTea::ToStringHexFromBytes(buf, count) << End();
       return;
     }
     uint16_t format = InternalFromBytesToU16(buf);
     // header ntrks
     count = reader.Read(buf, 2);
     if (count < 2) {
-      std::cerr << "Failed to read header ntrks 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
+      Err() << "Failed to read header ntrks 0x" << MilkTea::ToStringHexFromBytes(buf, count) << End();
       return;
     }
     uint16_t ntrks = InternalFromBytesToU16(buf);
     // header division
     count = reader.Read(buf, 2);
     if (count < 2) {
-      std::cerr << "Failed to read header division 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
+      Err() << "Failed to read header division 0x" << MilkTea::ToStringHexFromBytes(buf, count) << End();
       return;
     }
     uint16_t division = InternalFromBytesToU16(buf);
     // header chunk
-    printer() << "[HEADER]" << endl;
-    printer() << "type=" << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << endl;
-    printer() << "length=" << InternalToStringFromU32(length) << endl;
-    printer() << "format=" << InternalToStringFromU16(format) << endl;
-    printer() << "ntrks=" << InternalToStringFromU16(ntrks) << endl;
-    printer() << "division=" << InternalToStringFromU16(division) << endl;
-    printer() << "[/HEADER]" << endl;
+    Out() << "[HEADER]" << End();
+    Out() << "type=" << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << End();
+    Out() << "length=" << InternalToStringFromU32(length) << End();
+    Out() << "format=" << InternalToStringFromU16(format) << End();
+    Out() << "ntrks=" << InternalToStringFromU16(ntrks) << End();
+    Out() << "division=" << InternalToStringFromU16(division) << End();
+    Out() << "[/HEADER]" << End();
     // foreach chunk
     for (uint16_t i = 0; i < ntrks; ++i) {
       // chunk type
       count = reader.Read(buf, 4);
       if (count < 4) {
-        std::cerr << "Failed to read chunk type 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
+        Err() << "Failed to read chunk type 0x" << MilkTea::ToStringHexFromBytes(buf, count) << End();
         return;
       }
       buf[4] = '\0';
@@ -165,29 +159,29 @@ Usage: milk dump [OPTIONS] [FILES]
       // chunk length
       count = reader.Read(buf, 4);
       if (count < 4) {
-        std::cerr << "Failed to read chunk length 0x" << MilkTea::ToStringHexFromBytes(buf, count) << std::endl;
+        Err() << "Failed to read chunk length 0x" << MilkTea::ToStringHexFromBytes(buf, count) << End();
         return;
       }
       uint32_t length = InternalFromBytesToU32(buf);
       // each chunk
-      printer() << "[CHUNK]" << endl;
-      printer() << "type=" << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << endl;
-      printer() << "length=" << InternalToStringFromU32(length) << endl;
+      Out() << "[CHUNK]" << End();
+      Out() << "type=" << InternalToStringFromBytes(reinterpret_cast<const uint8_t *>(type.data()), 4) << End();
+      Out() << "length=" << InternalToStringFromU32(length) << End();
       if (!ShowData(reader, length)) {
-        std::cerr << "Failed to read data of chunk because of unexpected EOF" << std::endl;
+        Err() << "Failed to read data of chunk because of unexpected EOF" << End();
         return;
       }
-      printer() << "[/CHUNK]" << endl;
+      Out() << "[/CHUNK]" << End();
     }
   }
-  bool ShowData(MilkPowder::FileReader &reader, const uint32_t length) {
+  bool ShowData(BaseFileReader &reader, const uint32_t length) {
     if (detail_ != 1) {
       size_t count = reader.Read(nullptr, static_cast<size_t>(length));
       if (count < static_cast<size_t>(length)) {
         return false;
       }
     } else {
-      printer() << "  Offset: 0001 0203 0405 0607 0809 0A0B 0C0D 0E0F" << endl;
+      Out() << "  Offset: 0001 0203 0405 0607 0809 0A0B 0C0D 0E0F" << End();
       uint32_t line = 0;
       size_t count = 0;
       while (count < static_cast<size_t>(length)) {
@@ -203,46 +197,46 @@ Usage: milk dump [OPTIONS] [FILES]
         } else {
           count += c;
         }
-        printer() << MilkTea::ToStringHexFromU32(line) << ":";
+        Out() << MilkTea::ToStringHexFromU32(line) << ":";
         line += 16;
         for (size_t i = 0; i < 8; ++i) {
-          printer() << " ";
+          Out() << " ";
           for (size_t j = 0; j < 2; ++j) {
             size_t k = i * 2 + j;
             if (k < c) {
-              printer() << MilkTea::ToStringHexFromU8(buf[k]);
+              Out() << MilkTea::ToStringHexFromU8(buf[k]);
             } else {
-              printer() << "  ";
+              Out() << "  ";
             }
           }
         }
-        printer() << "  " << MilkTea::ToStringFromChars(buf, c) << endl;
+        Out() << "  " << MilkTea::ToStringFromChars(buf, c) << End();
       }
     }
     return true;
   }
-  void PreviewBody(MilkPowder::FileReader &reader) {
+  void PreviewBody(BaseFileReader &reader) {
     auto midi = MilkPowder::MidiMutableWrapper::Parse(reader);
     // header chunk
-    printer() << "[HEADER]" << endl;
-    printer() << "type=MThd" << endl;
-    printer() << "length=" << InternalToStringFromU32(6) << endl;
+    Out() << "[HEADER]" << End();
+    Out() << "type=MThd" << End();
+    Out() << "length=" << InternalToStringFromU32(6) << End();
     // format
     uint16_t format = midi.GetFormat();
-    printer() << "format=" << InternalToStringFromU16(format) << endl;
+    Out() << "format=" << InternalToStringFromU16(format) << End();
     // ntrks
     uint16_t ntrks = midi.GetNtrks();
-    printer() << "ntrks=" << InternalToStringFromU16(ntrks) << endl;
+    Out() << "ntrks=" << InternalToStringFromU16(ntrks) << End();
     // division
     uint16_t division = midi.GetDivision();
-    printer() << "division=" << InternalToStringFromU16(division) << endl;
-    printer() << "[/HEADER]" << endl;
+    Out() << "division=" << InternalToStringFromU16(division) << End();
+    Out() << "[/HEADER]" << End();
     // foreach chunk
     for (uint16_t i = 0; i != ntrks; ++i) {
       MilkPowder::TrackConstWrapper track = midi.GetTrack(i);
       // each chunk
-      printer() << "[CHUNK]" << endl;
-      printer() << "type=MTrk" << endl;
+      Out() << "[CHUNK]" << End();
+      Out() << "type=MTrk" << End();
       std::function<void(MilkPowder::MessageConstWrapper)> callback;
       if (detail_ == 2) {
         callback = [this](MilkPowder::MessageConstWrapper item) -> void {
@@ -257,53 +251,53 @@ Usage: milk dump [OPTIONS] [FILES]
         auto item = track.GetMessage(i);
         callback(item);
       }
-      printer() << "[/CHUNK]" << endl;
+      Out() << "[/CHUNK]" << End();
     }
   }
   void ShowMessages(MilkPowder::MessageConstWrapper message) {
-    printer() << "[EVENT]" << endl;
+    Out() << "[EVENT]" << End();
     // delta
     uint32_t delta = message.GetDelta();
-    printer() << "delta=" << InternalToStringFromVarLen(delta) << endl;
+    Out() << "delta=" << InternalToStringFromVarLen(delta) << End();
     // type
     uint32_t type = message.GetType();
-    printer() << "type=" << MilkTea::ToStringHexFromU8(type) << endl;
-    printer() << "[/EVENT]" << endl;
+    Out() << "type=" << MilkTea::ToStringHexFromU8(type) << End();
+    Out() << "[/EVENT]" << End();
   }
   void ShowMessagesVerbose(MilkPowder::MessageConstWrapper message) {
-    printer() << "[EVENT]" << endl;
+    Out() << "[EVENT]" << End();
     // delta
     uint32_t delta = message.GetDelta();
-    printer() << "delta=" << InternalToStringFromVarLen(delta) << endl;
+    Out() << "delta=" << InternalToStringFromVarLen(delta) << End();
     // type
     uint32_t type = message.GetType();
-    printer() << "type=" << MilkTea::ToStringHexFromU8(type);
+    Out() << "type=" << MilkTea::ToStringHexFromU8(type);
     do {
       // event
       if (message.IsEvent()) {
-        printer() << endl;
+        Out() << End();
         auto event = MilkPowder::EventConstWrapper::From(message);
         auto [arg0, arg1] = event.GetArgs();
-        printer() << "args=" << MilkTea::ToStringHexFromU8(arg0);
+        Out() << "args=" << MilkTea::ToStringHexFromU8(arg0);
         if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
-          printer() << MilkTea::ToStringHexFromU8(arg1);
+          Out() << MilkTea::ToStringHexFromU8(arg1);
         }
-        printer() << endl;
+        Out() << End();
         break;
       }
       // meta
       if (message.IsMeta()) {
         auto meta = MilkPowder::MetaConstWrapper::From(message);
         type = meta.GetType();
-        printer() << MilkTea::ToStringHexFromU8(type) << endl;
+        Out() << MilkTea::ToStringHexFromU8(type) << End();
         const uint8_t *args = nullptr;
         uint32_t len = meta.GetArgs(&args);
-        printer() << "args=" << InternalToStringFromBytes(args, len) << endl;
+        Out() << "args=" << InternalToStringFromBytes(args, len) << End();
         break;
       }
       // sysex
       if (message.IsSysex()) {
-        printer() << endl;
+        Out() << End();
         auto sysex = MilkPowder::SysexConstWrapper::From(message);
         uint32_t idx = 0;
         std::function<void(const MilkPowder::SysexItem &)> callback = [this, &idx](const MilkPowder::SysexItem &it) -> void {
@@ -311,10 +305,10 @@ Usage: milk dump [OPTIONS] [FILES]
           uint32_t length = it.length_;
           const uint8_t *args = it.args_;
           if (idx == 0) {
-            printer() << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << endl;
+            Out() << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << End();
             return;
           } else {
-            printer() << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << ", delta=" << MilkTea::ToStringHexFromVarLen(delta) << endl;
+            Out() << "args[" << idx++ << "]=" << InternalToStringFromBytes(args, length) << ", delta=" << MilkTea::ToStringHexFromVarLen(delta) << End();
           }
         };
         for (uint32_t i = 0, n = sysex.GetCount(); i != n; ++i) {
@@ -325,7 +319,7 @@ Usage: milk dump [OPTIONS] [FILES]
       // assert
       MilkTea_assertf("ShowMessagesVerbose -- type: %02" PRIx8, message.GetType());
     } while (false);
-    printer() << "[/EVENT]" << endl;
+    Out() << "[/EVENT]" << End();
   }
   std::string InternalToStringFromBytes(const uint8_t *bytes, size_t length) {
     return hex_
@@ -358,10 +352,6 @@ Usage: milk dump [OPTIONS] [FILES]
   static uint16_t InternalFromBytesToU16(const uint8_t bytes[]) {
     return (bytes[0] << 010) | bytes[1];
   }
-  Printer &printer() {
-    return printer_;
-  }
-  Printer printer_;
   bool hex_;
   uint8_t detail_;
 };

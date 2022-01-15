@@ -1,5 +1,5 @@
-#ifndef LIB_SOYBEAN_WRAPPER_HANDLE_H_
-#define LIB_SOYBEAN_WRAPPER_HANDLE_H_
+#ifndef LIB_SOYBEAN_COMMON_HANDLE_H_
+#define LIB_SOYBEAN_COMMON_HANDLE_H_
 
 #include <soybean/common.h>
 
@@ -7,6 +7,7 @@ namespace SoyBean {
 
 class BaseHandle {
   using raw_type = SoyBean_Handle_t;
+  using interface_type = SoyBean_Handle_Interface_t;
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
@@ -25,7 +26,7 @@ class BaseHandle {
   virtual void ChannelPressure(uint8_t channel, uint8_t pressure) = 0;
   virtual void PitchBend(uint8_t channel, uint8_t low, uint8_t height) = 0;
  private:
-  static MilkTea_decl(const SoyBean_Handle_Interface_t &) Interface();
+  static MilkTea_decl(const interface_type &) Interface();
 };
 
 class HandleWrapper final : public BaseHandle {
@@ -36,15 +37,13 @@ class HandleWrapper final : public BaseHandle {
     return release();
   }
   HandleWrapper(raw_type another = {}) : self_(another) {}
-  HandleWrapper(HandleWrapper &&another) : HandleWrapper() {
-    std::swap(self_, another.self_);
-  }
+  HandleWrapper(HandleWrapper &&another) : HandleWrapper(another.release()) {}
   ~HandleWrapper() final {
-    if (self_.self_ == nullptr) {
+    auto self = release();
+    if (self.self_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(SoyBean_Handle_Destroy, self_);
-    self_ = {};
+    MilkTea_invoke_panic(SoyBean_Handle_Destroy, self);
   }
   BaseHandle &Move() && final {
     return *new HandleWrapper(std::forward<HandleWrapper>(*this));
@@ -53,30 +52,33 @@ class HandleWrapper final : public BaseHandle {
     delete this;
   }
   void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_invoke_panic(SoyBean_Handle_NoteOff, self_, channel, note, pressure);
+    MilkTea_invoke_panic(SoyBean_Handle_NoteOff, get(), channel, note, pressure);
   }
   void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_invoke_panic(SoyBean_Handle_NoteOn, self_, channel, note, pressure);
+    MilkTea_invoke_panic(SoyBean_Handle_NoteOn, get(), channel, note, pressure);
   }
   void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    MilkTea_invoke_panic(SoyBean_Handle_AfterTouch, self_, channel, note, pressure);
+    MilkTea_invoke_panic(SoyBean_Handle_AfterTouch, get(), channel, note, pressure);
   }
   void ControlChange(uint8_t channel, uint8_t control, uint8_t argument) final {
-    MilkTea_invoke_panic(SoyBean_Handle_ControlChange, self_, channel, control, argument);
+    MilkTea_invoke_panic(SoyBean_Handle_ControlChange, get(), channel, control, argument);
   }
   void ProgramChange(uint8_t channel, uint8_t program) final {
-    MilkTea_invoke_panic(SoyBean_Handle_ProgramChange, self_, channel, program);
+    MilkTea_invoke_panic(SoyBean_Handle_ProgramChange, get(), channel, program);
   }
   void ChannelPressure(uint8_t channel, uint8_t pressure) final {
-    MilkTea_invoke_panic(SoyBean_Handle_ChannelPressure, self_, channel, pressure);
+    MilkTea_invoke_panic(SoyBean_Handle_ChannelPressure, get(), channel, pressure);
   }
   void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
-    MilkTea_invoke_panic(SoyBean_Handle_PitchBend, self_, channel, low, height);
+    MilkTea_invoke_panic(SoyBean_Handle_PitchBend, get(), channel, low, height);
   }
   raw_type release() {
-    raw_type self = self_;
-    self_ = {};
-    return self;
+    raw_type result = {};
+    std::swap(self_, result);
+    return result;
+  }
+  raw_type get() {
+    return self_;
   }
  private:
   raw_type self_;
@@ -86,4 +88,4 @@ class HandleWrapper final : public BaseHandle {
 
 } // namespace SoyBean
 
-#endif // ifndef LIB_SOYBEAN_WRAPPER_HANDLE_H_
+#endif // ifndef LIB_SOYBEAN_COMMON_HANDLE_H_

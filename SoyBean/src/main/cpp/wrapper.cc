@@ -1,4 +1,4 @@
-#include <soybean.h>
+#include <soybean/common.h>
 
 namespace {
 
@@ -51,7 +51,8 @@ MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Deleter(void *sel
 })
 
 MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Create(void *self, SoyBean_Handle_t *handle) MilkTea_with_except({
-  auto *handle_ = &BaseFactory_cast(self).Create();
+  MilkTea_nonnull(handle);
+  auto *handle_ = BaseFactory_cast(self).Create().release();
   MilkTea::Defer defer([handle_]() {
     std::move(*handle_).Destroy();
   });
@@ -62,8 +63,8 @@ MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Create(void *self
 
 namespace SoyBean {
 
-const SoyBean_Handle_Interface_t &BaseHandle::Interface() {
-  static const SoyBean_Handle_Interface_t instance_{
+const BaseHandle::interface_type &BaseHandle::Interface() {
+  static const interface_type instance_{
     .Deleter = SoyBean_BaseHandle_Interface_Deleter,
     .NoteOff = SoyBean_BaseHandle_Interface_NoteOff,
     .NoteOn = SoyBean_BaseHandle_Interface_NoteOn,
@@ -76,8 +77,8 @@ const SoyBean_Handle_Interface_t &BaseHandle::Interface() {
   return instance_;
 }
 
-const SoyBean_Factory_Interface_t &BaseFactory::Interface() {
-  static const SoyBean_Factory_Interface_t instance_{
+const BaseFactory::interface_type &BaseFactory::Interface() {
+  static const interface_type instance_{
     .Deleter = SoyBean_BaseFactory_Interface_Deleter,
     .Create = SoyBean_BaseFactory_Interface_Create,
   };
