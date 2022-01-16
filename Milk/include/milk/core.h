@@ -25,7 +25,7 @@ typedef struct Milk_Printer_t Milk_Printer_t;
 #endif
 
 struct Milk_FileReader_Interface_t {
-  MilkTea_Exception_t (MilkTea_call *Destroy)(void *self);
+  MilkTea_Exception_t (MilkTea_call *Deleter)(void *self);
   MilkTea_Exception_t (MilkTea_call *Read)(void *self, uint8_t bytes[], size_t *len);
 };
 
@@ -43,7 +43,7 @@ typedef struct Milk_FileReader_t Milk_FileReader_t;
 #endif
 
 struct Milk_FileWriter_Interface_t {
-  MilkTea_Exception_t (MilkTea_call *Destroy)(void *self);
+  MilkTea_Exception_t (MilkTea_call *Deleter)(void *self);
   MilkTea_Exception_t (MilkTea_call *Write)(void *self, const uint8_t bytes[], size_t len);
 };
 

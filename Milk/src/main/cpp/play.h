@@ -21,10 +21,10 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
     seek_(nullptr) {
     if (format == 0x02) {
       for (uint16_t i = 0; i != ntrks; ++i) {
-        handle_.push_back(factory.Create());
+        handle_.emplace_back(&factory.Create());
       }
     } else {
-      handle_.push_back(factory.Create());
+      handle_.emplace_back(&factory.Create());
     }
   }
   RendererImpl(RendererImpl &&another)

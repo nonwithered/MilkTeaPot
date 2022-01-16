@@ -20,7 +20,7 @@ class FileReaderWrapper final : public BaseFileReader {
     if (self.self_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(self.interface_->Destroy, self.self_);
+    MilkTea_invoke_panic(self.interface_->Deleter, self.self_);
   }
   BaseFileReader &Move() && final {
     return *new FileReaderWrapper(release());
@@ -67,7 +67,7 @@ class FileWriterWrapper final : public BaseFileWriter {
     if (self.self_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(self.interface_->Destroy, self.self_);
+    MilkTea_invoke_panic(self.interface_->Deleter, self.self_);
   }
   BaseFileWriter &Move() && final {
     return *new FileWriterWrapper(release());

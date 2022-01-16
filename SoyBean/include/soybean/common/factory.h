@@ -18,7 +18,7 @@ class BaseFactory {
   virtual ~BaseFactory() = default;
   virtual BaseFactory &Move() && = 0;
   virtual void Destroy() && = 0;
-  virtual std::unique_ptr<BaseHandle> Create() = 0;
+  virtual BaseHandle &Create() = 0;
  private:
   static MilkTea_decl(const interface_type &) Interface();
 };
@@ -45,10 +45,10 @@ class FactoryWrapper final : public BaseFactory {
   void Destroy() && final {
     delete this;
   }
-  std::unique_ptr<BaseHandle>Create() final {
+  BaseHandle &Create() final {
     SoyBean_Handle_t result = {};
     MilkTea_invoke_panic(SoyBean_Handle_Create, &result, get());
-    return std::make_unique<HandleWrapper>(result);
+    return *new HandleWrapper(result);
   }
   raw_type release() {
     raw_type result = {};

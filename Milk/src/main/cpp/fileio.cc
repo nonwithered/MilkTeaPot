@@ -14,7 +14,7 @@ Milk::BaseFileWriter &BaseFileWriter_cast(void *self) {
   return *reinterpret_cast<Milk::BaseFileWriter *>(self);
 }
 
-MilkTea_Exception_t MilkTea_call Milk_BaseFileReader_Interface_Destroy(void *self) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_BaseFileReader_Interface_Deleter(void *self) MilkTea_with_except({
   std::move(BaseFileReader_cast(self)).Destroy();
 })
 
@@ -23,7 +23,7 @@ MilkTea_Exception_t MilkTea_call Milk_BaseFileReader_Interface_Read(void *self, 
   *len = BaseFileReader_cast(self).Read(bytes, *len);
 })
 
-MilkTea_Exception_t MilkTea_call Milk_BaseFileWriter_Interface_Destroy(void *self) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_BaseFileWriter_Interface_Deleter(void *self) MilkTea_with_except({
   std::move(BaseFileWriter_cast(self)).Destroy();
 })
 
@@ -38,7 +38,7 @@ namespace Milk {
 
 const BaseFileReader::interface_type &BaseFileReader::Interface() {
   static const interface_type instance_{
-    .Destroy = Milk_BaseFileReader_Interface_Destroy,
+    .Deleter = Milk_BaseFileReader_Interface_Deleter,
     .Read = Milk_BaseFileReader_Interface_Read,
   };
   return instance_;
@@ -46,7 +46,7 @@ const BaseFileReader::interface_type &BaseFileReader::Interface() {
 
 const BaseFileWriter::interface_type &BaseFileWriter::Interface() {
   static const interface_type instance_{
-    .Destroy = Milk_BaseFileWriter_Interface_Destroy,
+    .Deleter = Milk_BaseFileWriter_Interface_Deleter,
     .Write = Milk_BaseFileWriter_Interface_Write,
   };
   return instance_;
