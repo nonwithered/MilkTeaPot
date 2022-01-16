@@ -82,7 +82,7 @@ struct Milk_Context_t {
 typedef struct Milk_Context_t Milk_Context_t;
 #endif
 
-MilkTea_decl(int)
+MilkTea_api
 Milk_Main(int argc, char *argv[], Milk_Context_t context);
 
 #ifdef __cplusplus

@@ -8,8 +8,8 @@
 namespace Milk {
 
 inline
-int Main(int argc, char *argv[], BaseContext &context) {
-  return Milk_Main(argc, argv, context.ToRawType());
+void Main(int argc, char *argv[], BaseContext &context) {
+  MilkTea_invoke_panic(Milk_Main, argc, argv, context.ToRawType());
 }
 
 } // namespace Milk

@@ -16,6 +16,12 @@ class FoundationImpl final : public Milk_Console::BaseFoundation {
 int main(int argc, char *argv[]) {
   Milk_Windows::FoundationImpl foundation;
   Milk_Console::ContextHolder context(foundation);
-  Milk::Main(argc, argv, context);
-  return 0;
+  auto e = MilkTea::Exception::Catch([&]() {
+    Milk::Main(argc, argv, context);
+  });
+  if (e == MilkTea::Exception::Type::Nil) {
+    return EXIT_SUCCESS;
+  }
+  std::cerr << MilkTea::Exception::TypeName(e) << ": " << MilkTea::Exception::What() << std::endl;
+  return EXIT_FAILURE;
 }

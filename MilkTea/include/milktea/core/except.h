@@ -53,6 +53,9 @@ MilkTea_Exception_Catch(MilkTea_Exception_Block_t block);
   MilkTea_throwf(type, "%s", what); \
 })
 
+#define MilkTea_stub(sym) \
+MilkTea_throw(Unsupported, #sym ": Stub!")
+
 #define MilkTea_assert(what) \
 MilkTea_throw(Assertion, what)
 

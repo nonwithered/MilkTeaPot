@@ -27,33 +27,24 @@ class ContextHolder final : public Milk::BaseContext {
     return self_;
   }
   void SetLogLevel(MilkTea::Logger::Level) final {
-    MilkTea_throw(Unsupported, "SetLogLevel -- stub");
+    MilkTea_stub(SetLogLevel);
   }
   SoyBean::FactoryWrapper GetSoyBeanFactory() final {
-    MilkTea_throw(Unsupported, "GetSoyBeanFactory -- stub");
+    MilkTea_stub(GetSoyBeanFactory);
   }
   Milk::BasePrinter &GetPrinterOut() final {
-    MilkTea_throw(Unsupported, "GetPrinterOut -- stub");
+    MilkTea_stub(GetPrinterOut);
   }
   Milk::BasePrinter &GetPrinterErr() final {
-    MilkTea_throw(Unsupported, "GetPrinterErr -- stub");
+    MilkTea_stub(GetPrinterErr);
   }
   std::unique_ptr<Milk::BaseFileReader> GetFileReader(const char [], size_t) final {
-    MilkTea_throw(Unsupported, "GetFileReader -- stub");
+    MilkTea_stub(GetFileReader);
   }
   std::unique_ptr<Milk::BaseFileWriter> GetFileWriter(const char [], size_t) final {
-    MilkTea_throw(Unsupported, "GetFileWriter -- stub");
+    MilkTea_stub(GetFileWriter);
   }
  private:
-  raw_type get() {
-    return self_;
-  }
-  void *self() {
-    return get().self_;
-  }
-  const interface_type *interface() {
-    return get().interface_;
-  }
   raw_type release() {
     raw_type result = {};
     std::swap(self_, result);

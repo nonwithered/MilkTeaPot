@@ -45,20 +45,13 @@ class Launcher final {
     return ControllerInfo::Make<Controller>();
   }
  public:
-  static bool Launch(int argc, char *argv[], ContextWrapper context) {
-    auto e = MilkTea::Exception::Catch([&context, argc, argv]() {
-      Launcher(context,
-        Info<CodecController>(), {
-          Info<DumpController>(),
-          Info<PlayController>(),
-        }
-      ).Main(argc, argv);
-    });
-    if (e == MilkTea::Exception::Type::Nil) {
-      return true;
-    }
-    std::cerr << MilkTea::Exception::TypeName(e) << ": " << MilkTea::Exception::What() << std::endl;
-    return false;
+  static void Launch(int argc, char *argv[], ContextWrapper context) {
+    Launcher(context,
+      Info<CodecController>(), {
+        Info<DumpController>(),
+        Info<PlayController>(),
+      }
+    ).Main(argc, argv);
   }
  private:
   Launcher(BaseContext &context, ControllerInfo info, std::initializer_list<ControllerInfo> infos)
