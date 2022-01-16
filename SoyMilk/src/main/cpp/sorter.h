@@ -73,7 +73,10 @@ class TickClock final {
     return std::chrono::duration_cast<duration_type>(std::chrono::seconds(1)) * tick / GetAccuracy();
   }
   uint32_t GetAccuracy() const {
-    return -(*reinterpret_cast<const int16_t *>(&division_) >> 010) * (division_ & 0x00ff);
+    uint32_t result = 1;
+    result *= division_ & 0x00ff;
+    result *= -(*reinterpret_cast<const int16_t *>(&division_) >> 010);
+    return result;
   }
   static uint32_t GetTick(const std::tuple<uint32_t, uint32_t> &tuple) {
     return std::get<0>(tuple);

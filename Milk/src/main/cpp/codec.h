@@ -15,6 +15,12 @@ namespace Milk {
 class CodecController final : public BaseController {
   static constexpr char TAG[] = "Milk::CodecController";
   using self_type = CodecController;
+  enum class FormatType {
+    UNCONFINED,
+    SINGLE,
+    SIMULTANEOUS,
+    INDEPENDENT,
+  };
  public:
   static constexpr auto kName = "";
   static constexpr auto kUsage = R"(
@@ -28,20 +34,38 @@ Usage: milk [OPTIONS] [FILES]
   -o
     name of target file
     or torn apart all files if this option is not set
-  -fmt {0, 1, 2}
+  -f {0, 1, 2}
   --format {0, 1, 2}
     header format of output files
+  -t
+  --tick
+    reset division by a 16 bit unsigned integer described in hexadecimal
+    only the header will be changed by default
+  -r
+  --reset
+    reset the delta of all messages if the division of target is different from original type
 )";
   CodecController(BaseContext &context, std::string help_text)
   : BaseController(context, std::move(help_text)),
     target_(""),
-    format_(-1) {
+    format_(FormatType::UNCONFINED),
+    division_(0),
+    update_delta_(false),
+    accuracy_(0) {
     Config(&self_type::InitTarget, {
       "-o",
     });
     Config(&self_type::SetFormat, {
-      "-fmt",
+      "-f",
       "--format",
+    });
+    Config(&self_type::SetTick, {
+      "-t",
+      "--tick",
+    });
+    Config(&self_type::EnableUpdateDelta, {
+      "-r",
+      "--reset",
     });
   }
  protected:
@@ -49,6 +73,9 @@ Usage: milk [OPTIONS] [FILES]
     if (args.empty()) {
       Err() << "milk: no input files" << End();
       return;
+    }
+    if (update_delta_ && (division_ & 0x8000) != 0) {
+      accuracy_ = GetAccuracy(division_);
     }
     if (target_ == "") {
       TornApart(args);
@@ -62,11 +89,11 @@ Usage: milk [OPTIONS] [FILES]
       Err() << "milk --format: need format value" << End();
       return false;
     } else if (*cursor == "0") {
-      format_ = 0;
+      format_ = FormatType::SINGLE;
     } else if (*cursor == "1") {
-      format_ = 1;
+      format_ = FormatType::SIMULTANEOUS;
     } else if (*cursor == "2") {
-      format_ = 2;
+      format_ = FormatType::INDEPENDENT;
     } else {
       Err() << "milk --format: invalid format value: " << *cursor << End();
       return false;
@@ -87,6 +114,94 @@ Usage: milk [OPTIONS] [FILES]
     ++cursor;
     return true;
   }
+  void EnableUpdateDelta() {
+    update_delta_ = true;
+  }
+  bool SetTick(ArgsCursor &cursor) {
+    if (!cursor) {
+      Err() << "milk --tick: need division value" << End();
+      return false;
+    }
+    auto s = *cursor;
+    for (size_t i = 0, n = s.size(); i != n; ++i) {
+      auto c = s[i];
+      if (('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')) {
+        continue;
+      }
+      Err() << "milk --tick: invalid division value -- " << s << End();
+      return false;
+    }
+    if (s.size() > 4) {
+      Err() << "milk --tick: the division value is too large -- " << s << End();
+      return false;
+    }
+    uint16_t division = 0;
+    for (size_t i = 0, n = s.size(); i != n; ++i) {
+      uint16_t b = 0;
+      auto c = s[i];
+      if ('0' <= c && c <= '9') {
+        b = c - '0';
+      }
+      if ('a' <= c && c <= 'f') {
+        b = c - 'a' + 10;
+      }
+      if ('A' <= c && c <= 'F') {
+        b = c - 'A' + 10;
+      }
+      division <<= 04;
+      division |= b;
+    }
+    division_ = division;
+    ++cursor;
+    return true;
+  }
+  uint32_t UpdateDelta(uint32_t delta, uint16_t division) const {
+    if (division == 0) {
+      MilkTea_logW("UpdateDelta but the division is zero");
+      return delta;
+    }
+    if ((division & 0x8000) == 0 && (division_ & 0x8000) == 0) {
+      uint64_t d = delta;
+      d *= division_;
+      d /= division;
+      uint32_t u = d & 0x0f'ff'ff'ff;
+      if (d != u) {
+        MilkTea_logW("UpdateDelta but the result is too large -- %" PRIu64, d);
+      }
+      return u;
+    }
+    if ((division & 0x8000) != 0 && (division_ & 0x8000) != 0) {
+      uint32_t accuracy = GetAccuracy(division);
+      uint64_t d = delta;
+      d *= accuracy_;
+      d /= accuracy;
+      uint32_t u = d & 0x0f'ff'ff'ff;
+      if (d != u) {
+        MilkTea_logW("UpdateDelta but the result is too large -- %" PRIu64, d);
+      }
+      return u;
+    }
+    MilkTea_logD("UpdateDelta but the type of division is difference -- from %" PRIu32 " to %" PRIu32, division, division_);
+    return false;
+  }
+  void UpdateDelta(MilkPowder::TrackMutableWrapper &track, uint16_t division) {
+    if (update_delta_ && division_ != 0 && division != 0) {
+      if (((division ^ division_) & 0x8000) != 0) {
+        MilkTea_logW("UpdateDelta but the type of division is difference -- from %" PRIu32 " to %" PRIu32, division, division_);
+        return;
+      }
+      track.AllMessage([this, division](auto &it) {
+        it.SetDelta(UpdateDelta(it.GetDelta(), division));
+        if (it.IsSysex()) {
+          auto sysex = MilkPowder::MutableInterface<MilkPowder::Mapping::Sysex>::From(std::move(it));
+          sysex.AllItem([this, division](auto item) {
+            item.delta_ = this->UpdateDelta(item.delta_, division);
+          });
+          it = MilkPowder::MutableInterface<MilkPowder::Mapping::Message>::From(std::move(sysex));
+        }
+      });
+    }
+  }
   void TornApart(const std::list<std::string_view> &filenames) {
     for (auto filename : filenames) {
       auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
@@ -96,11 +211,25 @@ Usage: milk [OPTIONS] [FILES]
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
       uint16_t division = midi.GetDivision();
-      if (format_ != -1) {
-        format = static_cast<uint16_t>(format_);
+      switch (format_) {
+        case FormatType::SINGLE:
+          format = 0;
+          break;
+        case FormatType::SIMULTANEOUS:
+          format = 1;
+          break;
+        case FormatType::INDEPENDENT:
+          format = 2;
+          break;
+        default:
+          break;
       }
       for (uint16_t idx = 0; idx != ntrks; ++idx) {
-        std::vector<MilkPowder::TrackMutableWrapper> tracks = { midi.GetTrack(idx) };
+        std::vector<MilkPowder::TrackMutableWrapper> tracks = { midi.GetTrack(idx), };
+        UpdateDelta(tracks[0], division);
+        if (division_ != 0) {
+          division = division_;
+        }
         auto target = MilkPowder::MidiMutableWrapper::Make(format, division, std::move(tracks));
         {
           std::string name = std::string() + filename.data() + "." + MilkTea::ToStringHex::FromU16(idx) + ".mid";
@@ -111,9 +240,21 @@ Usage: milk [OPTIONS] [FILES]
     }
   }
   void GenTarget(const std::list<std::string_view> &filenames, std::string_view name) {
-    int32_t f = format_;
-    int32_t d = -1;
+    uint16_t f = [this]() -> auto {
+      switch (format_) {
+        case FormatType::SINGLE:
+          return 0;
+        case FormatType::SIMULTANEOUS:
+          return 1;
+        case FormatType::INDEPENDENT:
+          return 2;
+        default:
+          return 0;
+      }
+    }();
+    uint16_t d = division_;
     std::vector<MilkPowder::TrackMutableWrapper> tracks;
+    std::vector<uint16_t> divisions;
     for (auto filename : filenames) {
       auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
         auto reader = Context().GetFileReader(filename.data(), filename.size());
@@ -122,84 +263,44 @@ Usage: milk [OPTIONS] [FILES]
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
       uint16_t division = midi.GetDivision();
-      if (f == -1) {
-        f = static_cast<int32_t>(format);
+      if (f == 0) {
+        f = format;
       }
-      if (d == -1) {
-        d = static_cast<int32_t>(division);
+      if (d == 0) {
+        d = division;
       }
-      for (uint16_t idx = 0; idx != ntrks; ++idx) {
+      for (auto idx = 0; idx != ntrks; ++idx) {
+        divisions.push_back(division);
         tracks.emplace_back(midi.GetTrack(idx));
       }
     }
-    if (f == 0) {
-      MergeTracks(tracks);
+    if (f == 0 && tracks.size() > 1) {
+      Err() << "milk: try to generate target with one more tracks but the expected format is single mode" << End();
+      return;
+    } else if (tracks.size() == 1 && format_ == FormatType::SINGLE) {
+      f = 0;
     }
-    auto target = MilkPowder::MidiMutableWrapper::Make(static_cast<uint16_t>(f), static_cast<uint16_t>(d), std::move(tracks));
+    division_ = d;
+    for (size_t i = 0, n = divisions.size(); i != n; ++i) {
+      UpdateDelta(tracks[i], divisions[i]);
+    }
+    auto target = MilkPowder::MidiMutableWrapper::Make(f, d, std::move(tracks));
     {
       auto writer = Context().GetFileWriter(name.data(), name.size());
       target.Dump(*writer);
     }
   }
-  static void MergeTracks(std::vector<MilkPowder::TrackMutableWrapper> &tracks) {
-    tracks = { MilkPowder::TrackMutableWrapper::Make(MergeMsgs(GetMsgs(tracks))) };
-  }
-  static std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> GetMsgs(const std::vector<MilkPowder::TrackMutableWrapper> &tracks) {
-    const size_t size = tracks.size();
-    std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> message_vec(size);
-    std::vector<uint64_t> delta_vec(size);
-    for (size_t i = 0; i != size; ++i) {
-      uint64_t &delta = delta_vec[i];
-      std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>> &messages = message_vec[i];
-      std::function<void(MilkPowder::MessageConstWrapper)> callback = [&delta, &messages](MilkPowder::MessageConstWrapper item) -> void {
-        delta += item.GetDelta();
-        messages.push_back(std::make_tuple(delta, item));
-      };
-      for (uint32_t i = 0, n = tracks[i].GetCount(); i != n; ++i) {
-        auto item = tracks[i].GetMessage(i);
-        delta += item.GetDelta();
-        messages.push_back(std::make_tuple(delta, item));
-      }
-    }
-    return message_vec;
-  }
-  static std::vector<MilkPowder::MessageMutableWrapper> MergeMsgs(const std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>> &messages) {
-    const size_t size = messages.size();
-    std::vector<MilkPowder::MessageMutableWrapper> messages_vec;
-    std::vector<std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>::const_iterator> itrs_vec(size);
-    for (size_t i = 0; i != size; ++i) {
-      itrs_vec[i] = messages[i].begin();
-    }
-    uint64_t delta = 0;
-    MilkTea_loop {
-      size_t idx = 0;
-      for (size_t i = 0; i != size; ++i) {
-        auto itr = itrs_vec[i];
-        if (itr == messages[i].end()) {
-          continue;
-        }
-        if (idx == 0) {
-          idx = i + 1;
-          continue;
-        }
-        if (std::get<0>(*itr) < std::get<0>(*itrs_vec[idx - 1])) {
-          idx = i + 1;
-          continue;
-        }
-      }
-      if (idx == 0) {
-        break;
-      }
-      const std::vector<std::tuple<uint64_t, MilkPowder::MessageConstWrapper>>::const_iterator itr = itrs_vec[idx - 1]++;
-      MilkPowder::MessageMutableWrapper message(std::get<1>(*itr));
-      message.SetDelta(static_cast<uint32_t>(std::get<0>(*itr) - delta));
-      messages_vec.emplace_back(std::move(message));
-      delta = std::get<0>(*itr);
-    }
-    return messages_vec;
+  static uint32_t GetAccuracy(uint16_t division) {
+    uint32_t result = 1;
+    result *= division & 0x00ff;
+    result *= -(*reinterpret_cast<const int16_t *>(&division) >> 010);
+    return result;
   }
   std::string_view target_;
-  int32_t format_;
+  FormatType format_;
+  uint16_t division_;
+  bool update_delta_;
+  uint32_t accuracy_;
 };
 
 } // namespace Milk
