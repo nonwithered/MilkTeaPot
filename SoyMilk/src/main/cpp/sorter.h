@@ -235,10 +235,8 @@ class FrameBufferSorterImpl final {
     const uint8_t *data = nullptr;
     uint32_t length = meta.GetArgs(&data);
     if (length != 0x03) {
-      auto args = MilkTea::ToStringHexFromBytes(data, length);
-      auto argc = length;
-      auto *argv = args.data();
-      MilkTea_throwf(InvalidParam, "try to set tempo but argc is %" PRIu32 " and argv is %s", argc, argv);
+      auto args = MilkTea::ToStringHex::FromBytes(data, length);
+      MilkTea_throwf(InvalidParam, "try to set tempo but argc is %" PRIu32 " and argv is %s", length, args.data());
     }
     uint32_t tempo = 0;
     for (uint32_t i = 0; i != length; ++i) {

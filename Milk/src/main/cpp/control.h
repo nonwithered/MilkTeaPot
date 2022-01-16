@@ -39,6 +39,9 @@ class BaseController {
   static constexpr std::nullptr_t End() {
     return nullptr;
   }
+  static constexpr std::string_view Line() {
+    return "\n";
+  }
   virtual void Main(std::list<std::string_view> &) = 0;
   class ArgsCursor final {
     using container = std::list<std::string_view>;
