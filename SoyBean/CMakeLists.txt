@@ -2,7 +2,8 @@ project(soybean)
 
 set(src_files
     "lib.cc"
-    "wrapper.cc"
+    "factory.cc"
+    "handle.cc"
 )
 
 set(src_dir

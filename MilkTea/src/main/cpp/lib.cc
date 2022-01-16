@@ -1,13 +1,14 @@
-#include <milktea.h>
+#include <milktea/common.h>
 
 #include "except.h"
+#include "logger.h"
 
 namespace {
 
 constexpr char TAG[] = "MilkTea";
 
-MilkTea::BaseLogger *GlobalLogger(MilkTea::LoggerWrapper *instance = nullptr) {
-  static auto instance_ = std::unique_ptr<MilkTea::LoggerWrapper>(nullptr);
+MilkTea::BaseLogger *GlobalLogger(MilkTea::BaseLogger *instance = nullptr) {
+  static auto instance_ = std::unique_ptr<MilkTea::BaseLogger>(nullptr);
   if (instance != nullptr) {
     instance_.reset(instance);
   }
