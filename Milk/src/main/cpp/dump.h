@@ -40,12 +40,24 @@ Usage: milk dump [OPTIONS] [FILES]
   DumpController(BaseContext &context, std::string usage)
   : BaseController(context, std::move(usage)) {
     Config(&self_type::hex_, {
-      "-x",
-    });
-    Config(&self_type::SetDetailLevel, {
-      "-L",
-      "--level",
-    });
+        "-x",
+      });
+    Config(&self_type::detail_,
+      "milk dump --level: need detail level",
+      "milk dump --level: invalid detail level: ",
+      {
+        { "h", DetailLevel::HEADER },
+        { "header", DetailLevel::HEADER },
+        { "d", DetailLevel::DATA },
+        { "data", DetailLevel::DATA },
+        { "e", DetailLevel::EVENTS },
+        { "events", DetailLevel::EVENTS },
+        { "v", DetailLevel::VERBOSE },
+        { "verbose", DetailLevel::VERBOSE },
+      }, {
+        "-L",
+        "--level",
+      });
   }
  protected:
   void Main(std::list<std::string_view> &args) final {
@@ -58,25 +70,6 @@ Usage: milk dump [OPTIONS] [FILES]
     }
   }
  private:
-  bool SetDetailLevel(cursor_type &cursor) {
-    if (!cursor) {
-      Err() << "milk dump --level: need detail level" << End();
-      return false;
-    } else if (*cursor == "h" || *cursor == "header") {
-      detail_ = DetailLevel::HEADER;
-    } else if (*cursor == "d" || *cursor == "data") {
-      detail_ = DetailLevel::DATA;
-    } else if (*cursor == "e" || *cursor == "events") {
-      detail_ = DetailLevel::EVENTS;
-    } else if (*cursor == "v" || *cursor == "verbose") {
-      detail_ = DetailLevel::VERBOSE;
-    } else {
-      Err() << "milk dump --level: invalid detail level: " << *cursor << End();
-      return false;
-    }
-    ++cursor;
-    return true;
-  }
   void Preview(std::string_view filename) {
     auto reader = Context().GetFileReader(filename.data(), filename.size());
     switch (detail_) {

@@ -48,20 +48,27 @@ Usage: milk [OPTIONS] [FILES]
   CodecController(BaseContext &context, std::string usage)
   : BaseController(context, std::move(usage)) {
     Config(&self_type::InitTarget, {
-      "-o",
-    });
-    Config(&self_type::SetFormat, {
-      "-f",
-      "--format",
-    });
+        "-o",
+      });
+    Config(&self_type::format_,
+      "milk --format: need format value",
+      "milk --format: invalid format value: ",
+      {
+        { "0", FormatType::SINGLE },
+        { "1", FormatType::SIMULTANEOUS },
+        { "2", FormatType::INDEPENDENT },
+      }, {
+        "-f",
+        "--format",
+      });
     Config(&self_type::SetTick, {
-      "-t",
-      "--tick",
-    });
+        "-t",
+        "--tick",
+      });
     Config(&self_type::update_delta_, {
-      "-r",
-      "--reset",
-    });
+        "-r",
+        "--reset",
+      });
   }
  protected:
   void Main(std::list<std::string_view> &args) final {
@@ -79,23 +86,6 @@ Usage: milk [OPTIONS] [FILES]
     }
   }
  private:
-  bool SetFormat(cursor_type &cursor) {
-    if (!cursor) {
-      Err() << "milk --format: need format value" << End();
-      return false;
-    } else if (*cursor == "0") {
-      format_ = FormatType::SINGLE;
-    } else if (*cursor == "1") {
-      format_ = FormatType::SIMULTANEOUS;
-    } else if (*cursor == "2") {
-      format_ = FormatType::INDEPENDENT;
-    } else {
-      Err() << "milk --format: invalid format value: " << *cursor << End();
-      return false;
-    }
-    ++cursor;
-    return true;
-  }
   bool InitTarget(cursor_type &cursor) {
     if (!cursor) {
       Err() << "milk -o: need target name" << End();

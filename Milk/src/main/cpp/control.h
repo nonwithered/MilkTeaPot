@@ -85,35 +85,71 @@ class BaseController {
     err_(context.GetPrinterErr()),
     usage_(std::move(usage)) {
     Config(&self_type::help_, {
-      "-h",
-      "--help",
-    });
-    Config(&self_type::SetLogLevel, {
-      "--log",
-    });
+        "-h",
+        "--help",
+      });
+    Config(&self_type::level_,
+      "milk dump --log: need log level",
+      "milk dump --log: invalid log level: ",
+      {
+        { "d", MilkTea::Logger::Level::DEBUG },
+        { "debug", MilkTea::Logger::Level::DEBUG },
+        { "i", MilkTea::Logger::Level::INFO },
+        { "info", MilkTea::Logger::Level::INFO },
+        { "w", MilkTea::Logger::Level::WARN },
+        { "warn", MilkTea::Logger::Level::WARN },
+        { "e", MilkTea::Logger::Level::ERROR },
+        { "error", MilkTea::Logger::Level::ERROR },
+      }, {
+        "--log",
+      });
     Config(&self_type::version_, {
-      "-v",
-      "--version",
-    });
+        "-v",
+        "--version",
+      });
   }
   template<typename Controller>
-  void Config(bool Controller::* f, std::initializer_list<std::string_view> args) {
-    Config(args, [this, f](auto &) -> bool {
-      dynamic_cast<Controller *>(this)->*f = true;
+  void Config(bool Controller::* member,
+      std::initializer_list<std::string_view> args) {
+    Config(args, [this, member](auto &) -> bool {
+      dynamic_cast<Controller *>(this)->*member = true;
+      return true;
+    });
+  }
+  template<typename Controller, typename T>
+  void Config(T Controller::* member,
+      std::string_view msg_none, std::string_view msg_invalid,
+      std::map<std::string_view, T> value_map,
+      std::initializer_list<std::string_view> args) {
+    Config(args, [this, member, msg_none, msg_invalid, value_map](auto &cursor) -> bool {
+      if (!cursor) {
+        Err() << msg_none << End();
+        return false;
+      }
+      auto &value = *cursor;
+      auto it = value_map.find(value);
+      if (it == value_map.end()) {
+        Err() << msg_invalid << value << End();
+        return false;
+      }
+      dynamic_cast<Controller *>(this)->*member = it->second;
+      ++cursor;
       return true;
     });
   }
   template<typename Controller>
-  void Config(void (Controller::* f)(), std::initializer_list<std::string_view> args) {
-    Config(args, [this, f](auto &) -> bool {
-      std::bind(f, dynamic_cast<Controller *>(this))();
+  void Config(void (Controller::* member)(),
+      std::initializer_list<std::string_view> args) {
+    Config(args, [this, member](auto &) -> bool {
+      std::bind(member, dynamic_cast<Controller *>(this))();
       return true;
     });
   }
   template<typename Controller>
-  void Config(bool (Controller::* f)(cursor_type &), std::initializer_list<std::string_view> args) {
-    Config(args, [this, f](auto &cursor) -> auto {
-      return (dynamic_cast<Controller *>(this)->*f)(cursor);
+  void Config(bool (Controller::* member)(cursor_type &),
+      std::initializer_list<std::string_view> args) {
+    Config(args, [this, member](auto &cursor) -> auto {
+      return (dynamic_cast<Controller *>(this)->*member)(cursor);
     });
   }
   BaseContext &Context() {
@@ -130,25 +166,6 @@ class BaseController {
     for (auto it : args) {
       callbacks_[it] = f;
     }
-  }
-  bool SetLogLevel(cursor_type &cursor) {
-    if (!cursor) {
-      Err() << "milk dump --log: need log level" << End();
-      return false;
-    } else if (*cursor == "d" || *cursor == "debug") {
-      level_ = MilkTea::Logger::Level::DEBUG;
-    } else if (*cursor == "i" || *cursor == "info") {
-      level_ = MilkTea::Logger::Level::INFO;
-    } else if (*cursor == "w" || *cursor == "warn") {
-      level_ = MilkTea::Logger::Level::WARN;
-    } else if (*cursor == "e" || *cursor == "error") {
-      level_ = MilkTea::Logger::Level::ERROR;
-    } else {
-      Err() << "milk dump --log: invalid log level: " << *cursor << End();
-      return false;
-    }
-    ++cursor;
-    return true;
   }
   BaseContext &context_;
   BufferPrinter out_;
