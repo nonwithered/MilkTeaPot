@@ -176,15 +176,15 @@ class PlayController final : public BaseController {
   static constexpr auto kName = "play";
   static constexpr auto kUsage = R"(
 Usage: milk play
+  -v, --version
+    print version code
   -h, --help
     print this help message
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
-  -v, --version
-    print version code
 )";
-  PlayController(BaseContext &context, std::string help_text)
-  : BaseController(context, std::move(help_text)) {
+  PlayController(BaseContext &context, std::string usage)
+  : BaseController(context, std::move(usage)) {
   }
  protected:
   void Main(std::list<std::string_view> &args) final {

@@ -24,12 +24,12 @@ class DumpController final : public BaseController {
   static constexpr auto kName = "dump";
   static constexpr auto kUsage = R"(
 Usage: milk dump [OPTIONS] [FILES]
+  -v, --version
+    print version code
   -h, --help
     print this help message
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
-  -v, --version
-    print version code
   -x
     show all numbers in hex
   -L {h, d, e, v, header, data, events, verbose}
@@ -37,11 +37,9 @@ Usage: milk dump [OPTIONS] [FILES]
     detail level
     only headers by default
 )";
-  DumpController(BaseContext &context, std::string help_text)
-  : BaseController(context, std::move(help_text)),
-    hex_(false),
-    detail_(DetailLevel::HEADER) {
-    Config(&self_type::EnableHex, {
+  DumpController(BaseContext &context, std::string usage)
+  : BaseController(context, std::move(usage)) {
+    Config(&self_type::hex_, {
       "-x",
     });
     Config(&self_type::SetDetailLevel, {
@@ -60,10 +58,7 @@ Usage: milk dump [OPTIONS] [FILES]
     }
   }
  private:
-  void EnableHex() {
-    hex_ = true;
-  }
-  bool SetDetailLevel(ArgsCursor &cursor) {
+  bool SetDetailLevel(cursor_type &cursor) {
     if (!cursor) {
       Err() << "milk dump --level: need detail level" << End();
       return false;
@@ -358,8 +353,8 @@ Usage: milk dump [OPTIONS] [FILES]
   static uint16_t FromBytesToU16(const uint8_t bytes[]) {
     return (bytes[0] << 010) | bytes[1];
   }
-  bool hex_;
-  DetailLevel detail_;
+  bool hex_ = false;
+  DetailLevel detail_ = DetailLevel::HEADER;
 };
 
 } // namespace Milk

@@ -12,6 +12,35 @@
 #include "util.h"
 
 namespace Milk {
+template<typename container_type>
+class Cursor final {
+  static constexpr char TAG[] = "Milk::Cursor";
+  using value_type = typename container_type::value_type;
+  using iterator = typename container_type::iterator;
+public:
+  Cursor(container_type &container, iterator &cursor)
+  : container_(container),
+    cursor_(cursor) {}
+  const value_type &operator*() const {
+    if (!operator bool()) {
+      MilkTea_throw(LogicError, "try to get but no more");
+    }
+    return *cursor_;
+  }
+  bool operator++() {
+    if (!operator bool()) {
+      return false;
+    }
+    cursor_ = container_.erase(cursor_);
+    return true;
+  }
+  operator bool() const {
+    return cursor_ != container_.end();
+  }
+private:
+  container_type &container_;
+  iterator &cursor_;
+};
 
 class BaseController {
   static constexpr char TAG[] = "Milk::BaseController";
@@ -27,15 +56,22 @@ class BaseController {
         continue;
       }
       i = args.erase(i);
-      auto cursor = ArgsCursor(args, i);
+      auto cursor = cursor_type(args, i);
       if (!it->second(cursor)) {
-        ShowHelp();
         return;
       }
     }
+    if (version_) {
+      Out() << "version: " << kVersion << End();
+    }
+    if (help_) {
+      Out() << usage_ << End();
+    }
+    Context().SetLogLevel(level_);
     Main(args);
   }
  protected:
+  using cursor_type = Cursor<std::list<std::string_view>>;
   static constexpr std::nullptr_t End() {
     return nullptr;
   }
@@ -43,69 +79,42 @@ class BaseController {
     return "\n";
   }
   virtual void Main(std::list<std::string_view> &) = 0;
-  class ArgsCursor final {
-    using container = std::list<std::string_view>;
-    using iterator = container::iterator;
-   public:
-    ArgsCursor(container &container, iterator &cursor) : container_(container), cursor_(cursor) {}
-    std::string_view operator*() const {
-      if (!operator bool()) {
-        return nullptr;
-      }
-      return *cursor_;
-    }
-    bool operator++() {
-      if (cursor_ == container_.end()) {
-        return false;
-      }
-      cursor_ = container_.erase(cursor_);
-      return true;
-    }
-    operator bool() const {
-      return cursor_ != container_.end();
-    }
-   private:
-    container &container_;
-    iterator &cursor_;
-  };
-  BaseController(BaseContext &context, std::string help_text) :
+  BaseController(BaseContext &context, std::string usage) :
     context_(context),
     out_(context.GetPrinterOut()),
     err_(context.GetPrinterErr()),
-    help_text_(std::move(help_text)),
-    help_(false),
-    version_(false),
-    callbacks_() {
-    Config(&self_type::ShowHelp, {
+    usage_(std::move(usage)) {
+    Config(&self_type::help_, {
       "-h",
       "--help",
     });
-    Config(&self_type::InitLog, {
+    Config(&self_type::SetLogLevel, {
       "--log",
     });
-    Config(&self_type::ShowVersion, {
+    Config(&self_type::version_, {
       "-v",
       "--version",
     });
   }
   template<typename Controller>
-  void Config(void (Controller::* f)(), std::initializer_list<std::string_view> args) {
-    auto callback = [this, f](auto &) -> bool {
-      std::bind(f, dynamic_cast<Controller *>(this))();
+  void Config(bool Controller::* f, std::initializer_list<std::string_view> args) {
+    Config(args, [this, f](auto &) -> bool {
+      dynamic_cast<Controller *>(this)->*f = true;
       return true;
-    };
-    for (auto it : args) {
-      callbacks_[it] = callback;
-    }
+    });
   }
   template<typename Controller>
-  void Config(bool (Controller::* f)(ArgsCursor &), std::initializer_list<std::string_view> args) {
-    auto callback = [this, f](auto &cursor) -> bool {
+  void Config(void (Controller::* f)(), std::initializer_list<std::string_view> args) {
+    Config(args, [this, f](auto &) -> bool {
+      std::bind(f, dynamic_cast<Controller *>(this))();
+      return true;
+    });
+  }
+  template<typename Controller>
+  void Config(bool (Controller::* f)(cursor_type &), std::initializer_list<std::string_view> args) {
+    Config(args, [this, f](auto &cursor) -> auto {
       return (dynamic_cast<Controller *>(this)->*f)(cursor);
-    };
-    for (auto it : args) {
-      callbacks_[it] = callback;
-    }
+    });
   }
   BaseContext &Context() {
     return context_;
@@ -117,51 +126,38 @@ class BaseController {
     return err_;
   }
  private:
-  void ShowVersion() {
-    if (version_) {
-      return;
-    } else {
-      version_ = true;
+  void Config(const std::initializer_list<std::string_view> &args, std::function<bool(cursor_type &)> f) {
+    for (auto it : args) {
+      callbacks_[it] = f;
     }
-    std::cout << "version: " << kVersion << "\n" << std::endl;
   }
-  void ShowHelp() {
-    if (help_) {
-      return;
-    } else {
-      help_ = true;
-    }
-    std::cout << help_text_ << "\n" << std::endl;
-  }
-  bool InitLog(ArgsCursor &cursor) {
-    MilkTea::Logger::Level level = MilkTea::Logger::Level::ASSERT;
+  bool SetLogLevel(cursor_type &cursor) {
     if (!cursor) {
-      std::cerr << "milk dump --log: need log level" << std::endl;
+      Err() << "milk dump --log: need log level" << End();
       return false;
     } else if (*cursor == "d" || *cursor == "debug") {
-      level = MilkTea::Logger::Level::DEBUG;
+      level_ = MilkTea::Logger::Level::DEBUG;
     } else if (*cursor == "i" || *cursor == "info") {
-      level = MilkTea::Logger::Level::INFO;
+      level_ = MilkTea::Logger::Level::INFO;
     } else if (*cursor == "w" || *cursor == "warn") {
-      level = MilkTea::Logger::Level::WARN;
+      level_ = MilkTea::Logger::Level::WARN;
     } else if (*cursor == "e" || *cursor == "error") {
-      level = MilkTea::Logger::Level::ERROR;
-    }
-    if (level == MilkTea::Logger::Level::ASSERT) {
-      std::cerr << "milk dump --log: invalid log level: " << *cursor << std::endl;
+      level_ = MilkTea::Logger::Level::ERROR;
+    } else {
+      Err() << "milk dump --log: invalid log level: " << *cursor << End();
       return false;
     }
-    Context().SetLogLevel(level);
     ++cursor;
     return true;
   }
   BaseContext &context_;
   BufferPrinter out_;
   BufferPrinter err_;
-  const std::string help_text_;
-  bool help_;
-  bool version_;
-  std::map<std::string_view, std::function<bool(ArgsCursor &)>> callbacks_;
+  const std::string usage_;
+  std::map<std::string_view, std::function<bool(cursor_type &)>> callbacks_;
+  bool version_ = false;
+  bool help_ = false;
+  MilkTea::Logger::Level level_ = MilkTea::Logger::Level::ASSERT;
 };
 
 } // namespace Milk

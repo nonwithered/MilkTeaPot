@@ -25,12 +25,12 @@ class CodecController final : public BaseController {
   static constexpr auto kName = "";
   static constexpr auto kUsage = R"(
 Usage: milk [OPTIONS] [FILES]
+  -v, --version
+    print version code
   -h, --help
     print this help message
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
-  -v, --version
-    print version code
   -o
     name of target file
     or torn apart all files if this option is not set
@@ -45,13 +45,8 @@ Usage: milk [OPTIONS] [FILES]
   --reset
     reset the delta of all messages if the division of target is different from original type
 )";
-  CodecController(BaseContext &context, std::string help_text)
-  : BaseController(context, std::move(help_text)),
-    target_(""),
-    format_(FormatType::UNCONFINED),
-    division_(0),
-    update_delta_(false),
-    accuracy_(0) {
+  CodecController(BaseContext &context, std::string usage)
+  : BaseController(context, std::move(usage)) {
     Config(&self_type::InitTarget, {
       "-o",
     });
@@ -63,7 +58,7 @@ Usage: milk [OPTIONS] [FILES]
       "-t",
       "--tick",
     });
-    Config(&self_type::EnableUpdateDelta, {
+    Config(&self_type::update_delta_, {
       "-r",
       "--reset",
     });
@@ -84,7 +79,7 @@ Usage: milk [OPTIONS] [FILES]
     }
   }
  private:
-  bool SetFormat(ArgsCursor &cursor) {
+  bool SetFormat(cursor_type &cursor) {
     if (!cursor) {
       Err() << "milk --format: need format value" << End();
       return false;
@@ -101,7 +96,7 @@ Usage: milk [OPTIONS] [FILES]
     ++cursor;
     return true;
   }
-  bool InitTarget(ArgsCursor &cursor) {
+  bool InitTarget(cursor_type &cursor) {
     if (!cursor) {
       Err() << "milk -o: need target name" << End();
       return false;
@@ -114,10 +109,7 @@ Usage: milk [OPTIONS] [FILES]
     ++cursor;
     return true;
   }
-  void EnableUpdateDelta() {
-    update_delta_ = true;
-  }
-  bool SetTick(ArgsCursor &cursor) {
+  bool SetTick(cursor_type &cursor) {
     if (!cursor) {
       Err() << "milk --tick: need division value" << End();
       return false;
@@ -296,11 +288,11 @@ Usage: milk [OPTIONS] [FILES]
     result *= -(*reinterpret_cast<const int16_t *>(&division) >> 010);
     return result;
   }
-  std::string_view target_;
-  FormatType format_;
-  uint16_t division_;
-  bool update_delta_;
-  uint32_t accuracy_;
+  std::string_view target_ = "";
+  FormatType format_ = FormatType::UNCONFINED;
+  uint16_t division_ = 0;
+  bool update_delta_ = false;
+  uint32_t accuracy_ = 0;
 };
 
 } // namespace Milk

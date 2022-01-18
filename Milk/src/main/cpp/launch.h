@@ -26,8 +26,8 @@ class ControllerInfo final {
   std::string_view usage() const {
     return usage_;
   }
-  std::unique_ptr<BaseController> Create(BaseContext &context, std::string help_text) const {
-    return std::unique_ptr<BaseController>(factory_(context, help_text));
+  std::unique_ptr<BaseController> Create(BaseContext &context, std::string usage) const {
+    return std::unique_ptr<BaseController>(factory_(context, usage));
   }
  private:
   ControllerInfo(std::string_view name, std::string_view usage, factory_type factory)
@@ -70,11 +70,11 @@ class Launcher final {
         }
       }
     }
-    std::string help_text = std::string(info_.usage());
+    std::string usage = std::string(info_.usage());
     for (const auto &it : infos_) {
-      help_text += it.usage();
+      usage += it.usage();
     }
-    info_.Create(context_, std::move(help_text))->Launch(args);
+    info_.Create(context_, std::move(usage))->Launch(args);
   }
   static std::list<std::string_view> Args(int argc, char *argv[]) {
     std::list<std::string_view> args;
