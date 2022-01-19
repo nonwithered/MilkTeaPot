@@ -45,33 +45,40 @@ Usage: milk [OPTIONS] [FILES]
   --reset
     reset the delta of all messages if the division of target is different from original type
 )";
-  CodecController(BaseContext &context, std::string usage)
-  : BaseController(context, std::move(usage)) {
-    Config(&self_type::InitTarget, {
-        "-o",
-      });
-    Config(&self_type::format_,
-      "milk --format: need format value",
-      "milk --format: invalid format value: ",
-      {
-        { "0", FormatType::SINGLE },
-        { "1", FormatType::SIMULTANEOUS },
-        { "2", FormatType::INDEPENDENT },
-      }, {
-        "-f",
-        "--format",
-      });
-    Config(&self_type::SetTick, {
-        "-t",
-        "--tick",
-      });
-    Config(&self_type::update_delta_, {
-        "-r",
-        "--reset",
-      });
-  }
- protected:
+  CodecController(BaseContext &context)
+  : BaseController(context, kUsage) {}
+ public:
   void Main(std::list<std::string_view> &args) final {
+    if (!BaseController::Config(Cocoa::Pipeline(*this, args))
+        .Append({
+            "-o",
+        }, &self_type::InitTarget)
+        .Append({
+            "-t",
+            "--tick",
+        }, &self_type::SetTick)
+        .Append({
+            "-r",
+            "--reset",
+        }, &self_type::update_delta_, true)
+        .Append({
+            "-f",
+            "--format",
+        }, &self_type::format_,
+        [this](auto &cmd) {
+          Err() << "milk " << cmd << ": need format value" << End();
+        },
+        [this](auto &cmd, auto &it) {
+          Err() << "milk " << cmd << ": invalid format value: " << it << End();
+        }, {
+          { FormatType::SINGLE, { "0" } },
+          { FormatType::SIMULTANEOUS, { "1" } },
+          { FormatType::INDEPENDENT, { "2" } },
+        })
+        .Launch(kName)) {
+      return;
+    }
+    BaseController::Main(args);
     if (args.empty()) {
       Err() << "milk: no input files" << End();
       return;

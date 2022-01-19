@@ -37,30 +37,33 @@ Usage: milk dump [OPTIONS] [FILES]
     detail level
     only headers by default
 )";
-  DumpController(BaseContext &context, std::string usage)
-  : BaseController(context, std::move(usage)) {
-    Config(&self_type::hex_, {
-        "-x",
-      });
-    Config(&self_type::detail_,
-      "milk dump --level: need detail level",
-      "milk dump --level: invalid detail level: ",
-      {
-        { "h", DetailLevel::HEADER },
-        { "header", DetailLevel::HEADER },
-        { "d", DetailLevel::DATA },
-        { "data", DetailLevel::DATA },
-        { "e", DetailLevel::EVENTS },
-        { "events", DetailLevel::EVENTS },
-        { "v", DetailLevel::VERBOSE },
-        { "verbose", DetailLevel::VERBOSE },
-      }, {
-        "-L",
-        "--level",
-      });
-  }
- protected:
+  DumpController(BaseContext &context)
+  : BaseController(context, kUsage) {}
+ public:
   void Main(std::list<std::string_view> &args) final {
+    if (!BaseController::Config(Cocoa::Pipeline(*this, args))
+        .Append({
+            "-x",
+        }, &self_type::hex_, true)
+        .Append({
+            "-L",
+            "--level",
+        }, &self_type::detail_,
+        [this](auto &cmd) {
+          Err() << "milk " << cmd << ": need detail level" << End();
+        },
+        [this](auto &cmd, auto &it) {
+          Err() << "milk " << cmd << ": invalid detail level: " << it << End();
+        }, {
+          { DetailLevel::HEADER, { "h", "header" } },
+          { DetailLevel::DATA, { "d", "data" } },
+          { DetailLevel::EVENTS, { "e", "events" } },
+          { DetailLevel::VERBOSE, { "v", "verbose" } },
+        })
+        .Launch(kName)) {
+      return;
+    }
+    BaseController::Main(args);
     if (args.empty()) {
       Err() << "milk dump: no input files" << End();
       return;

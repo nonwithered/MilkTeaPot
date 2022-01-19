@@ -183,13 +183,17 @@ Usage: milk play
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
 )";
-  PlayController(BaseContext &context, std::string usage)
-  : BaseController(context, std::move(usage)) {
-  }
- protected:
+  PlayController(BaseContext &context)
+  : BaseController(context, kUsage) {}
+ public:
   void Main(std::list<std::string_view> &args) final {
+    if (!BaseController::Config(Cocoa::Pipeline(*this, args))
+        .Launch(kName)) {
+      return;
+    }
+    BaseController::Main(args);
     if (args.empty()) {
-      Err() << "milk play: no input files" << End();
+      Err() << "milk " << kName << ": no input files" << End();
       return;
     }
     auto midi = [&]() -> MilkPowder::MidiMutableWrapper {

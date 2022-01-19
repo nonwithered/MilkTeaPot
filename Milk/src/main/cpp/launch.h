@@ -12,69 +12,62 @@
 namespace Milk {
 
 class ControllerInfo final {
-  using factory_type = std::function<BaseController *(BaseContext &, std::string)>;
+  using factory_type = std::function<BaseController *(BaseContext &)>;
  public:
   template<typename Controller>
   static ControllerInfo Make() {
-    return ControllerInfo(Controller::kName, Controller::kUsage, [](auto &context, auto s) -> Controller * {
-      return new Controller(context, s);
+    return ControllerInfo(Controller::kName, [](auto &context) -> Controller * {
+      return new Controller(context);
     });
   }
   std::string_view name() const {
     return name_;
   }
-  std::string_view usage() const {
-    return usage_;
-  }
-  std::unique_ptr<BaseController> Create(BaseContext &context, std::string usage) const {
-    return std::unique_ptr<BaseController>(factory_(context, usage));
+  std::unique_ptr<BaseController> Create(BaseContext &context) const {
+    return std::unique_ptr<BaseController>(factory_(context));
   }
  private:
-  ControllerInfo(std::string_view name, std::string_view usage, factory_type factory)
+  ControllerInfo(std::string_view name, factory_type factory)
   : name_(name),
-    usage_(usage),
     factory_(std::move(factory)) {}
   const std::string_view name_;
-  const std::string_view usage_;
   factory_type factory_;
 };
 
 class Launcher final {
+  static constexpr char TAG[] = "Milk::Launcher";
   template<typename Controller>
   static ControllerInfo Info() {
     return ControllerInfo::Make<Controller>();
   }
  public:
   static void Launch(int argc, char *argv[], ContextWrapper context) {
-    Launcher(context,
-      Info<CodecController>(), {
-        Info<DumpController>(),
-        Info<PlayController>(),
-      }
-    ).Main(argc, argv);
+    Launcher(context, {
+      Info<CodecController>(),
+      Info<DumpController>(),
+      Info<PlayController>(),
+    }).Main(argc, argv);
   }
  private:
-  Launcher(BaseContext &context, ControllerInfo info, std::initializer_list<ControllerInfo> infos)
+  Launcher(BaseContext &context, std::initializer_list<ControllerInfo> infos)
   : context_(context),
-    info_(std::move(info)),
     infos_(std::move(infos)) {}
   void Main(int argc, char *argv[]) {
     auto args = Args(argc, argv);
+    if (infos_.empty()) {
+      MilkTea_assert("no command to launch");
+    }
     if (!args.empty()) {
       auto mode = args.front();
       for (const auto &it : infos_) {
         if (it.name() == mode) {
           args.pop_front();
-          it.Create(context_, std::string(it.usage()))->Launch(args);
+          it.Create(context_)->Main(args);
           return;
         }
       }
     }
-    std::string usage = std::string(info_.usage());
-    for (const auto &it : infos_) {
-      usage += it.usage();
-    }
-    info_.Create(context_, std::move(usage))->Launch(args);
+    infos_[0].Create(context_)->Main(args);
   }
   static std::list<std::string_view> Args(int argc, char *argv[]) {
     std::list<std::string_view> args;
@@ -84,7 +77,6 @@ class Launcher final {
     return args;
   }
   BaseContext &context_;
-  ControllerInfo info_;
   std::vector<ControllerInfo> infos_;
 
 };
