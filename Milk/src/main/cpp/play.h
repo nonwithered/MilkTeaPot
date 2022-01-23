@@ -186,7 +186,7 @@ Usage: milk play
  protected:
   void Main(args_type &args) final {
     if (args.empty()) {
-      Err() << Tip() << ": no input files" << End();
+      Err() << Tip() << "no input files" << End();
       return;
     }
     auto midi = [&]() -> MilkPowder::MidiMutableWrapper {

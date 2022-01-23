@@ -78,10 +78,10 @@ Usage: milk [OPTIONS] [FILES]
         "--format",
       }, &self_type::format_,
       [this]() {
-        Err() << Tip() << ": need format value" << End();
+        Err() << Tip() << "need format value" << End();
       },
       [this](auto &it) {
-        Err() << Tip() << ": invalid format value: " << it << End();
+        Err() << Tip() << "invalid format value: " << it << End();
       }, {
         { FormatType::SINGLE, { "0" } },
         { FormatType::SIMULTANEOUS, { "1" } },

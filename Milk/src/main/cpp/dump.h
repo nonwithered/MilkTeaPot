@@ -57,10 +57,10 @@ Usage: milk dump [OPTIONS] [FILES]
           "--level",
       }, &self_type::detail_,
       [this]() {
-        Err() << Tip() << ": need detail level" << End();
+        Err() << Tip() << "need detail level" << End();
       },
       [this](auto &it) {
-        Err() << Tip() << ": invalid detail level: " << it << End();
+        Err() << Tip() << "invalid detail level: " << it << End();
       }, {
         { DetailLevel::HEADER, { "h", "header" } },
         { DetailLevel::DATA, { "d", "data" } },

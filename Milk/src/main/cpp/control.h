@@ -18,7 +18,6 @@ namespace Milk {
 template<typename Controller>
 struct Mode final {
   using controller_type = Controller;
-  using args_type = Milk::args_type;
   static std::string_view Name() {
     return controller_type::kName;
   }
@@ -41,7 +40,6 @@ class BaseController {
  protected:
   using self_type = Controller;
   using super_type = BaseController<self_type>;
-  using args_type = typename std::vector<std::string_view>;
   using value_type = args_type::value_type;
   using cursor_type = Cocoa::Cursor<args_type>;
   using pipeline_type = Cocoa::Pipeline<args_type, self_type>;
@@ -60,10 +58,10 @@ class BaseController {
           "--log",
         }, &self_type::level_,
         [this]() {
-          Err() << Tip() << ": need log level" << End();
+          Err() << Tip() << "need log level" << End();
         },
         [this](auto &it) {
-          Err() << Tip() << ": invalid log level: " << it << End();
+          Err() << Tip() << "invalid log level: " << it << End();
         }, {
           { MilkTea::Logger::Level::DEBUG, { "d", "debug" } },
           { MilkTea::Logger::Level::INFO, { "i", "info" } },
@@ -97,7 +95,7 @@ class BaseController {
     return self_type::kUsage;
   }
   std::string Tip() const {
-    return std::string(Milk::kName) + " " + Name().data() + ": ";
+    return std::string(kName) + " " + Name().data() + ": ";
   }
   bool version_ = false;
   bool help_ = false;
