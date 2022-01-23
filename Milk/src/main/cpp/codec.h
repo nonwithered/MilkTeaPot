@@ -12,9 +12,8 @@
 
 namespace Milk {
 
-class CodecController final : public BaseController {
+class CodecController final : public BaseController<CodecController> {
   static constexpr char TAG[] = "Milk::CodecController";
-  using self_type = CodecController;
   enum class FormatType {
     UNCONFINED,
     SINGLE,
@@ -45,42 +44,11 @@ Usage: milk [OPTIONS] [FILES]
   --reset
     reset the delta of all messages if the division of target is different from original type
 )";
-  CodecController(BaseContext &context)
-  : BaseController(context, kUsage) {}
- public:
-  void Main(std::list<std::string_view> &args) final {
-    if (!BaseController::Config(Cocoa::Pipeline(*this, args))
-        .Append({
-            "-o",
-        }, &self_type::InitTarget)
-        .Append({
-            "-t",
-            "--tick",
-        }, &self_type::SetTick)
-        .Append({
-            "-r",
-            "--reset",
-        }, &self_type::update_delta_, true)
-        .Append({
-            "-f",
-            "--format",
-        }, &self_type::format_,
-        [this](auto &cmd) {
-          Err() << "milk " << cmd << ": need format value" << End();
-        },
-        [this](auto &cmd, auto &it) {
-          Err() << "milk " << cmd << ": invalid format value: " << it << End();
-        }, {
-          { FormatType::SINGLE, { "0" } },
-          { FormatType::SIMULTANEOUS, { "1" } },
-          { FormatType::INDEPENDENT, { "2" } },
-        })
-        .Launch(kName)) {
-      return;
-    }
-    BaseController::Main(args);
+  CodecController(BaseContext &context) : BaseController(context) {}
+ protected:
+  void Main(args_type &args) final {
     if (args.empty()) {
-      Err() << "milk: no input files" << End();
+      Err() << Tip() << "no input files" << End();
       return;
     }
     if (update_delta_ && (division_ & 0x8000) != 0) {
@@ -92,14 +60,42 @@ Usage: milk [OPTIONS] [FILES]
       GenTarget(args, target_);
     }
   }
+  pipeline_type Config(pipeline_type &&pipeline) final {
+    return super_type::Config(std::forward<pipeline_type>(pipeline))
+      .Append({
+        "-o",
+      }, &self_type::InitTarget)
+      .Append({
+        "-t",
+        "--tick",
+      }, &self_type::SetTick)
+      .Append({
+        "-r",
+        "--reset",
+      }, &self_type::update_delta_, true)
+      .Append({
+        "-f",
+        "--format",
+      }, &self_type::format_,
+      [this]() {
+        Err() << Tip() << ": need format value" << End();
+      },
+      [this](auto &it) {
+        Err() << Tip() << ": invalid format value: " << it << End();
+      }, {
+        { FormatType::SINGLE, { "0" } },
+        { FormatType::SIMULTANEOUS, { "1" } },
+        { FormatType::INDEPENDENT, { "2" } },
+      });
+  }
  private:
   bool InitTarget(cursor_type &cursor) {
     if (!cursor) {
-      Err() << "milk -o: need target name" << End();
+      Err() << Tip() << "-o: need target name" << End();
       return false;
     }
     if (target_ != "") {
-      Err() << "milk -o: target name has been set to " << target_ << End();
+      Err() << Tip() << "-o: target name has been set to " << target_ << End();
       return false;
     }
     target_ = *cursor;
@@ -108,7 +104,7 @@ Usage: milk [OPTIONS] [FILES]
   }
   bool SetTick(cursor_type &cursor) {
     if (!cursor) {
-      Err() << "milk --tick: need division value" << End();
+      Err() << Tip() << "--tick: need division value" << End();
       return false;
     }
     auto s = *cursor;
@@ -117,11 +113,11 @@ Usage: milk [OPTIONS] [FILES]
       if (('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')) {
         continue;
       }
-      Err() << "milk --tick: invalid division value -- " << s << End();
+      Err() << Tip() << "--tick: invalid division value -- " << s << End();
       return false;
     }
     if (s.size() > 4) {
-      Err() << "milk --tick: the division value is too large -- " << s << End();
+      Err() << Tip() << "--tick: the division value is too large -- " << s << End();
       return false;
     }
     uint16_t division = 0;
@@ -191,7 +187,7 @@ Usage: milk [OPTIONS] [FILES]
       });
     }
   }
-  void TornApart(const std::list<std::string_view> &filenames) {
+  void TornApart(const args_type &filenames) {
     for (auto filename : filenames) {
       auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
         auto reader = Context().GetFileReader(filename.data(), filename.size());
@@ -228,7 +224,7 @@ Usage: milk [OPTIONS] [FILES]
       }
     }
   }
-  void GenTarget(const std::list<std::string_view> &filenames, std::string_view name) {
+  void GenTarget(const args_type &filenames, std::string_view name) {
     uint16_t f = [this]() -> auto {
       switch (format_) {
         case FormatType::SINGLE:
@@ -264,7 +260,7 @@ Usage: milk [OPTIONS] [FILES]
       }
     }
     if (f == 0 && tracks.size() > 1) {
-      Err() << "milk: try to generate target with one more tracks but the expected format is single mode" << End();
+      Err() << Tip() << "try to generate target with one more tracks but the expected format is single mode" << End();
       return;
     } else if (tracks.size() == 1 && format_ == FormatType::SINGLE) {
       f = 0;

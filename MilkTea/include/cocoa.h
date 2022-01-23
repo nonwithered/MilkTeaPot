@@ -5,6 +5,7 @@
 
 #include <cocoa/cursor.h>
 #include <cocoa/pipeline.h>
+#include <cocoa/dispatcher.h>
 
 #endif // ifdef __cplusplus
 

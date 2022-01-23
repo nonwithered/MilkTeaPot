@@ -11,9 +11,8 @@
 
 namespace Milk {
 
-class DumpController final : public BaseController {
+class DumpController final : public BaseController<DumpController> {
   static constexpr char TAG[] = "Milk::DumpController";
-  using self_type = DumpController;
   enum class DetailLevel {
     HEADER,
     DATA,
@@ -37,40 +36,37 @@ Usage: milk dump [OPTIONS] [FILES]
     detail level
     only headers by default
 )";
-  DumpController(BaseContext &context)
-  : BaseController(context, kUsage) {}
- public:
-  void Main(std::list<std::string_view> &args) final {
-    if (!BaseController::Config(Cocoa::Pipeline(*this, args))
-        .Append({
-            "-x",
-        }, &self_type::hex_, true)
-        .Append({
-            "-L",
-            "--level",
-        }, &self_type::detail_,
-        [this](auto &cmd) {
-          Err() << "milk " << cmd << ": need detail level" << End();
-        },
-        [this](auto &cmd, auto &it) {
-          Err() << "milk " << cmd << ": invalid detail level: " << it << End();
-        }, {
-          { DetailLevel::HEADER, { "h", "header" } },
-          { DetailLevel::DATA, { "d", "data" } },
-          { DetailLevel::EVENTS, { "e", "events" } },
-          { DetailLevel::VERBOSE, { "v", "verbose" } },
-        })
-        .Launch(kName)) {
-      return;
-    }
-    BaseController::Main(args);
+  DumpController(BaseContext &context) : BaseController(context) {}
+ protected:
+  void Main(args_type &args) final {
     if (args.empty()) {
-      Err() << "milk dump: no input files" << End();
+      Err() << Tip() << "no input files" << End();
       return;
     }
     for (auto it : args) {
       Preview(it);
     }
+  }
+  pipeline_type Config(pipeline_type &&pipeline) final {
+    return super_type::Config(std::forward<pipeline_type>(pipeline))
+      .Append({
+          "-x",
+      }, &self_type::hex_, true)
+      .Append({
+          "-L",
+          "--level",
+      }, &self_type::detail_,
+      [this]() {
+        Err() << Tip() << ": need detail level" << End();
+      },
+      [this](auto &it) {
+        Err() << Tip() << ": invalid detail level: " << it << End();
+      }, {
+        { DetailLevel::HEADER, { "h", "header" } },
+        { DetailLevel::DATA, { "d", "data" } },
+        { DetailLevel::EVENTS, { "e", "events" } },
+        { DetailLevel::VERBOSE, { "v", "verbose" } },
+      });
   }
  private:
   void Preview(std::string_view filename) {

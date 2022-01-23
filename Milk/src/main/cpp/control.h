@@ -15,49 +15,55 @@
 
 namespace Milk {
 
+template<typename Controller>
+struct Mode final {
+  using controller_type = Controller;
+  using args_type = Milk::args_type;
+  static std::string_view Name() {
+    return controller_type::kName;
+  }
+  static void Start(std::string_view, args_type &args, Milk::ContextWrapper &context) {
+    controller_type(context).Start(args);
+  }
+};
+
+template<typename Controller>
 class BaseController {
   static constexpr char TAG[] = "Milk::BaseController";
-  using self_type = BaseController;
  public:
-  static constexpr auto kName = "";
-  static constexpr auto kUsage = "";
-  virtual void Main(std::list<std::string_view> &) {
-    if (version_) {
-      Out() << "version: " << kVersion << End();
+  void Start(args_type &args) {
+    if (!Config(Cocoa::Pipeline(args, dynamic_cast<self_type &>(*this))).Start()) {
+      return;
     }
-    if (help_) {
-      Out() << usage_ << End();
-    }
-    Context().SetLogLevel(level_);
+    Prepare();
+    Main(args);
   }
  protected:
-  using container_type = std::list<std::string_view>;
-  using cursor_type = Cocoa::Cursor<container_type>;
-  static constexpr std::nullptr_t End() {
-    return nullptr;
-  }
-  static constexpr std::string_view Line() {
-    return "\n";
-  }
-  template<typename attribute_type, typename container_type>
-  Cocoa::Pipeline<attribute_type, container_type> Config(Cocoa::Pipeline<attribute_type, container_type> &&pipeline) {
-    return std::forward<Cocoa::Pipeline<attribute_type, container_type>>(pipeline)
+  using self_type = Controller;
+  using super_type = BaseController<self_type>;
+  using args_type = typename std::vector<std::string_view>;
+  using value_type = args_type::value_type;
+  using cursor_type = Cocoa::Cursor<args_type>;
+  using pipeline_type = Cocoa::Pipeline<args_type, self_type>;
+  virtual void Main(args_type &) = 0;
+  virtual pipeline_type Config(pipeline_type &&pipeline) {
+    return std::move(pipeline)
       .Append({
           "-h",
           "--help",
-        }, &attribute_type::help_, true)
+        }, &self_type::help_, true)
       .Append({
           "-v",
           "--version",
-        }, &attribute_type::version_, true)
+        }, &self_type::version_, true)
       .Append({
           "--log",
-        }, &attribute_type::level_,
-        [this](auto &cmd) {
-          Err() << "milk " << cmd << ": need log level" << End();
+        }, &self_type::level_,
+        [this]() {
+          Err() << Tip() << ": need log level" << End();
         },
-        [this](auto &cmd, auto &it) {
-          Err() << "milk " << cmd << ": invalid log level: " << it << End();
+        [this](auto &it) {
+          Err() << Tip() << ": invalid log level: " << it << End();
         }, {
           { MilkTea::Logger::Level::DEBUG, { "d", "debug" } },
           { MilkTea::Logger::Level::INFO, { "i", "info" } },
@@ -65,9 +71,14 @@ class BaseController {
           { MilkTea::Logger::Level::ERROR, { "e", "error" } },
         });
   }
-  BaseController(BaseContext &context, std::string_view usage)
+  static constexpr std::nullptr_t End() {
+    return nullptr;
+  }
+  static constexpr std::string_view Line() {
+    return "\n";
+  }
+  BaseController(BaseContext &context)
   : context_(context),
-    usage_(std::move(usage)),
     out_(context.GetPrinterOut()),
     err_(context.GetPrinterErr()) {}
   BaseContext &Context() {
@@ -79,14 +90,33 @@ class BaseController {
   BufferPrinter &Err() {
     return err_;
   }
+  std::string_view Name() const {
+    return self_type::kName;
+  }
+  std::string_view Usage() const {
+    return self_type::kUsage;
+  }
+  std::string Tip() const {
+    return std::string(Milk::kName) + " " + Name().data() + ": ";
+  }
   bool version_ = false;
   bool help_ = false;
   MilkTea::Logger::Level level_ = MilkTea::Logger::Level::ASSERT;
  private:
+  void Prepare() {
+    if (version_) {
+      Out() << "version: " << kVersion << End();
+    }
+    if (help_) {
+      Out() << Usage() << End();
+    }
+    Context().SetLogLevel(level_);
+  }
   BaseContext &context_;
-  std::string usage_;
   BufferPrinter out_;
   BufferPrinter err_;
+  MilkTea_NonCopy(BaseController);
+  MilkTea_NonMove(BaseController);
 };
 
 } // namespace Milk

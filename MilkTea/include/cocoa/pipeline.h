@@ -12,45 +12,32 @@
 
 namespace Cocoa {
 
-template<typename attribute_type, typename container_type>
+template<typename container_type, typename extra_type>
 class Pipeline final {
   static constexpr char TAG[] = "Cocoa::Pipeline";
-  using self_type = Pipeline<attribute_type, container_type>;
+  using self_type = Pipeline<container_type, extra_type>;
   using value_type = typename container_type::value_type;
   using cursor_type = Cursor<container_type>;
  public:
-  explicit Pipeline(attribute_type &attribute, container_type &container)
-  : attribute_(attribute),
-    container_(container) {}
+  explicit Pipeline(container_type &container, extra_type &extra)
+  : container_(container),
+    extra_(extra) {}
   Pipeline(self_type &&another)
   : callbacks_(std::move(another.callbacks_)),
-    attribute_(another.attribute_),
-    container_(another.container_) {}
+    container_(another.container_),
+    extra_(another.extra_) {}
   self_type Append(
       std::initializer_list<value_type> candidate,
-      std::function<bool(const value_type &, cursor_type &)> f
+      std::function<bool(cursor_type &)> f
     ) && {
     for (auto it : candidate) {
       if (callbacks_.count(it) != 0) {
-        std::string s;
-        {
-          std::stringstream ss;
-          ss << it;
-          ss >> s;
-        }
+        auto s = MilkTea::ToString::From(it);
         MilkTea_throwf(InvalidParam, "append a redundant candidate: %s", s.data());
       }
       callbacks_[it] = f;
     }
     return std::forward<self_type>(*this);
-  }
-  self_type Append(
-      std::initializer_list<value_type> candidate,
-      std::function<bool(cursor_type &)> f
-    ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [f](auto &, auto &cursor) -> bool {
-      return f(cursor);
-    });
   }
   template<typename T, typename S>
   self_type Append(
@@ -58,43 +45,34 @@ class Pipeline final {
       T S::* member,
       T value
     ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [&attribute = attribute_, member, value](auto &) -> bool {
-      dynamic_cast<S &>(attribute).*member = value;
+    return std::forward<self_type>(*this).Append(std::move(candidate), [&extra = extra_, member, value](auto &) -> bool {
+      dynamic_cast<S &>(extra).*member = value;
       return true;
     });
   }
   self_type Append(
       std::initializer_list<value_type> candidate,
-      void (attribute_type::* member)()
+      void (extra_type::* member)()
     ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [&attribute = attribute_, member](auto &) -> bool {
-//      std::bind(member, attribute_)();
-      (attribute.*member)();
+    return std::forward<self_type>(*this).Append(std::move(candidate), [&extra = extra_, member](auto &) -> bool {
+      (extra.*member)();
       return true;
     });
   }
   self_type Append(
       std::initializer_list<value_type> candidate,
-      bool (attribute_type::* member)(const value_type &, cursor_type &)
+      bool (extra_type::* member)(cursor_type &)
     ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [&attribute = attribute_, member](auto &cmd, auto &cursor) -> bool {
-      return (attribute.*member)(cmd, cursor);
-    });
-  }
-  self_type Append(
-      std::initializer_list<value_type> candidate,
-      bool (attribute_type::* member)(cursor_type &)
-    ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [&attribute = attribute_, member](auto &cursor) -> bool {
-      return (attribute.*member)(cursor);
+    return std::forward<self_type>(*this).Append(std::move(candidate), [&extra = extra_, member](auto &cursor) -> bool {
+      return (extra.*member)(cursor);
     });
   }
   template<typename T, typename S>
   self_type Append(
       std::initializer_list<value_type> candidate,
       T S::* member,
-      std::function<void(const value_type &)> handler_none,
-      std::function<void(const value_type &, const value_type &)> handler_invalid,
+      std::function<void()> handler_none,
+      std::function<void(const value_type &)> handler_invalid,
       std::map<T, std::vector<value_type>> value_map
     ) && {
     std::map<value_type, T> candidate_map;
@@ -102,12 +80,7 @@ class Pipeline final {
       for (auto i = value_map.begin(), n = value_map.end(); i != n; ++i) {
         for (auto &it : i->second) {
           if (candidate_map.count(it) != 0) {
-            std::string s;
-            {
-              std::stringstream ss;
-              ss << it;
-              ss >> s;
-            }
+            auto s = MilkTea::ToString::From(it);
             MilkTea_throwf(InvalidParam, "append a redundant sub candidate: %s", s.data());
           }
           candidate_map[it] = i->first;
@@ -115,24 +88,24 @@ class Pipeline final {
       }
     }
     return std::forward<self_type>(*this).Append(std::move(candidate),
-        [&attribute = attribute_, member, handler_none, handler_invalid, handler_map = std::move(candidate_map)]
-        (auto cmd, auto &cursor) -> bool {
+        [&extra = extra_, member, handler_none, handler_invalid, handler_map = std::move(candidate_map)]
+        (auto &cursor) -> bool {
       if (!cursor) {
-        handler_none(cmd);
+        handler_none();
         return false;
       }
       auto &value = *cursor;
       auto it = handler_map.find(value);
       if (it == handler_map.end()) {
-        handler_invalid(cmd, value);
+        handler_invalid(value);
         return false;
       }
-      dynamic_cast<S &>(attribute).*member = it->second;
+      dynamic_cast<S &>(extra).*member = it->second;
       ++cursor;
       return true;
     });
   }
-  bool Launch(const value_type &cmd) && {
+  bool Start() && {
     for (auto i = container_.begin(); i != container_.end(); ) {
       auto it = callbacks_.find(*i);
       if (it == callbacks_.end()) {
@@ -141,16 +114,16 @@ class Pipeline final {
       }
       i = container_.erase(i);
       auto cursor = cursor_type(container_, i);
-      if (!it->second(cmd, cursor)) {
+      if (!it->second(cursor)) {
         return false;
       }
     }
     return true;
   }
  private:
-  std::map<value_type, std::function<bool(const value_type &, cursor_type &)>> callbacks_;
-  attribute_type &attribute_;
+  std::map<value_type, std::function<bool(cursor_type &)>> callbacks_;
   container_type &container_;
+  extra_type &extra_;
   MilkTea_NonCopy(Pipeline);
   MilkTea_NonMoveAssign(Pipeline);
 };

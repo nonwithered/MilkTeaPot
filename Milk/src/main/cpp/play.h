@@ -168,9 +168,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   std::vector<std::unique_ptr<SoyBean::BaseHandle>> handle_;
 };
 
-class PlayController final : public BaseController {
+class PlayController final : public BaseController<PlayController> {
   static constexpr char TAG[] = "Milk::PlayController";
-  using self_type = PlayController;
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   static constexpr auto kName = "play";
@@ -183,17 +182,11 @@ Usage: milk play
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
 )";
-  PlayController(BaseContext &context)
-  : BaseController(context, kUsage) {}
- public:
-  void Main(std::list<std::string_view> &args) final {
-    if (!BaseController::Config(Cocoa::Pipeline(*this, args))
-        .Launch(kName)) {
-      return;
-    }
-    BaseController::Main(args);
+  PlayController(BaseContext &context) : BaseController(context) {}
+ protected:
+  void Main(args_type &args) final {
     if (args.empty()) {
-      Err() << "milk " << kName << ": no input files" << End();
+      Err() << Tip() << ": no input files" << End();
       return;
     }
     auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
@@ -254,6 +247,9 @@ Usage: milk play
     timer.AwaitTermination();
     timer.Close();
     Out() << "return" << End();
+  }
+  pipeline_type Config(pipeline_type &&pipeline) final {
+    return super_type::Config(std::forward<pipeline_type>(pipeline));
   }
  private:
 };

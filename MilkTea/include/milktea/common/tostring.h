@@ -11,6 +11,15 @@ namespace MilkTea {
 
 namespace ToString {
 
+template<typename T>
+std::string From(const T &t) {
+  std::string s;
+  std::stringstream ss;
+  ss << t;
+  ss >> s;
+  return s;
+}
+
 inline std::string FromU8(uint8_t n) {
   char buf[4];
   sprintf(buf, "%" PRIu8, n);

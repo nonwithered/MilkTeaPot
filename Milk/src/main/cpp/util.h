@@ -6,7 +6,11 @@
 
 namespace Milk {
 
+static constexpr char kName[] = "milk";
+
 static constexpr char kVersion[] = "0.0.1-SNAPSHOT";
+
+using args_type = typename std::vector<std::string_view>;
 
 } // namespace Milk
 
