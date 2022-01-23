@@ -14,7 +14,7 @@ template<typename container_type, typename context_type>
 struct DispatcherHelper {
   static constexpr char TAG[] = "Cocoa::Dispatcher";
   using value_type = typename container_type::value_type;
-  using command_type = std::function<void(value_type, container_type &, context_type &)>;
+  using command_type = std::function<void(container_type &, context_type &)>;
   using map_type = std::map<value_type, command_type>;
 };
 
@@ -60,16 +60,18 @@ class Dispatcher final {
     if (m.empty()) {
       MilkTea_throw(InvalidParam, "Start need commands");
     }
-    auto h = container_.begin();
-    if (h != container_.end()) {
-      auto i = m.find(*h);
-      if (i != m.end()) {
+    if (auto h = container_.begin(); h != container_.end()) {
+      if (auto i = m.find(*h); i != m.end()) {
         container_.erase(h);
-        i->second(i->first, container_, context_);
+        i->second(container_, context_);
         return;
       }
     }
-    m.begin()->second(value_type(), container_, context_);
+    if (auto v = value_type(); m.count(v) != 0) {
+      m[v](container_, context_);
+      return;
+    }
+    MilkTea_logW("missing a default command");
   }
   Dispatcher(container_type container, context_type context)
   : container_(container),

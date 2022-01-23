@@ -41,8 +41,8 @@ class LoggerWrapper final : public BaseLogger {
     Interface().Error(Self(), tag.data(), msg.data());
   }
   MilkTea_Logger_t release() {
-    MilkTea_Logger_t self = self_;
-    self_ = {};
+    MilkTea_Logger_t self = {};
+    std::swap(self, self_);
     return self;
   }
  private:

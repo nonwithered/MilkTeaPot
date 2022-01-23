@@ -21,7 +21,7 @@ struct Mode final {
   static std::string_view Name() {
     return controller_type::kName;
   }
-  static void Start(std::string_view, args_type &args, Milk::ContextWrapper &context) {
+  static void Start(args_type &args, Milk::ContextWrapper &context) {
     controller_type(context).Start(args);
   }
 };

@@ -46,18 +46,14 @@ class BufferPrinter final {
  public:
   explicit BufferPrinter(BasePrinter &printer) : printer_(printer), buf_() {}
   BufferPrinter &operator()(std::initializer_list<StringWrapper> s) {
-    for (const auto &it : s) {
+    for (auto &it : s) {
       buf_ += it;
     }
     return *this;
   }
   template<typename T>
   BufferPrinter &operator<<(T t) {
-    std::stringstream ss;
-    ss << t;
-    std::string s;
-    ss >> s;
-    buf_ += s;
+    buf_ += MilkTea::ToString::From(t);
     return *this;
   }
   BufferPrinter &operator<<(std::string s) {

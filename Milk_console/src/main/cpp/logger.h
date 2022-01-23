@@ -15,16 +15,16 @@ class LoggerImpl : public MilkTea::BaseLogger {
     delete this;
   }
   void Debug(std::string_view tag, std::string_view msg) final {
-    std::cerr << Current() << "/DEBUG: " << tag << ": " << msg << std::endl;
+    std::clog << Current() << "/DEBUG: " << tag << ": " << msg << std::endl;
   }
   void Info(std::string_view tag, std::string_view msg) final {
-    std::cerr << Current() << "/INFO: " << tag << ": " << msg << std::endl;
+    std::clog << Current() << "/INFO: " << tag << ": " << msg << std::endl;
   }
   void Warn(std::string_view tag, std::string_view msg) final {
-    std::cerr << Current() << "/WARN: " << tag << ": " << msg << std::endl;
+    std::clog << Current() << "/WARN: " << tag << ": " << msg << std::endl;
   }
   void Error(std::string_view tag, std::string_view msg) final {
-    std::cerr << Current() << "/ERROR: " << tag << ": " << msg << std::endl;
+    std::clog << Current() << "/ERROR: " << tag << ": " << msg << std::endl;
   }
  private:
   static std::string Current() {
