@@ -24,7 +24,7 @@ class HandleImpl final : public SoyBean::BaseHandle {
     self_ = nullptr;
   }
   BaseHandle &Move() && final {
-    return *new HandleImpl(std::forward<HandleImpl>(*this));
+    return *new HandleImpl(std::move(*this));
   }
   void Destroy() && final {
     delete this;

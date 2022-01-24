@@ -11,7 +11,7 @@ class BaseFactory {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = &std::forward<BaseFactory>(*this).Move(),
+      .self_ = &std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }
@@ -40,7 +40,7 @@ class FactoryWrapper final : public BaseFactory {
     MilkTea_invoke_panic(SoyBean_Factory_Destroy, self);
   }
   BaseFactory &Move() && final {
-    return *new FactoryWrapper(std::forward<FactoryWrapper>(*this));
+    return *new FactoryWrapper(std::move(*this));
   }
   void Destroy() && final {
     delete this;

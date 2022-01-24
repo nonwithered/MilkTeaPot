@@ -14,7 +14,7 @@ class BaseRenderer {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = std::forward<BaseRenderer>(*this).Move(),
+      .self_ = std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }
@@ -54,7 +54,7 @@ class RendererWrapper final : public BaseRenderer {
     self_ = {};
   }
   BaseRenderer *Move() && final {
-    return new RendererWrapper(std::forward<RendererWrapper>(*this));
+    return new RendererWrapper(std::move(*this));
   }
   void Destroy() && final {
     delete this;
@@ -118,7 +118,7 @@ class RendererProxy final : public BaseRenderer {
   ~RendererProxy() final {
   }
   base_type *Move() && final {
-    return new self_type(std::forward<self_type>(*this));
+    return new self_type(std::move(*this));
   }
   void Destroy() && final {
     delete this;

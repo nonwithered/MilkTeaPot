@@ -61,7 +61,7 @@ Usage: milk [OPTIONS] [FILES]
     }
   }
   pipeline_type Config(pipeline_type &&pipeline) final {
-    return super_type::Config(std::forward<pipeline_type>(pipeline))
+    return super_type::Config(std::move(pipeline))
       .Append({
         "-o",
       }, &self_type::InitTarget)

@@ -11,7 +11,7 @@ class BaseHandle {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = &std::forward<BaseHandle>(*this).Move(),
+      .self_ = &std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }
@@ -46,7 +46,7 @@ class HandleWrapper final : public BaseHandle {
     MilkTea_invoke_panic(SoyBean_Handle_Destroy, self);
   }
   BaseHandle &Move() && final {
-    return *new HandleWrapper(std::forward<HandleWrapper>(*this));
+    return *new HandleWrapper(std::move(*this));
   }
   void Destroy() && final {
     delete this;

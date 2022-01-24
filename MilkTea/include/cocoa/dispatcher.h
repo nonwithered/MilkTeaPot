@@ -73,9 +73,6 @@ class Dispatcher final {
     }
     MilkTea_logW("missing a default command");
   }
-  Dispatcher(container_type container, context_type context)
-  : container_(container),
-    context_(context) {}
   Dispatcher(container_type &container, context_type &context)
   : container_(container),
     context_(context) {}

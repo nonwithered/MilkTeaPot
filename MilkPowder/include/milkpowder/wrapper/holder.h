@@ -110,7 +110,7 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
   }
   void operator=(MutableWrapper<T> &&another) {
     this->~MutableWrapper<T>();
-    new (this) MutableWrapper<T>(std::forward<MutableWrapper<T>>(another));
+    new (this) MutableWrapper<T>(std::move(another));
   }
   raw_type *release() {
     return reset(nullptr);

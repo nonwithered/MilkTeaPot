@@ -28,9 +28,9 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
  public:
   explicit PlayerImpl(RendererWrapper &&renderer, TeaPot::Executor::executor_type executor, TeaPot::TimerWorkerWeakWrapper &&timer)
   : state_(State::INIT),
-    renderer_(std::forward<RendererWrapper>(renderer)),
+    renderer_(std::move(renderer)),
     executor_(executor),
-    timer_(std::forward<TeaPot::TimerWorkerWeakWrapper>(timer)),
+    timer_(std::move(timer)),
     perform_() {}
   ~PlayerImpl() = default;
   void Init() {

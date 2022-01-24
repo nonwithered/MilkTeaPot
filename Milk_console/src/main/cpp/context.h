@@ -18,7 +18,7 @@ class ContextImpl final : public Milk::BaseContext {
     out_(std::cout),
     err_(std::cerr) {}
   void SetLogLevel(MilkTea::Logger::Level level) final {
-    bool b = MilkTea::Logger::Config(LoggerImpl(level));
+    bool b = MilkTea::Logger::Config<LoggerImpl>(LoggerImpl(level));
     if (!b) {
       MilkTea_logW("SetLogLevel fail");
     }

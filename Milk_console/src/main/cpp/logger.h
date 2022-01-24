@@ -9,7 +9,7 @@ class LoggerImpl : public MilkTea::BaseLogger {
  public:
   LoggerImpl(MilkTea::Logger::Level level) : MilkTea::BaseLogger(level) {}
   BaseLogger &Move() && final {
-    return *new LoggerImpl(std::forward<LoggerImpl>(*this));
+    return *new LoggerImpl(std::move(*this));
   }
   void Destroy() && final {
     delete this;

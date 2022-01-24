@@ -14,7 +14,7 @@ class PlayerWrapper final {
     std::swap(self_, another.self_);
   }
   PlayerWrapper(BaseRenderer &&renderer, TeaPot::Executor::executor_type executor, TeaPot::TimerWorkerWeakWrapper timer) : PlayerWrapper() {
-    MilkTea_invoke_panic(SoyMilk_Player_Create, &self_, std::forward<BaseRenderer>(renderer).ToRawType(), TeaPot::Executor::ToRawType(executor), timer.release());
+    MilkTea_invoke_panic(SoyMilk_Player_Create, &self_, std::move(renderer).ToRawType(), TeaPot::Executor::ToRawType(executor), timer.release());
   }
   ~PlayerWrapper() {
     if (self_ == nullptr) {

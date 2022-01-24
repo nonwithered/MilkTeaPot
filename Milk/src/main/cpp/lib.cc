@@ -21,7 +21,9 @@ auto Args(int argc, char *argv[]) {
 } // namespace
 
 MilkTea_extern(Milk_Main, (int argc, char *argv[], Milk_Context_t context), {
-  Cocoa::Dispatcher(Args(argc, argv), Milk::ContextWrapper(context)).Start(
+  auto args = Args(argc, argv);
+  auto context_wrapper = Milk::ContextWrapper(context);
+  Cocoa::Dispatcher(args, context_wrapper).Start(
     Milk::Mode<Milk::CodecController>(),
     Milk::Mode<Milk::DumpController>(),
     Milk::Mode<Milk::PlayController>()

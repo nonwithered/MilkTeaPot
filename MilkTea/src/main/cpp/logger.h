@@ -23,7 +23,7 @@ class LoggerWrapper final : public BaseLogger {
     self_ = {};
   }
   BaseLogger &Move() && final {
-    return *new LoggerWrapper(std::forward<LoggerWrapper>(*this));
+    return *new LoggerWrapper(std::move(*this));
   }
   void Destroy() && final {
     delete this;

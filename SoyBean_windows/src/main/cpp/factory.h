@@ -27,7 +27,7 @@ class FactoryImpl final : public SoyBean::BaseFactory {
     fdwOpen_ = 0;
   }
   BaseFactory &Move() && final {
-    return *new FactoryImpl(std::forward<FactoryImpl>(*this));
+    return *new FactoryImpl(std::move(*this));
   }
   void Destroy() && final {
     delete this;

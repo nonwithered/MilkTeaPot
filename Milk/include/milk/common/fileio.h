@@ -14,7 +14,7 @@ class BaseFileReader {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = &std::forward<BaseFileReader>(*this).Move(),
+      .self_ = &std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }
@@ -37,7 +37,7 @@ class BaseFileWriter {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = &std::forward<BaseFileWriter>(*this).Move(),
+      .self_ = &std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }

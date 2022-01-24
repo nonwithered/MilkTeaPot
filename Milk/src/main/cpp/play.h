@@ -43,7 +43,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
     seek_(another.seek_) {}
   ~RendererImpl() final = default;
   RendererImpl *Move() && final {
-    return new RendererImpl(std::forward<RendererImpl>(*this));
+    return new RendererImpl(std::move(*this));
   }
   void Destroy() && final {
     delete this;
@@ -249,7 +249,7 @@ Usage: milk play
     Out() << "return" << End();
   }
   pipeline_type Config(pipeline_type &&pipeline) final {
-    return super_type::Config(std::forward<pipeline_type>(pipeline));
+    return super_type::Config(std::move(pipeline));
   }
  private:
 };

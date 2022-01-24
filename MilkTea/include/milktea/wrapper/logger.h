@@ -8,8 +8,8 @@ namespace MilkTea {
 namespace Logger {
 
 template<typename T>
-bool Config(T &&logger) {
-  return MilkTea_Logger_Config(std::forward<T>(logger).ToRawType());
+bool Config(typename std::remove_reference<T>::type &&logger) {
+  return MilkTea_Logger_Config(std::move(logger).ToRawType());
 }
 
 inline

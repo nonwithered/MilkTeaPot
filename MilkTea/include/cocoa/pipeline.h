@@ -37,7 +37,7 @@ class Pipeline final {
       }
       callbacks_[it] = f;
     }
-    return std::forward<self_type>(*this);
+    return std::move(*this);
   }
   template<typename T, typename S>
   self_type Append(
@@ -45,7 +45,7 @@ class Pipeline final {
       T S::* member,
       T value
     ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [&extra = extra_, member, value](auto &) -> bool {
+    return std::move(*this).Append(std::move(candidate), [&extra = extra_, member, value](auto &) -> bool {
       dynamic_cast<S &>(extra).*member = value;
       return true;
     });
@@ -54,7 +54,7 @@ class Pipeline final {
       std::initializer_list<value_type> candidate,
       void (extra_type::* member)()
     ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [&extra = extra_, member](auto &) -> bool {
+    return std::move(*this).Append(std::move(candidate), [&extra = extra_, member](auto &) -> bool {
       (extra.*member)();
       return true;
     });
@@ -63,7 +63,7 @@ class Pipeline final {
       std::initializer_list<value_type> candidate,
       bool (extra_type::* member)(cursor_type &)
     ) && {
-    return std::forward<self_type>(*this).Append(std::move(candidate), [&extra = extra_, member](auto &cursor) -> bool {
+    return std::move(*this).Append(std::move(candidate), [&extra = extra_, member](auto &cursor) -> bool {
       return (extra.*member)(cursor);
     });
   }
@@ -87,7 +87,7 @@ class Pipeline final {
         }
       }
     }
-    return std::forward<self_type>(*this).Append(std::move(candidate),
+    return std::move(*this).Append(std::move(candidate),
         [&extra = extra_, member, handler_none, handler_invalid, handler_map = std::move(candidate_map)]
         (auto &cursor) -> bool {
       if (!cursor) {

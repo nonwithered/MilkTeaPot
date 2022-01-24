@@ -29,7 +29,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
       }
       MilkTea_throwf(LogicError, "Close need TERMINATED but now %s", StateName(state));
     });
-    worker->binder_.Unbind(std::forward<worker_type>(worker));
+    worker->binder_.Unbind(std::move(worker));
   }
   ~TimerWorkerImpl() {
     State state = state_;
