@@ -29,7 +29,7 @@ class ContextHolder final : public Milk::BaseContext {
   void SetLogLevel(MilkTea::Logger::Level) final {
     MilkTea_stub(SetLogLevel);
   }
-  SoyBean::FactoryWrapper GetSoyBeanFactory() final {
+  SoyBean::BaseFactory &GetSoyBeanFactory() final {
     MilkTea_stub(GetSoyBeanFactory);
   }
   Milk::BasePrinter &GetPrinterOut() final {
@@ -38,10 +38,10 @@ class ContextHolder final : public Milk::BaseContext {
   Milk::BasePrinter &GetPrinterErr() final {
     MilkTea_stub(GetPrinterErr);
   }
-  std::unique_ptr<Milk::BaseFileReader> GetFileReader(const char [], size_t) final {
+  MilkTea::BaseReader &GetFileReader(std::string_view) final {
     MilkTea_stub(GetFileReader);
   }
-  std::unique_ptr<Milk::BaseFileWriter> GetFileWriter(const char [], size_t) final {
+  MilkTea::BaseWriter &GetFileWriter(std::string_view) final {
     MilkTea_stub(GetFileWriter);
   }
  private:

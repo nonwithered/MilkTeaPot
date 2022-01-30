@@ -7,13 +7,13 @@
 
 namespace Milk_Console {
 
-class FileReaderImpl final : public Milk::BaseFileReader {
+class FileReaderImpl final : public MilkTea::BaseReader {
   static constexpr char TAG[] = "Milk_Console::FileReaderImpl";
  public:
   FileReaderImpl(std::ifstream ifs) : ifs_(std::move(ifs)) {}
   FileReaderImpl(FileReaderImpl &&another) : FileReaderImpl(std::move(another.ifs_)) {}
   ~FileReaderImpl() final  = default;
-  BaseFileReader &Move() && final {
+  BaseReader &Move() && final {
     return *new FileReaderImpl(std::move(*this));
   }
   void Destroy() && final {
@@ -34,13 +34,13 @@ class FileReaderImpl final : public Milk::BaseFileReader {
   std::ifstream ifs_;
 };
 
-class FileWriterImpl final : public Milk::BaseFileWriter {
+class FileWriterImpl final : public MilkTea::BaseWriter {
   static constexpr char TAG[] = "Milk_Console::FileWriterImpl";
  public:
   FileWriterImpl(std::ofstream ofs) : ofs_(std::move(ofs)) {}
   FileWriterImpl(FileWriterImpl &&another) : FileWriterImpl(std::move(another.ofs_)) {}
   ~FileWriterImpl() final  = default;
-  BaseFileWriter &Move() && final {
+  BaseWriter &Move() && final {
     return *new FileWriterImpl(std::move(*this));
   }
   void Destroy() && final {

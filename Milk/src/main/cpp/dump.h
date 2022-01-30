@@ -36,7 +36,7 @@ Usage: milk dump [OPTIONS] [FILES]
     detail level
     only headers by default
 )";
-  DumpController(BaseContext &context) : BaseController(context) {}
+  DumpController(ContextWrapper &context) : BaseController(context) {}
  protected:
   void Main(args_type &args) final {
     if (args.empty()) {
@@ -70,21 +70,21 @@ Usage: milk dump [OPTIONS] [FILES]
   }
  private:
   void Preview(std::string_view filename) {
-    auto reader = Context().GetFileReader(filename.data(), filename.size());
+    auto reader = Context().GetFileReader(filename);
     switch (detail_) {
       case DetailLevel::HEADER:
       case DetailLevel::DATA:
-        PreviewHead(*reader);
+        PreviewHead(reader);
         break;
       case DetailLevel::EVENTS:
       case DetailLevel::VERBOSE:
-        PreviewBody(*reader);
+        PreviewBody(reader);
         break;
       default:
         MilkTea_assert("Preview");
     }
   }
-  void PreviewHead(BaseFileReader &reader) {
+  void PreviewHead(MilkTea::ReaderWrapper &reader) {
     uint8_t buf[5];
     size_t count;
     // header type
@@ -170,7 +170,7 @@ Usage: milk dump [OPTIONS] [FILES]
       "[/CHUNK]" << End();
     }
   }
-  bool ShowData(BaseFileReader &reader, const uint32_t length) {
+  bool ShowData(MilkTea::ReaderWrapper &reader, const uint32_t length) {
     if (detail_ != DetailLevel::DATA) {
       uint32_t count = reader.Read(nullptr, length);
       if (count < length) {
@@ -212,8 +212,10 @@ Usage: milk dump [OPTIONS] [FILES]
     }
     return true;
   }
-  void PreviewBody(BaseFileReader &reader) {
-    auto midi = MilkPowder::MidiMutableWrapper::Parse(reader);
+  void PreviewBody(MilkTea::ReaderWrapper &reader) {
+    auto midi = MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
+      return reader.Read(bytes, len);
+    });
     auto format = midi.GetFormat();
     auto ntrks = midi.GetNtrks();
     auto division = midi.GetDivision();

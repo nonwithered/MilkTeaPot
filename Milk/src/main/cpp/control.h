@@ -75,11 +75,11 @@ class BaseController {
   static constexpr std::string_view Line() {
     return "\n";
   }
-  BaseController(BaseContext &context)
+  BaseController(ContextWrapper &context)
   : context_(context),
     out_(context.GetPrinterOut()),
     err_(context.GetPrinterErr()) {}
-  BaseContext &Context() {
+  ContextWrapper &Context() {
     return context_;
   }
   BufferPrinter &Out() {
@@ -110,7 +110,7 @@ class BaseController {
     }
     Context().SetLogLevel(level_);
   }
-  BaseContext &context_;
+  ContextWrapper &context_;
   BufferPrinter out_;
   BufferPrinter err_;
   MilkTea_NonCopy(BaseController);

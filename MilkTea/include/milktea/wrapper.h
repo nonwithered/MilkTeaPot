@@ -7,6 +7,7 @@
 
 #include <milktea/wrapper/except.h>
 #include <milktea/wrapper/logger.h>
+#include <milktea/wrapper/transport.h>
 
 #endif // ifdef __cplusplus
 

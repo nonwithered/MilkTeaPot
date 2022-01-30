@@ -18,7 +18,11 @@ Milk_Console::ContextImpl &ContextImpl_cast(void *self) {
 
 MilkTea_Exception_t MilkTea_call Milk_Console_Foundation_Interface_GetSoyBeanFactory(void *self, SoyBean_Factory_t *factory) MilkTea_with_except({
   MilkTea_nonnull(factory);
-  *factory = BaseFoundation_cast(self).GetSoyBeanFactory().ToRawType();
+  auto &factory_ = BaseFoundation_cast(self).GetSoyBeanFactory();
+  MilkTea::Defer defer([&factory_]() {
+    std::move(factory_).Destroy();
+  });
+  *factory = std::move(factory_).ToRawType();
 })
 
 } // namespace

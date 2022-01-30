@@ -4,6 +4,7 @@ set(src_files
     "lib.cc"
     "except.cc"
     "logger.cc"
+    "transport.cc"
 )
 
 set(src_dir

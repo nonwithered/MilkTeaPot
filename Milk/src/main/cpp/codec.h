@@ -44,7 +44,7 @@ Usage: milk [OPTIONS] [FILES]
   --reset
     reset the delta of all messages if the division of target is different from original type
 )";
-  CodecController(BaseContext &context) : BaseController(context) {}
+  CodecController(ContextWrapper &context) : BaseController(context) {}
  protected:
   void Main(args_type &args) final {
     if (args.empty()) {
@@ -190,8 +190,10 @@ Usage: milk [OPTIONS] [FILES]
   void TornApart(const args_type &filenames) {
     for (auto filename : filenames) {
       auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
-        auto reader = Context().GetFileReader(filename.data(), filename.size());
-        return MilkPowder::MidiMutableWrapper::Parse(*reader);
+        auto reader = Context().GetFileReader(filename);
+        return MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
+          return reader.Read(bytes, len);
+        });
       }();
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
@@ -218,8 +220,10 @@ Usage: milk [OPTIONS] [FILES]
         auto target = MilkPowder::MidiMutableWrapper::Make(format, division, std::move(tracks));
         {
           std::string name = std::string() + filename.data() + "." + MilkTea::ToStringHex::FromU16(idx) + ".mid";
-          auto writer = Context().GetFileWriter(name.data(), name.size());
-          target.Dump(*writer);
+          auto writer = Context().GetFileWriter(name);
+          target.Dump([&writer](auto bytes[], auto len) {
+            writer.Write(bytes, len);
+          });
         }
       }
     }
@@ -242,8 +246,10 @@ Usage: milk [OPTIONS] [FILES]
     std::vector<uint16_t> divisions;
     for (auto filename : filenames) {
       auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
-        auto reader = Context().GetFileReader(filename.data(), filename.size());
-        return MilkPowder::MidiMutableWrapper::Parse(*reader);
+        auto reader = Context().GetFileReader(filename);
+        return MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
+          return reader.Read(bytes, len);
+        });
       }();
       uint16_t format = midi.GetFormat();
       uint16_t ntrks = midi.GetNtrks();
@@ -271,8 +277,10 @@ Usage: milk [OPTIONS] [FILES]
     }
     auto target = MilkPowder::MidiMutableWrapper::Make(f, d, std::move(tracks));
     {
-      auto writer = Context().GetFileWriter(name.data(), name.size());
-      target.Dump(*writer);
+      auto writer = Context().GetFileWriter(name);
+      target.Dump([&writer](auto bytes[], auto len) {
+        writer.Write(bytes, len);
+      });
     }
   }
   static uint32_t GetAccuracy(uint16_t division) {

@@ -182,7 +182,7 @@ Usage: milk play
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
 )";
-  PlayController(BaseContext &context) : BaseController(context) {}
+  PlayController(ContextWrapper &context) : BaseController(context) {}
  protected:
   void Main(args_type &args) final {
     if (args.empty()) {
@@ -191,8 +191,10 @@ Usage: milk play
     }
     auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
       auto filename = args.front();
-      auto reader = Context().GetFileReader(filename.data(), filename.size());
-      return MilkPowder::MidiMutableWrapper::Parse(*reader);
+      auto reader = Context().GetFileReader(filename);
+      return MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
+        return reader.Read(bytes, len);
+      });
     }();
     TeaPot::TimerWorkerWrapper timer([this](auto type, auto what) -> bool {
       if (type == MilkTea::Exception::Type::Nil) {

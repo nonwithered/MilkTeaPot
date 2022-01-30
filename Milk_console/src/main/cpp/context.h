@@ -23,7 +23,7 @@ class ContextImpl final : public Milk::BaseContext {
       MilkTea_logW("SetLogLevel fail");
     }
   }
-  SoyBean::FactoryWrapper GetSoyBeanFactory() final {
+  SoyBean::BaseFactory &GetSoyBeanFactory() final {
     return foundation_.GetSoyBeanFactory();
   }
   Milk::BasePrinter &GetPrinterOut() final {
@@ -32,35 +32,19 @@ class ContextImpl final : public Milk::BaseContext {
   Milk::BasePrinter &GetPrinterErr() final {
     return err_;
   }
-  std::unique_ptr<Milk::BaseFileReader> GetFileReader(const char name[], size_t len) final {
-    std::string_view v;
-    std::string s;
-    if (name[len] == '\0') {
-      v = name;
-    } else {
-      s = std::string(name, name + len);
-      v = s;
-    }
-    std::ifstream fs(v.data(), std::ios::binary);
+  MilkTea::BaseReader &GetFileReader(std::string_view name) final {
+    std::ifstream fs(name.data(), std::ios::binary);
     if (!fs.is_open()) {
-      MilkTea_throwf(IOError, "GetFileReader fail -- %s", v.data());
+      MilkTea_throwf(IOError, "GetFileReader fail -- %s", name.data());
     }
-    return std::make_unique<FileReaderImpl>(std::move(fs));
+    return *new FileReaderImpl(std::move(fs));
   }
-  std::unique_ptr<Milk::BaseFileWriter> GetFileWriter(const char name[], size_t len) final {
-    std::string_view v;
-    std::string s;
-    if (name[len] == '\0') {
-      v = name;
-    } else {
-      s = std::string(name, name + len);
-      v = s;
-    }
-    std::ofstream fs(v.data(), std::ios::binary);
+  MilkTea::BaseWriter &GetFileWriter(std::string_view name) final {
+    std::ofstream fs(name.data(), std::ios::binary);
     if (!fs.is_open()) {
-      MilkTea_throwf(IOError, "GetFileWriter fail -- %s", v.data());
+      MilkTea_throwf(IOError, "GetFileWriter fail -- %s", name.data());
     }
-    return std::make_unique<FileWriterImpl>(std::move(fs));
+    return *new FileWriterImpl(std::move(fs));
   }
  private:
   FoundationWrapper foundation_;

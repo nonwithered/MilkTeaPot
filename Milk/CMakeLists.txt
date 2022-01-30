@@ -4,7 +4,6 @@ set(src_files
     "lib.cc"
     "context.cc"
     "printer.cc"
-    "fileio.cc"
 )
 
 set(src_dir

@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include <milk/core.h>
-#include <milk/common/fileio.h>
 #include <milk/common/printer.h>
 
 namespace Milk {
@@ -21,11 +20,11 @@ class BaseContext {
     };
   }
   virtual void SetLogLevel(MilkTea::Logger::Level) = 0;
-  virtual SoyBean::FactoryWrapper GetSoyBeanFactory() = 0;
+  virtual SoyBean::BaseFactory &GetSoyBeanFactory() = 0;
   virtual BasePrinter &GetPrinterOut() = 0;
   virtual BasePrinter &GetPrinterErr() = 0;
-  virtual std::unique_ptr<BaseFileReader> GetFileReader(const char [], size_t) = 0;
-  virtual std::unique_ptr<BaseFileWriter> GetFileWriter(const char [], size_t) = 0;
+  virtual MilkTea::BaseReader &GetFileReader(std::string_view) = 0;
+  virtual MilkTea::BaseWriter &GetFileWriter(std::string_view) = 0;
  private:
   static MilkTea_decl(const interface_type &) Interface();
 };

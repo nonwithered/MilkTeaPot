@@ -3,12 +3,11 @@
 
 #include <milk/common.h>
 
-#include "fileio.h"
 #include "printer.h"
 
 namespace Milk {
 
-class ContextWrapper final : public BaseContext {
+class ContextWrapper final {
   static constexpr char TAG[] = "Milk::ContextWrapper";
   using raw_type = Milk_Context_t;
   using interface_type = Milk_Context_Interface_t;
@@ -24,32 +23,29 @@ class ContextWrapper final : public BaseContext {
     MilkTea_invoke_panic(interface().GetPrinterErr, self(), &err);
     err_ = err;
   }
-  raw_type ToRawType() final {
-    return self_;
-  }
-  void SetLogLevel(MilkTea::Logger::Level level) final {
+  void SetLogLevel(MilkTea::Logger::Level level) {
     MilkTea_invoke_panic(interface().SetLogLevel, self(), MilkTea::Logger::ToRawType(level));
   }
-  SoyBean::FactoryWrapper GetSoyBeanFactory() final {
+  SoyBean::FactoryWrapper GetSoyBeanFactory() {
     SoyBean_Factory_t result = {};
     MilkTea_invoke_panic(interface().GetSoyBeanFactory, self(), &result);
     return result;
   }
-  BasePrinter &GetPrinterOut() final {
+  BasePrinter &GetPrinterOut() {
     return out_;
   }
-  BasePrinter &GetPrinterErr() final {
+  BasePrinter &GetPrinterErr() {
     return err_;
   }
-  std::unique_ptr<BaseFileReader> GetFileReader(const char name[], size_t len) final {
-    Milk_FileReader_t result = {};
-    MilkTea_invoke_panic(interface().GetFileReader, self(), &result, name, len);
-    return std::make_unique<FileReaderWrapper>(result);
+  MilkTea::ReaderWrapper GetFileReader(std::string_view name) {
+    MilkTea_Reader_t result = {};
+    MilkTea_invoke_panic(interface().GetFileReader, self(), &result, name.data(), name.size());
+    return result;
   }
-  std::unique_ptr<BaseFileWriter> GetFileWriter(const char name[], size_t len) final {
-    Milk_FileWriter_t result = {};
-    MilkTea_invoke_panic(interface().GetFileWriter, self(), &result, name, len);
-    return std::make_unique<FileWriterWrapper>(result);
+  MilkTea::WriterWrapper GetFileWriter(std::string_view name) {
+    MilkTea_Writer_t result = {};
+    MilkTea_invoke_panic(interface().GetFileWriter, self(), &result, name.data(), name.size());
+    return result;
   }
  private:
   void *self() const {

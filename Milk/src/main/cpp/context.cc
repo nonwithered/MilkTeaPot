@@ -15,7 +15,11 @@ MilkTea_Exception_t MilkTea_call Milk_Context_Interface_SetLogLevel(void *self, 
 
 MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetSoyBeanFactory(void *self, SoyBean_Factory_t *factory) MilkTea_with_except({
   MilkTea_nonnull(factory);
-  *factory = BaseContext_cast(self).GetSoyBeanFactory().ToRawType();
+  auto &factory_ = BaseContext_cast(self).GetSoyBeanFactory();
+  MilkTea::Defer defer([&factory_]() {
+    std::move(factory_).Destroy();
+  });
+  *factory = std::move(factory_).ToRawType();
 })
 
 MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterOut(void *self, Milk_Printer_t *printer) MilkTea_with_except({
@@ -28,22 +32,38 @@ MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterErr(void *self
   *printer = BaseContext_cast(self).GetPrinterErr().ToRawType();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileReader(void *self, Milk_FileReader_t *reader, const char name[], size_t len) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileReader(void *self, MilkTea_Reader_t *reader, const char name[], size_t len) MilkTea_with_except({
   MilkTea_nonnull(name);
-  auto *reader_ = BaseContext_cast(self).GetFileReader(name, len).release();
-  MilkTea::Defer defer([reader_]() {
-    std::move(*reader_).Destroy();
+  std::string s;
+  std::string_view sv;
+  if (name[len] == '\0') {
+    sv = std::string_view(name, len);
+  } else {
+    s = std::string(name, len);
+    sv = s;
+  }
+  auto &reader_ = BaseContext_cast(self).GetFileReader(sv);
+  MilkTea::Defer defer([&reader_]() {
+    std::move(reader_).Destroy();
   });
-  *reader = std::move(*reader_).ToRawType();
+  *reader = std::move(reader_).ToRawType();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileWriter(void *self, Milk_FileWriter_t *writer, const char name[], size_t len) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileWriter(void *self, MilkTea_Writer_t *writer, const char name[], size_t len) MilkTea_with_except({
   MilkTea_nonnull(name);
-  auto *writer_ = BaseContext_cast(self).GetFileWriter(name, len).release();
-  MilkTea::Defer defer([writer_]() {
-    std::move(*writer_).Destroy();
+  std::string s;
+  std::string_view sv;
+  if (name[len] == '\0') {
+    sv = std::string_view(name, len);
+  } else {
+    s = std::string(name, len);
+    sv = s;
+  }
+  auto &writer_ = BaseContext_cast(self).GetFileWriter(sv);
+  MilkTea::Defer defer([&writer_]() {
+    std::move(writer_).Destroy();
   });
-  *writer = std::move(*writer_).ToRawType();
+  *writer = std::move(writer_).ToRawType();
 })
 
 } // namespace

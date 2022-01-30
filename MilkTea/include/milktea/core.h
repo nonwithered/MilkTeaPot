@@ -5,5 +5,6 @@
 #include <milktea/core/closure.h>
 #include <milktea/core/except.h>
 #include <milktea/core/logger.h>
+#include <milktea/core/transport.h>
 
 #endif // ifndef LIB_MILKTEA_CORE_H_
