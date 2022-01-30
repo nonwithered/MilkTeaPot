@@ -40,10 +40,43 @@ inline std::string FromBytes(const uint8_t bytes[], size_t length) {
   std::stringstream ss;
   for (size_t i = 0; i != length; ++i) {
     uint8_t byte = bytes[i];
-    if (isgraph(byte)) {
-      ss << static_cast<char>(byte);
-    } else {
-      ss << "\\" << std::oct << std::right << std::setw(3) << std::setfill('0') << static_cast<unsigned int>(byte);
+    switch (byte) {
+      case '\a':
+        ss << "\\a";
+        break;
+      case '\b':
+        ss << "\\b";
+        break;
+      case '\t':
+        ss << "\\t";
+        break;
+      case '\n':
+        ss << "\\n";
+        break;
+      case '\v':
+        ss << "\\v";
+        break;
+      case '\f':
+        ss << "\\f";
+        break;
+      case '\r':
+        ss << "\\r";
+        break;
+      case '\"':
+        ss << "\\\"";
+        break;
+      case '\'':
+        ss << "\\\'";
+        break;
+      case '\\':
+        ss << "\\\\";
+        break;
+      default:
+        if (isgraph(byte)) {
+          ss << static_cast<char>(byte);
+        } else {
+          ss << "\\" << std::oct << std::right << std::setw(3) << std::setfill('0') << static_cast<unsigned int>(byte);
+        }
     }
   }
   return ss.str();
