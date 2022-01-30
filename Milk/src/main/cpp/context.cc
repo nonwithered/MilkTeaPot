@@ -22,14 +22,22 @@ MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetSoyBeanFactory(void *
   *factory = std::move(factory_).ToRawType();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterOut(void *self, Milk_Printer_t *printer) MilkTea_with_except({
-  MilkTea_nonnull(printer);
-  *printer = BaseContext_cast(self).GetPrinterOut().ToRawType();
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterOut(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
+  MilkTea_nonnull(writer);
+  auto &writer_ = BaseContext_cast(self).GetPrinterOut();
+  MilkTea::Defer defer([&writer_]() {
+    std::move(writer_).Destroy();
+  });
+  *writer = std::move(writer_).ToRawType();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterErr(void *self, Milk_Printer_t *printer) MilkTea_with_except({
-  MilkTea_nonnull(printer);
-  *printer = BaseContext_cast(self).GetPrinterErr().ToRawType();
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterErr(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
+  MilkTea_nonnull(writer);
+  auto &writer_ = BaseContext_cast(self).GetPrinterErr();
+  MilkTea::Defer defer([&writer_]() {
+    std::move(writer_).Destroy();
+  });
+  *writer = std::move(writer_).ToRawType();
 })
 
 MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileReader(void *self, MilkTea_Reader_t *reader, const char name[], size_t len) MilkTea_with_except({

@@ -12,29 +12,25 @@ class ContextWrapper final {
   using raw_type = Milk_Context_t;
   using interface_type = Milk_Context_Interface_t;
  public:
-  ContextWrapper(raw_type another = {}) : self_(another), out_(), err_() {
-    if (self() == nullptr) {
-      return;
-    }
-    Milk_Printer_t out = {};
-    MilkTea_invoke_panic(interface().GetPrinterOut, self(), &out);
-    out_ = out;
-    Milk_Printer_t err = {};
-    MilkTea_invoke_panic(interface().GetPrinterErr, self(), &err);
-    err_ = err;
-  }
+  ContextWrapper(raw_type another = {})
+  : self_(another),
+    out_([another]() -> auto {
+      MilkTea_Writer_t result = {};
+      MilkTea_invoke_panic(another.interface_->GetPrinterOut, another.self_, &result);
+      return result;
+    }()),
+    err_([another]() -> auto {
+      MilkTea_Writer_t result = {};
+      MilkTea_invoke_panic(another.interface_->GetPrinterErr, another.self_, &result);
+      return result;
+    }()) {}
   void SetLogLevel(MilkTea::Logger::Level level) {
     MilkTea_invoke_panic(interface().SetLogLevel, self(), MilkTea::Logger::ToRawType(level));
   }
-  SoyBean::FactoryWrapper GetSoyBeanFactory() {
-    SoyBean_Factory_t result = {};
-    MilkTea_invoke_panic(interface().GetSoyBeanFactory, self(), &result);
-    return result;
-  }
-  BasePrinter &GetPrinterOut() {
+  MilkTea::BaseWriter &GetPrinterOut() {
     return out_;
   }
-  BasePrinter &GetPrinterErr() {
+  MilkTea::BaseWriter &GetPrinterErr() {
     return err_;
   }
   MilkTea::ReaderWrapper GetFileReader(std::string_view name) {
@@ -45,6 +41,11 @@ class ContextWrapper final {
   MilkTea::WriterWrapper GetFileWriter(std::string_view name) {
     MilkTea_Writer_t result = {};
     MilkTea_invoke_panic(interface().GetFileWriter, self(), &result, name.data(), name.size());
+    return result;
+  }
+  SoyBean::FactoryWrapper GetSoyBeanFactory() {
+    SoyBean_Factory_t result = {};
+    MilkTea_invoke_panic(interface().GetSoyBeanFactory, self(), &result);
     return result;
   }
  private:
@@ -58,8 +59,8 @@ class ContextWrapper final {
     return self_;
   }
   const raw_type self_;
-  PrinterWripper out_;
-  PrinterWripper err_;
+  MilkTea::WriterWrapper out_;
+  MilkTea::WriterWrapper err_;
 };
 
 

@@ -5,8 +5,8 @@
 
 #include "printer.h"
 #include "logger.h"
-#include "fileio.h"
 #include "foundation.h"
+#include "fileio.h"
 
 namespace Milk_Console {
 
@@ -14,9 +14,7 @@ class ContextImpl final : public Milk::BaseContext {
   static constexpr char TAG[] = "Milk_Console::ContextImpl";
  public:
   ContextImpl(FoundationWrapper foundation)
-  : foundation_(foundation),
-    out_(std::cout),
-    err_(std::cerr) {}
+  : foundation_(std::move(foundation)) {}
   void SetLogLevel(MilkTea::Logger::Level level) final {
     bool b = MilkTea::Logger::Config<LoggerImpl>(LoggerImpl(level));
     if (!b) {
@@ -26,11 +24,11 @@ class ContextImpl final : public Milk::BaseContext {
   SoyBean::BaseFactory &GetSoyBeanFactory() final {
     return foundation_.GetSoyBeanFactory();
   }
-  Milk::BasePrinter &GetPrinterOut() final {
-    return out_;
+  MilkTea::BaseWriter &GetPrinterOut() final {
+    return *new PrinterImpl(std::cout);
   }
-  Milk::BasePrinter &GetPrinterErr() final {
-    return err_;
+  MilkTea::BaseWriter &GetPrinterErr() final {
+    return *new PrinterImpl(std::cerr);
   }
   MilkTea::BaseReader &GetFileReader(std::string_view name) final {
     std::ifstream fs(name.data(), std::ios::binary);
@@ -48,8 +46,6 @@ class ContextImpl final : public Milk::BaseContext {
   }
  private:
   FoundationWrapper foundation_;
-  PrinterImpl out_;
-  PrinterImpl err_;
 };
 
 

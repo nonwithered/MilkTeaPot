@@ -82,10 +82,10 @@ class BaseController {
   ContextWrapper &Context() {
     return context_;
   }
-  BufferPrinter &Out() {
+  PrinterImpl &Out() {
     return out_;
   }
-  BufferPrinter &Err() {
+  PrinterImpl &Err() {
     return err_;
   }
   std::string_view Name() const {
@@ -111,8 +111,8 @@ class BaseController {
     Context().SetLogLevel(level_);
   }
   ContextWrapper &context_;
-  BufferPrinter out_;
-  BufferPrinter err_;
+  PrinterImpl out_;
+  PrinterImpl err_;
   MilkTea_NonCopy(BaseController);
   MilkTea_NonMove(BaseController);
 };

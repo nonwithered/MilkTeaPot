@@ -7,28 +7,11 @@
 extern "C" {
 #endif
 
-struct Milk_Printer_Interface_t {
-  MilkTea_Exception_t (MilkTea_call *Print)(void *self, const char msg[], size_t len);
-};
-
-#ifndef __cplusplus
-typedef struct Milk_Printer_Interface_t Milk_Printer_Interface_t;
-#endif
-
-struct Milk_Printer_t {
-  void *self_;
-  const Milk_Printer_Interface_t *interface_;
-};
-
-#ifndef __cplusplus
-typedef struct Milk_Printer_t Milk_Printer_t;
-#endif
-
 struct Milk_Context_Interface_t {
   MilkTea_Exception_t (MilkTea_call *SetLogLevel)(void *self, MilkTea_Logger_Level_t level);
   MilkTea_Exception_t (MilkTea_call *GetSoyBeanFactory)(void *self, SoyBean_Factory_t *factory);
-  MilkTea_Exception_t (MilkTea_call *GetPrinterOut)(void *self, Milk_Printer_t *printer);
-  MilkTea_Exception_t (MilkTea_call *GetPrinterErr)(void *self, Milk_Printer_t *printer);
+  MilkTea_Exception_t (MilkTea_call *GetPrinterOut)(void *self, MilkTea_Writer_t *printer);
+  MilkTea_Exception_t (MilkTea_call *GetPrinterErr)(void *self, MilkTea_Writer_t *printer);
   MilkTea_Exception_t (MilkTea_call *GetFileReader)(void *self, MilkTea_Reader_t *reader, const char name[], size_t len);
   MilkTea_Exception_t (MilkTea_call *GetFileWriter)(void *self, MilkTea_Writer_t *writer, const char name[], size_t len);
 };

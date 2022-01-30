@@ -8,24 +8,35 @@
 
 namespace Milk_Console {
 
-class PrinterImpl final : public Milk::BasePrinter {
+class PrinterImpl final : public MilkTea::BaseWriter {
   static constexpr char TAG[] = "Milk_Console::PrinterImpl";
  public:
-  explicit PrinterImpl(std::ostream &printer) : printer_(printer) {}
-  void Print(const char msg[], size_t len) final {
+  explicit PrinterImpl(std::ostream &os) : os_(os) {}
+  PrinterImpl(PrinterImpl &&another) : os_(another.os_) {}
+  void Write(const uint8_t msg[], size_t len) final {
     MilkTea_nonnull(msg);
-    if (msg[len] == '\0') {
-      Print(msg);
-      return;
+    const char *c = reinterpret_cast<const char *>(msg);
+    std::string s;
+    std::string sv;
+    if (c[len] == '\0') {
+      sv = std::string_view(c, len);
+    } else {
+      std::string s(c, len);
+      sv = s;
     }
-    std::string s(msg, msg + len);
-    Print(s);
+    Print(sv);
+  }
+  MilkTea::BaseWriter &Move() && final {
+    return *new PrinterImpl(std::move(*this));
+  }
+  void Destroy() && final {
+    delete this;
   }
  private:
   void Print(std::string_view s) {
-    printer_ << s << std::endl;
+    os_ << s << std::endl;
   }
-  std::ostream &printer_;
+  std::ostream &os_;
 };
 
 
