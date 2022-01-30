@@ -44,6 +44,7 @@ class PrinterImpl final {
     return *this;
   }
   PrinterImpl &operator<<(std::nullptr_t) {
+    buf_ += '\n';
     writer_.Write(reinterpret_cast<const uint8_t *>(buf_.data()), buf_.size());
     buf_.clear();
     return *this;
