@@ -16,21 +16,21 @@ class ContextWrapper final {
   : self_(another),
     out_([another]() -> auto {
       MilkTea_Writer_t result = {};
-      MilkTea_invoke_panic(another.interface_->GetPrinterOut, another.self_, &result);
+      MilkTea_invoke_panic(another.interface_->GetOutWriter, another.self_, &result);
       return result;
     }()),
     err_([another]() -> auto {
       MilkTea_Writer_t result = {};
-      MilkTea_invoke_panic(another.interface_->GetPrinterErr, another.self_, &result);
+      MilkTea_invoke_panic(another.interface_->GetErrWriter, another.self_, &result);
       return result;
     }()) {}
   void SetLogLevel(MilkTea::Logger::Level level) {
     MilkTea_invoke_panic(interface().SetLogLevel, self(), MilkTea::Logger::ToRawType(level));
   }
-  MilkTea::BaseWriter &GetPrinterOut() {
+  MilkTea::BaseWriter &GetOutWriter() {
     return out_;
   }
-  MilkTea::BaseWriter &GetPrinterErr() {
+  MilkTea::BaseWriter &GetErrWriter() {
     return err_;
   }
   MilkTea::ReaderWrapper GetFileReader(std::string_view name) {

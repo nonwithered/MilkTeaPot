@@ -19,8 +19,8 @@ class BaseContext {
     };
   }
   virtual void SetLogLevel(MilkTea::Logger::Level) = 0;
-  virtual MilkTea::BaseWriter &GetPrinterOut() = 0;
-  virtual MilkTea::BaseWriter &GetPrinterErr() = 0;
+  virtual MilkTea::BaseWriter &GetOutWriter() = 0;
+  virtual MilkTea::BaseWriter &GetErrWriter() = 0;
   virtual MilkTea::BaseReader &GetFileReader(std::string_view) = 0;
   virtual MilkTea::BaseWriter &GetFileWriter(std::string_view) = 0;
   virtual SoyBean::BaseFactory &GetSoyBeanFactory() = 0;

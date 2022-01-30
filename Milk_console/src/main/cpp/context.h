@@ -24,10 +24,10 @@ class ContextImpl final : public Milk::BaseContext {
   SoyBean::BaseFactory &GetSoyBeanFactory() final {
     return foundation_.GetSoyBeanFactory();
   }
-  MilkTea::BaseWriter &GetPrinterOut() final {
+  MilkTea::BaseWriter &GetOutWriter() final {
     return *new PrinterImpl(std::cout);
   }
-  MilkTea::BaseWriter &GetPrinterErr() final {
+  MilkTea::BaseWriter &GetErrWriter() final {
     return *new PrinterImpl(std::cerr);
   }
   MilkTea::BaseReader &GetFileReader(std::string_view name) final {

@@ -22,18 +22,18 @@ MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetSoyBeanFactory(void *
   *factory = std::move(factory_).ToRawType();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterOut(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetOutWriter(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
   MilkTea_nonnull(writer);
-  auto &writer_ = BaseContext_cast(self).GetPrinterOut();
+  auto &writer_ = BaseContext_cast(self).GetOutWriter();
   MilkTea::Defer defer([&writer_]() {
     std::move(writer_).Destroy();
   });
   *writer = std::move(writer_).ToRawType();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetPrinterErr(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetErrWriter(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
   MilkTea_nonnull(writer);
-  auto &writer_ = BaseContext_cast(self).GetPrinterErr();
+  auto &writer_ = BaseContext_cast(self).GetErrWriter();
   MilkTea::Defer defer([&writer_]() {
     std::move(writer_).Destroy();
   });
@@ -82,8 +82,8 @@ const BaseContext::interface_type &BaseContext::Interface() {
   static const interface_type instance_{
     .SetLogLevel = Milk_Context_Interface_SetLogLevel,
     .GetSoyBeanFactory = Milk_Context_Interface_GetSoyBeanFactory,
-    .GetPrinterOut = Milk_Context_Interface_GetPrinterOut,
-    .GetPrinterErr = Milk_Context_Interface_GetPrinterErr,
+    .GetOutWriter = Milk_Context_Interface_GetOutWriter,
+    .GetErrWriter = Milk_Context_Interface_GetErrWriter,
     .GetFileReader = Milk_Context_Interface_GetFileReader,
     .GetFileWriter = Milk_Context_Interface_GetFileWriter,
   };

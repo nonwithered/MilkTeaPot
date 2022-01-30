@@ -77,8 +77,8 @@ class BaseController {
   }
   BaseController(ContextWrapper &context)
   : context_(context),
-    out_(context.GetPrinterOut()),
-    err_(context.GetPrinterErr()) {}
+    out_(context.GetOutWriter()),
+    err_(context.GetErrWriter()) {}
   ContextWrapper &Context() {
     return context_;
   }

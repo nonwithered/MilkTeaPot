@@ -32,11 +32,11 @@ class ContextHolder final : public Milk::BaseContext {
   SoyBean::BaseFactory &GetSoyBeanFactory() final {
     MilkTea_stub(GetSoyBeanFactory);
   }
-  MilkTea::BaseWriter &GetPrinterOut() final {
-    MilkTea_stub(GetPrinterOut);
+  MilkTea::BaseWriter &GetOutWriter() final {
+    MilkTea_stub(GetOutWriter);
   }
-  MilkTea::BaseWriter &GetPrinterErr() final {
-    MilkTea_stub(GetPrinterErr);
+  MilkTea::BaseWriter &GetErrWriter() final {
+    MilkTea_stub(GetErrWriter);
   }
   MilkTea::BaseReader &GetFileReader(std::string_view) final {
     MilkTea_stub(GetFileReader);
