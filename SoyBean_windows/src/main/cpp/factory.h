@@ -32,11 +32,11 @@ class FactoryImpl final : public SoyBean::BaseFactory {
   void Destroy() && final {
     delete this;
   }
-  SoyBean::BaseHandle &Create() final {
+  SoyBean_Handle_t Create() final {
     if (!enable_) {
       MilkTea_throw(LogicError, "Create but disable");
     }
-    return *new HandleImpl(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_);
+    return HandleImpl(uDeviceID_, dwCallback_, dwInstance_, fdwOpen_).ToRawType();
   }
  private:
   FactoryImpl() : enable_(false), uDeviceID_(0), dwCallback_(nullptr), dwInstance_(nullptr), fdwOpen_(0) {}

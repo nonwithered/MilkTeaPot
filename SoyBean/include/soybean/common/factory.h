@@ -18,7 +18,7 @@ class BaseFactory {
   virtual ~BaseFactory() = default;
   virtual BaseFactory &Move() && = 0;
   virtual void Destroy() && = 0;
-  virtual BaseHandle &Create() = 0;
+  virtual SoyBean_Handle_t Create() = 0;
  private:
   static MilkTea_decl(const interface_type &) Interface();
 };
@@ -45,10 +45,10 @@ class FactoryWrapper final : public BaseFactory {
   void Destroy() && final {
     delete this;
   }
-  BaseHandle &Create() final {
+  SoyBean_Handle_t Create() final {
     SoyBean_Handle_t result = {};
     MilkTea_invoke_panic(SoyBean_Handle_Create, &result, get());
-    return *new HandleWrapper(result);
+    return result;
   }
   raw_type release() {
     raw_type result = {};

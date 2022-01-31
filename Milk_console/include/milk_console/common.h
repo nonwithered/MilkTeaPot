@@ -17,7 +17,7 @@ class BaseFoundation {
       .interface_ = &Interface(),
     };
   }
-  virtual SoyBean::BaseFactory &GetSoyBeanFactory() = 0;
+  virtual SoyBean_Factory_t GetSoyBeanFactory() = 0;
  private:
   static MilkTea_decl(const interface_type &) Interface();
 };

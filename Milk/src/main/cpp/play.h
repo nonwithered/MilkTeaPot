@@ -21,10 +21,10 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
     seek_(nullptr) {
     if (format == 0x02) {
       for (uint16_t i = 0; i != ntrks; ++i) {
-        handle_.emplace_back(&factory.Create());
+        handle_.emplace_back(factory.Create());
       }
     } else {
-      handle_.emplace_back(&factory.Create());
+      handle_.emplace_back(factory.Create());
     }
   }
   RendererImpl(RendererImpl &&another)
@@ -134,7 +134,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   bool *seek_;
  private:
   void OnFrame(uint16_t index, MilkPowder::EventConstWrapper event) {
-    auto &handle = *handle_[index].get();
+    auto &handle = handle_[index];
     uint8_t type = event.GetType();
     uint8_t channel = type & 0x0f;
     type &= 0xf0;
@@ -165,7 +165,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   }
   const uint16_t format_;
   const uint16_t ntrks_;
-  std::vector<std::unique_ptr<SoyBean::BaseHandle>> handle_;
+  std::vector<SoyBean::HandleWrapper> handle_;
 };
 
 class PlayController final : public BaseController<PlayController> {

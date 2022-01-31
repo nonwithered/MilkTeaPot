@@ -6,8 +6,8 @@
 namespace Milk_Windows {
 
 class FoundationImpl final : public Milk_Console::BaseFoundation {
-  SoyBean::BaseFactory &GetSoyBeanFactory() {
-    return *new SoyBean::FactoryWrapper(SoyBean_Windows::make_factory(0, nullptr, nullptr, 0));
+  SoyBean_Factory_t GetSoyBeanFactory() {
+    return SoyBean_Windows::make_factory(0, nullptr, nullptr, 0).ToRawType();
   }
 };
 
@@ -15,9 +15,8 @@ class FoundationImpl final : public Milk_Console::BaseFoundation {
 
 int main(int argc, char *argv[]) {
   Milk_Windows::FoundationImpl foundation;
-  Milk_Console::ContextHolder context(foundation);
   auto e = MilkTea::Exception::Catch([&]() {
-    Milk::Main(argc, argv, context);
+    Milk::Main(argc, argv, Milk_Console::ContextHolder(foundation).release());
   });
   if (e == MilkTea::Exception::Type::Nil) {
     return EXIT_SUCCESS;

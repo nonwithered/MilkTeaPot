@@ -21,28 +21,28 @@ class ContextImpl final : public Milk::BaseContext {
       MilkTea_logW("SetLogLevel fail");
     }
   }
-  SoyBean::BaseFactory &GetSoyBeanFactory() final {
-    return foundation_.GetSoyBeanFactory();
+  MilkTea_Writer_t GetOutWriter() final {
+    return PrinterImpl(std::cout).ToRawType();
   }
-  MilkTea::BaseWriter &GetOutWriter() final {
-    return *new PrinterImpl(std::cout);
+  MilkTea_Writer_t GetErrWriter() final {
+    return PrinterImpl(std::cerr).ToRawType();
   }
-  MilkTea::BaseWriter &GetErrWriter() final {
-    return *new PrinterImpl(std::cerr);
-  }
-  MilkTea::BaseReader &GetFileReader(std::string_view name) final {
+  MilkTea_Reader_t GetFileReader(std::string_view name) final {
     std::ifstream fs(name.data(), std::ios::binary);
     if (!fs.is_open()) {
       MilkTea_throwf(IOError, "GetFileReader fail -- %s", name.data());
     }
-    return *new FileReaderImpl(std::move(fs));
+    return FileReaderImpl(std::move(fs)).ToRawType();
   }
-  MilkTea::BaseWriter &GetFileWriter(std::string_view name) final {
+  MilkTea_Writer_t GetFileWriter(std::string_view name) final {
     std::ofstream fs(name.data(), std::ios::binary);
     if (!fs.is_open()) {
       MilkTea_throwf(IOError, "GetFileWriter fail -- %s", name.data());
     }
-    return *new FileWriterImpl(std::move(fs));
+    return FileWriterImpl(std::move(fs)).ToRawType();
+  }
+  SoyBean_Factory_t GetSoyBeanFactory() final {
+    return foundation_.GetSoyBeanFactory();
   }
  private:
   FoundationWrapper foundation_;

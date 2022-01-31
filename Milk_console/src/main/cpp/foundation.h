@@ -14,10 +14,10 @@ class FoundationWrapper final : public BaseFoundation {
   raw_type ToRawType() final {
     return self_;
   }
-  SoyBean::BaseFactory &GetSoyBeanFactory() final {
+  SoyBean_Factory_t GetSoyBeanFactory() final {
     SoyBean_Factory_t result = {};
     MilkTea_invoke_panic(interface().GetSoyBeanFactory, self(), &result);
-    return *new SoyBean::FactoryWrapper(result);
+    return result;
   }
  private:
   void *self() const {
