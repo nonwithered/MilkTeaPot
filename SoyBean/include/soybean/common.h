@@ -5,6 +5,7 @@
 
 #ifdef __cplusplus
 
+#include <soybean/common/handle.h>
 #include <soybean/common/factory.h>
 
 #endif // ifdef __cplusplus
