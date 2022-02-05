@@ -8,6 +8,8 @@
 #include <milktea/wrapper/except.h>
 #include <milktea/wrapper/logger.h>
 #include <milktea/wrapper/transport.h>
+#include <milktea/wrapper/tostring.h>
+#include <milktea/wrapper/fromstring.h>
 
 #endif // ifdef __cplusplus
 

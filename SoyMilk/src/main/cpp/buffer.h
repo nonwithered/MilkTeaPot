@@ -52,7 +52,7 @@ class FrameBufferQueueImpl final {
     queue = FrameBufferSorterImpl::Sort(midi);
     auto time_end = TeaPot::TimerUnit::Now();
     auto time_duration = time_end - time_begin;
-    MilkTea_logI("fill midi fbo queue during %" PRIi64 " us", time_duration.count());
+    MilkTea_logI("fill midi fbo queue during %" PRId64 " us", time_duration.count());
 
     if (queue.empty()) {
       MilkTea_logW("fill but empty");

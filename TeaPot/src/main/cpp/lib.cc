@@ -137,7 +137,7 @@ MilkTea_extern(TeaPot_TimerWorker_GetState, (TeaPot_TimerWorker_t *self, TeaPot_
 MilkTea_extern(TeaPot_TimerWorker_Post, (TeaPot_TimerWorker_t *self, TeaPot_TimerFuture_t **future, int64_t delay, TeaPot_Action_t action), {
   MilkTea_nonnull(self);
   if (delay < 0) {
-    MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
+    MilkTea_throwf(InvalidParam, "post -- delay: %" PRId64, delay);
   }
   auto future_ = timer_cast(self)->Post(duration_type(delay), TeaPot::Action::FromRawType(action));
   if (future != nullptr) {
@@ -168,7 +168,7 @@ MilkTea_extern(TeaPot_TimerWorker_AwaitTermination, (TeaPot_TimerWorker_t *self,
   MilkTea_nonnull(self);
   MilkTea_nonnull(success);
   if (delay < 0) {
-    MilkTea_throwf(InvalidParam, "post -- delay: %" PRIi64, delay);
+    MilkTea_throwf(InvalidParam, "post -- delay: %" PRId64, delay);
   }
   if (delay > 0) {
     *success = timer_cast(self)->AwaitTermination(duration_type(delay));

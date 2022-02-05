@@ -276,6 +276,10 @@ Usage: milk play [OPTIONS] [FILES]
   pipeline_type Config(pipeline_type &&pipeline) final {
     return super_type::Config(std::move(pipeline))
       .Append({
+          "-r",
+          "--range",
+        }, &self_type::SetRange)
+      .Append({
           "-o",
         }, &self_type::target_,
         [this]() {
@@ -296,37 +300,104 @@ Usage: milk play [OPTIONS] [FILES]
       ;
   }
  private:
+  bool SetRange(cursor_type &cursor) {
+    auto f = [this, &cursor](int64_t &position_, std::string_view name) -> bool {
+      if (!cursor) {
+        Err() << Tip() << "-r: need " << name << " position value" << End();
+        return false;
+      }
+      auto sv = *cursor;
+      bool negative = false;
+      int64_t position = 0;
+      size_t n = sv.size();
+      size_t len = 0;
+      bool l = false;
+      MilkTea_block({
+        auto s = sv.data();
+        while (n >= 1 && s[0] == '-') {
+          negative = !negative;
+          s += 1;
+          n -= 1;
+        }
+        if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+          MilkTea_logD("SetRange %s dec", name.data());
+          s += 2;
+          n -= 2;
+          if (n > 60 / 4) {
+            l = true;
+            break;
+          }
+          len = MilkTea::FromStringHex::ToInt<int64_t>(s, n, &position);
+          break;
+        }
+        if (n > 1 && s[0] == '0') {
+          MilkTea_logD("SetRange %s oct", name.data());
+          s += 1;
+          n -= 1;
+          if (n > 60 / 3) {
+            l = true;
+            break;
+          }
+          len = MilkTea::FromStringOct::ToInt<int64_t>(s, n, &position);
+          break;
+        }
+        {
+          MilkTea_logD("SetRange %s dec", name.data());
+          if (n > 3 * 6) {
+            l = true;
+            break;
+          }
+          len = MilkTea::FromStringDec::ToInt<int64_t>(s, n, &position);
+        }
+      });
+      if (l) {
+        Err() << Tip() << "-m: the " << name << " position value is too long -- " << sv << End();
+        return false;
+      }
+      if (len != n) {
+        Err() << Tip() << "-m: invalid " << name << " position value -- " << sv << End();
+        return false;
+      }
+      if (negative) {
+        position *= -1;
+      }
+      position_ = position;
+      ++cursor;
+      MilkTea_logD("SetRange %s %" PRId64, name.data(), position);
+      return true;
+    };
+    if (!f(begin_, "begin")) {
+      return false;
+    }
+    if (!f(end_, "end")) {
+      return false;
+    }
+    return true;
+  }
   bool SetTick(cursor_type &cursor) {
     if (!cursor) {
       Err() << Tip() << "-t: need division value" << End();
       return false;
     }
-    auto s = *cursor;
-    const size_t n = s.size();
-    size_t j = 0;
-    if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-      j = 2;
-    }
+    auto sv = *cursor;
     uint16_t division = 0;
-    for (size_t i = j; i != n; ++i) {
-      if (i - j >= 4) {
-        Err() << Tip() << "-t: the division value is too long -- " << s << End();
+    size_t n = sv.size();
+    size_t len = 0;
+    {
+      auto s = sv.data();
+      if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        s += 2;
+        n -= 2;
+      }
+      if (n > 4) {
+        Err() << Tip() << "-t: the division value is too long -- " << sv << End();
         return false;
       }
-      auto c = s[i];
-      uint8_t b = 0;
-      if ('0' <= c && c <= '9') {
-        b = c - '0';
-      } else if ('a' <= c && c <= 'f') {
-        b = c - 'a' + 10;
-      } else if ('A' <= c && c <= 'F') {
-        b = c - 'A' + 10;
-      } else {
-        Err() << Tip() << "-t: invalid division value -- " << s << End();
-        return false;
-      }
-      division <<= 04;
-      division |= b;
+      len = MilkTea::FromStringHex::ToInt<uint16_t>(s, n, &division);
+    }
+    if (len != n) {
+      Err() << Tip() << "-t: invalid division value -- " << sv << End();
+      return false;
     }
     if (division == 0) {
       Err() << Tip() << "-t: division value can not be zero" << End();
@@ -341,64 +412,55 @@ Usage: milk play [OPTIONS] [FILES]
       Err() << Tip() << "-m: need tempo value" << End();
       return false;
     }
-    auto s = *cursor;
-    const size_t n = s.size();
+    auto sv = *cursor;
     uint32_t tempo = 0;
-    if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-      for (size_t i = 2; i != n; ++i) {
-        if (i >= 24 / 4 + 2) {
-          Err() << Tip() << "-m: the tempo value is too long -- " << s << End();
-          return false;
+    size_t n = sv.size();
+    size_t len = 0;
+    bool l = false;
+    MilkTea_block({
+      auto s = sv.data();
+      if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        MilkTea_logD("SetTempo hex");
+        s += 2;
+        n -= 2;
+        if (n > 24 / 4) {
+          l = true;
+          break;
         }
-        auto c = s[i];
-        uint8_t b = 0;
-        if ('0' <= c && c <= '9') {
-          b = c - '0';
-        } else if ('a' <= c && c <= 'f') {
-          b = c - 'a' + 10;
-        } else if ('A' <= c && c <= 'F') {
-          b = c - 'A' + 10;
-        } else {
-          Err() << Tip() << "-m: invalid tempo value -- " << s << End();
-          return false;
-        }
-        tempo <<= 04;
-        tempo |= b;
+        len = MilkTea::FromStringHex::ToInt<uint32_t>(s, n, &tempo);
+        break;
       }
-    } else if (n > 1 && s[0] == '0') {
-      for (size_t i = 1; i != n; ++i) {
-        if (i >= 24 / 3 + 1) {
-          Err() << Tip() << "-m: the tempo value is too long -- " << s << End();
-          return false;
+      if (n > 1 && s[0] == '0') {
+        MilkTea_logD("SetTempo oct");
+        s += 1;
+        n -= 1;
+        if (n > 24 / 3) {
+          l = true;
+          break;
         }
-        auto c = s[i];
-        uint8_t b = 0;
-        if ('0' <= c && c <= '7') {
-          b = c - '0';
-        } else {
-          Err() << Tip() << "-m: invalid tempo value -- " << s << End();
-          return false;
-        }
-        tempo <<= 03;
-        tempo |= b;
+        len = MilkTea::FromStringOct::ToInt<uint32_t>(s, n, &tempo);
+        break;
       }
-    } else {
-      for (size_t i = 1; i != n; ++i) {
-        auto c = s[i];
-        uint8_t b = 0;
-        if ('0' <= c && c <= '9') {
-          b = c - '0';
-        } else {
-          Err() << Tip() << "-m: invalid tempo value -- " << s << End();
-          return false;
+      {
+        MilkTea_logD("SetTempo dec");
+        if (n > 8) {
+          l = true;
+          break;
         }
-        tempo *= 10;
-        tempo += b;
+        len = MilkTea::FromStringDec::ToInt<uint32_t>(s, n, &tempo);
         if (tempo > 0xff'ff'ff) {
-          Err() << Tip() << "-m: the tempo value is too long -- " << s << End();
-          return false;
+          l = true;
+          break;
         }
       }
+    });
+    if (l) {
+      Err() << Tip() << "-m: the tempo value is too long -- " << sv << End();
+      return false;
+    }
+    if (len != n) {
+      Err() << Tip() << "-m: invalid tempo value -- " << sv << End();
+      return false;
     }
     if (tempo == 0) {
       Err() << Tip() << "-m: tempo value can not be zero" << End();
@@ -406,12 +468,15 @@ Usage: milk play [OPTIONS] [FILES]
     }
     tempo_ = tempo;
     ++cursor;
+      MilkTea_logD("SetTempo %" PRId64, tempo);
     return true;
   }
   std::string_view target_ = "";
   bool background_ = false;
   uint16_t division_ = 0x0078;
   uint32_t tempo_ = 60'000'000 / 120;
+  int64_t begin_ = 0;
+  int64_t end_ = 0;
 };
 
 } // namespace Milk

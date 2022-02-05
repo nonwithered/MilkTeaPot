@@ -11,7 +11,6 @@
 #include <milktea/common/except.h>
 #include <milktea/common/logger.h>
 #include <milktea/common/transport.h>
-#include <milktea/common/tostring.h>
 
 #endif // ifdef __cplusplus
 

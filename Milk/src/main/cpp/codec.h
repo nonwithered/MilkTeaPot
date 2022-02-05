@@ -98,32 +98,25 @@ Usage: milk [OPTIONS] [FILES]
       Err() << Tip() << "-t: need division value" << End();
       return false;
     }
-    auto s = *cursor;
-    const size_t n = s.size();
-    size_t j = 0;
-    if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-      j = 2;
-    }
+    auto sv = *cursor;
     uint16_t division = 0;
-    for (size_t i = j; i != n; ++i) {
-      if (i - j >= 4) {
+    size_t n = sv.size();
+    size_t len = 0;
+    {
+      auto s = sv.data();
+      if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+        s += 2;
+        n -= 2;
+      }
+      if (n > 4) {
         Err() << Tip() << "-t: the division value is too long -- " << s << End();
         return false;
       }
-      auto c = s[i];
-      uint8_t b = 0;
-      if ('0' <= c && c <= '9') {
-        b = c - '0';
-      } else if ('a' <= c && c <= 'f') {
-        b = c - 'a' + 10;
-      } else if ('A' <= c && c <= 'F') {
-        b = c - 'A' + 10;
-      } else {
-        Err() << Tip() << "-t: invalid division value -- " << s << End();
-        return false;
-      }
-      division <<= 04;
-      division |= b;
+      len = MilkTea::FromStringHex::ToInt<uint16_t>(s, n, &division);
+    }
+    if (len != n) {
+      Err() << Tip() << "-t: invalid division value -- " << sv << End();
+      return false;
     }
     if (division == 0) {
       Err() << Tip() << "-t: division value can not be zero" << End();

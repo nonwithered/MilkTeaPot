@@ -1,5 +1,5 @@
-#ifndef LIB_MILKTEA_COMMON_TOSTRING_H_
-#define LIB_MILKTEA_COMMON_TOSTRING_H_
+#ifndef LIB_MILKTEA_WRAPPER_TOSTRING_H_
+#define LIB_MILKTEA_WRAPPER_TOSTRING_H_
 
 #include <string>
 #include <sstream>
@@ -18,25 +18,29 @@ std::string From(const T &t) {
   return ss.str();
 }
 
-inline std::string FromU8(uint8_t n) {
+inline
+std::string FromU8(uint8_t n) {
   char buf[4];
   sprintf(buf, "%" PRIu8, n);
   return buf;
 }
 
-inline std::string FromU16(uint16_t n) {
+inline
+std::string FromU16(uint16_t n) {
   char buf[8];
   sprintf(buf, "%" PRIu16, n);
   return buf;
 }
 
-inline std::string FromU32(uint32_t n) {
+inline
+std::string FromU32(uint32_t n) {
   char buf[16];
   sprintf(buf, "%" PRIu32, n);
   return buf;
 }
 
-inline std::string FromBytes(const uint8_t bytes[], size_t length) {
+inline
+std::string FromBytes(const uint8_t bytes[], size_t length) {
   std::stringstream ss;
   for (size_t i = 0; i != length; ++i) {
     uint8_t byte = bytes[i];
@@ -82,7 +86,8 @@ inline std::string FromBytes(const uint8_t bytes[], size_t length) {
   return ss.str();
 }
 
-inline std::string FromChars(const uint8_t bytes[], size_t length) {
+inline
+std::string FromChars(const uint8_t bytes[], size_t length) {
   std::stringstream ss;
   for (size_t i = 0; i != length; ++i) {
     uint8_t byte = bytes[i];
@@ -99,25 +104,29 @@ inline std::string FromChars(const uint8_t bytes[], size_t length) {
 
 namespace ToStringHex {
 
-inline std::string FromU8(uint8_t n) {
+inline
+std::string FromU8(uint8_t n) {
   char buf[3];
   sprintf(buf, "%02" PRIx8, n);
   return buf;
 }
 
-inline std::string FromU16(uint16_t n) {
+inline
+std::string FromU16(uint16_t n) {
   char buf[5];
   sprintf(buf, "%04" PRIx16, n);
   return buf;
 }
 
-inline std::string FromU32(uint32_t n) {
+inline
+std::string FromU32(uint32_t n) {
   char buf[9];
   sprintf(buf, "%08" PRIx32, n);
   return buf;
 }
 
-inline std::string FromVarLen(uint32_t n) {
+inline
+std::string FromVarLen(uint32_t n) {
   uint8_t bytes[4];
   size_t size = 0;
   bytes[size++] = static_cast<uint8_t>(n & 0x7f);
@@ -131,7 +140,9 @@ inline std::string FromVarLen(uint32_t n) {
   }
   return ss.str();
 }
-inline std::string FromBytes(const uint8_t bytes[], size_t length) {
+
+inline
+std::string FromBytes(const uint8_t bytes[], size_t length) {
   std::stringstream ss;
   for (size_t i = 0; i != length; ++i) {
     ss << FromU8(bytes[i]);
@@ -143,4 +154,4 @@ inline std::string FromBytes(const uint8_t bytes[], size_t length) {
 
 } // namespace MilkTea
 
-#endif // ifndef LIB_MILKTEA_COMMON_TOSTRING_H_
+#endif // ifndef LIB_MILKTEA_WRAPPER_TOSTRING_H_
