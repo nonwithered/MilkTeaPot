@@ -30,14 +30,14 @@ Usage: milk [OPTIONS] [FILES]
     print this help message
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
-  -o
+  -o <filename>
     name of target file
     or torn apart all files if this option is not set
   -f {0, 1, 2}
   --format {0, 1, 2}
     header format of output files
-  -t
-  --tick
+  -t <division>
+  --tick <division>
     reset division by a 16 bit unsigned integer described in hexadecimal
     only the header will be changed by default
   -r
@@ -108,30 +108,27 @@ Usage: milk [OPTIONS] [FILES]
       return false;
     }
     auto s = *cursor;
-    for (size_t i = 0, n = s.size(); i != n; ++i) {
-      auto c = s[i];
-      if (('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')) {
-        continue;
-      }
-      Err() << Tip() << "--tick: invalid division value -- " << s << End();
-      return false;
-    }
-    if (s.size() > 4) {
-      Err() << Tip() << "--tick: the division value is too large -- " << s << End();
-      return false;
+    size_t j = 0;
+    if (s.size() > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+      j = 2;
     }
     uint16_t division = 0;
-    for (size_t i = 0, n = s.size(); i != n; ++i) {
-      uint16_t b = 0;
+    for (size_t i = j, n = s.size(); i != n; ++i) {
+      if (i - j >= 4) {
+        Err() << Tip() << "--tick: the division value is too long -- " << s << End();
+        return false;
+      }
       auto c = s[i];
+      uint16_t b = 0;
       if ('0' <= c && c <= '9') {
         b = c - '0';
-      }
-      if ('a' <= c && c <= 'f') {
+      } else if ('a' <= c && c <= 'f') {
         b = c - 'a' + 10;
-      }
-      if ('A' <= c && c <= 'F') {
+      } else if ('A' <= c && c <= 'F') {
         b = c - 'A' + 10;
+      } else {
+        Err() << Tip() << "--tick: invalid division value -- " << s << End();
+        return false;
       }
       division <<= 04;
       division |= b;

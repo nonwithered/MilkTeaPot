@@ -174,13 +174,36 @@ class PlayController final : public BaseController<PlayController> {
  public:
   static constexpr auto kName = "play";
   static constexpr auto kUsage = R"(
-Usage: milk play
+Usage: milk play [OPTIONS] [FILES]
   -v, --version
     print version code
   -h, --help
     print this help message
   --log {d, i, w, e, debug, info, warn, error}
     init log level, or no log
+  -r <begin> <end>
+  --range <begin> <end>
+    set the range of playing time
+    the parameters can be signed integer described in decimal, hexadecimal, octal
+    the absolute value cannot be greater than 10 ^ 18 - 1 in decimal
+                                           or  2 ^ 60 - 1 in hexadecimal and octal
+  -o <filename>
+    name of target file
+    the input events will be recorded
+  -b
+  --background
+    the background will be recorded together
+  -t <division>
+  --tick <division>
+    set division for the target file by a 16 bit unsigned integer described in hexadecimal
+    the default value is 0x0078
+  -m <microseconds>
+  --tempo <microseconds>
+    set tempo for the target file in microseconds
+    it should be an unsigned integer in hexadecimal or decimal
+    it will not take effect if the target is timecode based
+    it cannot be greater than 0xffffff
+    the default value is 500000
 )";
   PlayController(ContextWrapper &context) : BaseController(context) {}
  protected:

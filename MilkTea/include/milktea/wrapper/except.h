@@ -9,8 +9,6 @@
 extern "C" \
 MilkTea_Exception_t \
 section list { \
-  MilkTea_logD(#section " begin"); \
-  MilkTea::Defer defer_([]() { MilkTea_logD(#section " end"); }); \
   MilkTea_with_except(block) \
 }
 
