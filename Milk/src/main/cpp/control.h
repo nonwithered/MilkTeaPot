@@ -58,16 +58,17 @@ class BaseController {
           "--log",
         }, &self_type::level_,
         [this]() {
-          Err() << Tip() << "need log level" << End();
+          Err() << Tip() << "--log: need log level" << End();
         },
         [this](auto &it) {
-          Err() << Tip() << "invalid log level: " << it << End();
+          Err() << Tip() << "--log: invalid log level: " << it << End();
         }, {
           { MilkTea::Logger::Level::DEBUG, { "d", "debug" } },
           { MilkTea::Logger::Level::INFO, { "i", "info" } },
           { MilkTea::Logger::Level::WARN, { "w", "warn" } },
           { MilkTea::Logger::Level::ERROR, { "e", "error" } },
-        });
+        })
+      ;
   }
   static constexpr std::nullptr_t End() {
     return nullptr;
@@ -97,9 +98,6 @@ class BaseController {
   std::string Tip() const {
     return std::string(kName) + " " + Name().data() + ": ";
   }
-  bool version_ = false;
-  bool help_ = false;
-  MilkTea::Logger::Level level_ = MilkTea::Logger::Level::ASSERT;
  private:
   void Prepare() {
     if (version_) {
@@ -113,6 +111,9 @@ class BaseController {
   ContextWrapper &context_;
   PrinterImpl out_;
   PrinterImpl err_;
+  bool version_ = false;
+  bool help_ = false;
+  MilkTea::Logger::Level level_ = MilkTea::Logger::Level::ASSERT;
   MilkTea_NonCopy(BaseController);
   MilkTea_NonMove(BaseController);
 };

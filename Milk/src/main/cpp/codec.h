@@ -63,63 +63,55 @@ Usage: milk [OPTIONS] [FILES]
   pipeline_type Config(pipeline_type &&pipeline) final {
     return super_type::Config(std::move(pipeline))
       .Append({
-        "-o",
-      }, &self_type::InitTarget)
+          "-o",
+        }, &self_type::target_,
+        [this]() {
+          Err() << Tip() << "-o: need target name" << End();
+        })
       .Append({
-        "-t",
-        "--tick",
-      }, &self_type::SetTick)
+          "-t",
+          "--tick",
+        }, &self_type::SetTick)
       .Append({
-        "-r",
-        "--reset",
-      }, &self_type::update_delta_, true)
+          "-r",
+          "--reset",
+        }, &self_type::update_delta_, true)
       .Append({
-        "-f",
-        "--format",
-      }, &self_type::format_,
-      [this]() {
-        Err() << Tip() << "need format value" << End();
-      },
-      [this](auto &it) {
-        Err() << Tip() << "invalid format value: " << it << End();
-      }, {
-        { FormatType::SINGLE, { "0" } },
-        { FormatType::SIMULTANEOUS, { "1" } },
-        { FormatType::INDEPENDENT, { "2" } },
-      });
+          "-f",
+          "--format",
+        }, &self_type::format_,
+        [this]() {
+          Err() << Tip() << "-f: need format value" << End();
+        },
+        [this](auto &it) {
+          Err() << Tip() << "-f: invalid format value: " << it << End();
+        }, {
+          { FormatType::SINGLE, { "0" } },
+          { FormatType::SIMULTANEOUS, { "1" } },
+          { FormatType::INDEPENDENT, { "2" } },
+        })
+      ;
   }
  private:
-  bool InitTarget(cursor_type &cursor) {
-    if (!cursor) {
-      Err() << Tip() << "-o: need target name" << End();
-      return false;
-    }
-    if (target_ != "") {
-      Err() << Tip() << "-o: target name has been set to " << target_ << End();
-      return false;
-    }
-    target_ = *cursor;
-    ++cursor;
-    return true;
-  }
   bool SetTick(cursor_type &cursor) {
     if (!cursor) {
-      Err() << Tip() << "--tick: need division value" << End();
+      Err() << Tip() << "-t: need division value" << End();
       return false;
     }
     auto s = *cursor;
+    const size_t n = s.size();
     size_t j = 0;
-    if (s.size() > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+    if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
       j = 2;
     }
     uint16_t division = 0;
-    for (size_t i = j, n = s.size(); i != n; ++i) {
+    for (size_t i = j; i != n; ++i) {
       if (i - j >= 4) {
-        Err() << Tip() << "--tick: the division value is too long -- " << s << End();
+        Err() << Tip() << "-t: the division value is too long -- " << s << End();
         return false;
       }
       auto c = s[i];
-      uint16_t b = 0;
+      uint8_t b = 0;
       if ('0' <= c && c <= '9') {
         b = c - '0';
       } else if ('a' <= c && c <= 'f') {
@@ -127,11 +119,15 @@ Usage: milk [OPTIONS] [FILES]
       } else if ('A' <= c && c <= 'F') {
         b = c - 'A' + 10;
       } else {
-        Err() << Tip() << "--tick: invalid division value -- " << s << End();
+        Err() << Tip() << "-t: invalid division value -- " << s << End();
         return false;
       }
       division <<= 04;
       division |= b;
+    }
+    if (division == 0) {
+      Err() << Tip() << "-t: division value can not be zero" << End();
+      return false;
     }
     division_ = division;
     ++cursor;

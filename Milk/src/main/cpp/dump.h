@@ -51,22 +51,23 @@ Usage: milk dump [OPTIONS] [FILES]
     return super_type::Config(std::move(pipeline))
       .Append({
           "-x",
-      }, &self_type::hex_, true)
+        }, &self_type::hex_, true)
       .Append({
           "-L",
           "--level",
-      }, &self_type::detail_,
-      [this]() {
-        Err() << Tip() << "need detail level" << End();
-      },
-      [this](auto &it) {
-        Err() << Tip() << "invalid detail level: " << it << End();
-      }, {
-        { DetailLevel::HEADER, { "h", "header" } },
-        { DetailLevel::DATA, { "d", "data" } },
-        { DetailLevel::EVENTS, { "e", "events" } },
-        { DetailLevel::VERBOSE, { "v", "verbose" } },
-      });
+        }, &self_type::detail_,
+        [this]() {
+          Err() << Tip() << "-L: need detail level" << End();
+        },
+        [this](auto &it) {
+          Err() << Tip() << "-L: invalid detail level: " << it << End();
+        }, {
+          { DetailLevel::HEADER, { "h", "header" } },
+          { DetailLevel::DATA, { "d", "data" } },
+          { DetailLevel::EVENTS, { "e", "events" } },
+          { DetailLevel::VERBOSE, { "v", "verbose" } },
+        })
+      ;
   }
  private:
   void Preview(std::string_view filename) {

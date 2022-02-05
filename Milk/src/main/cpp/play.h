@@ -200,9 +200,9 @@ Usage: milk play [OPTIONS] [FILES]
   -m <microseconds>
   --tempo <microseconds>
     set tempo for the target file in microseconds
-    it should be an unsigned integer in hexadecimal or decimal
+    it should be an unsigned integer in decimal, hexadecimal, octal
     it will not take effect if the target is timecode based
-    it cannot be greater than 0xffffff
+    it cannot be greater than 2 ^ 24 - 1
     the default value is 500000
 )";
   PlayController(ContextWrapper &context) : BaseController(context) {}
@@ -274,9 +274,144 @@ Usage: milk play [OPTIONS] [FILES]
     Out() << "return" << End();
   }
   pipeline_type Config(pipeline_type &&pipeline) final {
-    return super_type::Config(std::move(pipeline));
+    return super_type::Config(std::move(pipeline))
+      .Append({
+          "-o",
+        }, &self_type::target_,
+        [this]() {
+          Err() << Tip() << "-o: need target name" << End();
+        })
+      .Append({
+          "-b",
+          "--background",
+        }, &self_type::background_, true)
+      .Append({
+          "-t",
+          "--tick",
+        }, &self_type::SetTick)
+      .Append({
+          "-m",
+          "--tempo",
+        }, &self_type::SetTempo)
+      ;
   }
  private:
+  bool SetTick(cursor_type &cursor) {
+    if (!cursor) {
+      Err() << Tip() << "-t: need division value" << End();
+      return false;
+    }
+    auto s = *cursor;
+    const size_t n = s.size();
+    size_t j = 0;
+    if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+      j = 2;
+    }
+    uint16_t division = 0;
+    for (size_t i = j; i != n; ++i) {
+      if (i - j >= 4) {
+        Err() << Tip() << "-t: the division value is too long -- " << s << End();
+        return false;
+      }
+      auto c = s[i];
+      uint8_t b = 0;
+      if ('0' <= c && c <= '9') {
+        b = c - '0';
+      } else if ('a' <= c && c <= 'f') {
+        b = c - 'a' + 10;
+      } else if ('A' <= c && c <= 'F') {
+        b = c - 'A' + 10;
+      } else {
+        Err() << Tip() << "-t: invalid division value -- " << s << End();
+        return false;
+      }
+      division <<= 04;
+      division |= b;
+    }
+    if (division == 0) {
+      Err() << Tip() << "-t: division value can not be zero" << End();
+      return false;
+    }
+    division_ = division;
+    ++cursor;
+    return true;
+  }
+  bool SetTempo(cursor_type &cursor) {
+    if (!cursor) {
+      Err() << Tip() << "-m: need tempo value" << End();
+      return false;
+    }
+    auto s = *cursor;
+    const size_t n = s.size();
+    uint32_t tempo = 0;
+    if (n > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+      for (size_t i = 2; i != n; ++i) {
+        if (i >= 24 / 4 + 2) {
+          Err() << Tip() << "-m: the tempo value is too long -- " << s << End();
+          return false;
+        }
+        auto c = s[i];
+        uint8_t b = 0;
+        if ('0' <= c && c <= '9') {
+          b = c - '0';
+        } else if ('a' <= c && c <= 'f') {
+          b = c - 'a' + 10;
+        } else if ('A' <= c && c <= 'F') {
+          b = c - 'A' + 10;
+        } else {
+          Err() << Tip() << "-m: invalid tempo value -- " << s << End();
+          return false;
+        }
+        tempo <<= 04;
+        tempo |= b;
+      }
+    } else if (n > 1 && s[0] == '0') {
+      for (size_t i = 1; i != n; ++i) {
+        if (i >= 24 / 3 + 1) {
+          Err() << Tip() << "-m: the tempo value is too long -- " << s << End();
+          return false;
+        }
+        auto c = s[i];
+        uint8_t b = 0;
+        if ('0' <= c && c <= '7') {
+          b = c - '0';
+        } else {
+          Err() << Tip() << "-m: invalid tempo value -- " << s << End();
+          return false;
+        }
+        tempo <<= 03;
+        tempo |= b;
+      }
+    } else {
+      for (size_t i = 1; i != n; ++i) {
+        auto c = s[i];
+        uint8_t b = 0;
+        if ('0' <= c && c <= '9') {
+          b = c - '0';
+        } else {
+          Err() << Tip() << "-m: invalid tempo value -- " << s << End();
+          return false;
+        }
+        tempo *= 10;
+        tempo += b;
+        if (tempo > 0xff'ff'ff) {
+          Err() << Tip() << "-m: the tempo value is too long -- " << s << End();
+          return false;
+        }
+      }
+    }
+    if (tempo == 0) {
+      Err() << Tip() << "-m: tempo value can not be zero" << End();
+      return false;
+    }
+    tempo_ = tempo;
+    ++cursor;
+    return true;
+  }
+  std::string_view target_ = "";
+  bool background_ = false;
+  uint16_t division_ = 0x0078;
+  uint32_t tempo_ = 60'000'000 / 120;
 };
 
 } // namespace Milk

@@ -67,6 +67,24 @@ class Pipeline final {
       return (extra.*member)(cursor);
     });
   }
+  template<typename S>
+  self_type Append(
+      std::initializer_list<value_type> candidate,
+      value_type S::* member,
+      std::function<void()> handler_none
+  ) && {
+    return std::move(*this).Append(std::move(candidate),
+        [&extra = extra_, member, handler_none]
+        (auto &cursor) -> bool {
+      if (!cursor) {
+        handler_none();
+        return false;
+      }
+      dynamic_cast<S &>(extra).*member = *cursor;
+      ++cursor;
+      return true;
+    });
+  }
   template<typename T, typename S>
   self_type Append(
       std::initializer_list<value_type> candidate,
