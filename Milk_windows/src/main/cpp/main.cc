@@ -7,7 +7,7 @@ namespace Milk_Windows {
 
 class FoundationImpl final : public Milk_Console::BaseFoundation {
   SoyBean_Factory_t GetSoyBeanFactory() {
-    return SoyBean_Windows::make_factory(0, nullptr, nullptr, 0).ToRawType();
+    return SoyBean_Windows::make_factory(0, nullptr, nullptr, 0);
   }
 };
 

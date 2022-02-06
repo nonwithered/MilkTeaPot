@@ -38,6 +38,7 @@ add_subdirectory(TeaPot)
 add_subdirectory(MilkPowder)
 add_subdirectory(SoyBean)
 add_subdirectory(SoyMilk)
+add_subdirectory(Yogurt)
 add_subdirectory(Milk)
 add_subdirectory(Milk_console)
 
