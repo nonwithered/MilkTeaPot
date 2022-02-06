@@ -41,14 +41,15 @@ class MutableInterface<Mapping::Track> {
     MilkTea_invoke_panic(mapping::raw_parse, &self, reader_);
     return self;
   }
-  static MutableWrapper<Mapping::Track> Make(std::vector<MutableWrapper<Mapping::Message>> messages) {
+  template<typename iterator_type>
+  static MutableWrapper<Mapping::Track> Make(iterator_type iterator, size_t size) {
     raw_type *self = nullptr;
-    uint32_t length = messages.size();
-    std::vector<Mapping::Message::raw_type *> vec(length);
-    for (uint32_t i = 0; i != length; ++i) {
-      vec[i] = messages[i].release();
+    std::vector<Mapping::Message::raw_type *> vec(size);
+    for (size_t i = 0; i != size; ++i) {
+      vec[i] = iterator->release();
+      ++iterator;
     }
-    MilkTea_invoke_panic(mapping::raw_create, &self, vec.data(), length);
+    MilkTea_invoke_panic(mapping::raw_create, &self, vec.data(), size);
     return self;
   }
   void AllMessage(std::function<void(MutableWrapper<Mapping::Message> &)> consumer) {

@@ -203,7 +203,7 @@ Usage: milk [OPTIONS] [FILES]
         if (division_ != 0) {
           division = division_;
         }
-        auto target = MilkPowder::MidiMutableWrapper::Make(format, division, std::move(tracks));
+        auto target = MilkPowder::MidiMutableWrapper::Make(format, tracks.size(), division, tracks.begin());
         {
           std::string name = std::string() + filename.data() + "." + MilkTea::ToStringHex::FromU16(idx) + ".mid";
           auto writer = Context().GetFileWriter(name);
@@ -261,7 +261,7 @@ Usage: milk [OPTIONS] [FILES]
     for (size_t i = 0, n = divisions.size(); i != n; ++i) {
       UpdateDelta(tracks[i], divisions[i]);
     }
-    auto target = MilkPowder::MidiMutableWrapper::Make(f, d, std::move(tracks));
+    auto target = MilkPowder::MidiMutableWrapper::Make(f, tracks.size(), d, tracks.begin());
     {
       auto writer = Context().GetFileWriter(name);
       target.Dump([&writer](auto bytes[], auto len) {

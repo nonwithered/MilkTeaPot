@@ -26,7 +26,7 @@ class ConstWrapper final : public ConstInterface<T> {
     return self_;
   }
  public:
-  ConstWrapper(const raw_type *self) : self_(self) {}
+  ConstWrapper(const raw_type *self = nullptr) : self_(self) {}
   ~ConstWrapper() {
     self_ = nullptr;
   }
@@ -70,10 +70,9 @@ class MutableWrapper final : public ConstInterface<T>, public MutableInterface<T
     return self_;
   }
  public:
-  MutableWrapper(raw_type *self) : self_(self) {}
+  MutableWrapper(raw_type *self = nullptr) : self_(self) {}
   ~MutableWrapper() {
-    raw_type *self = nullptr;
-    std::swap(self_, self);
+    auto *self = release();
     if (self == nullptr) {
       return;
     }
