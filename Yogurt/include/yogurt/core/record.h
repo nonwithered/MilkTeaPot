@@ -29,7 +29,4 @@ Yogurt_Recorder_Pause(Yogurt_Recorder_t *self);
 MilkTea_api
 Yogurt_Recorder_Take(Yogurt_Recorder_t *self, MilkPowder_Midi_t **midi);
 
-MilkTea_api
-Yogurt_Recorder_Touch(Yogurt_Recorder_t *self, MilkPowder_Midi_t **midi);
-
 #endif // ifndef LIB_YOGURT_CORE_RECORD_H_

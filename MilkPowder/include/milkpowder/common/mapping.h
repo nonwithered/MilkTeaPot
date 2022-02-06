@@ -1,6 +1,8 @@
 #ifndef LIB_MILKPOWDER_COMMON_MAPPING_H_
 #define LIB_MILKPOWDER_COMMON_MAPPING_H_
 
+#include <chrono>
+
 #include <milkpowder/core.h>
 
 namespace MilkPowder {
@@ -39,6 +41,7 @@ struct Track {
 struct Message {
   using raw_type = MilkPowder_Message_t;
   using raw_consumer_type = MilkPowder_Message_Consumer_t;
+  using tempo_type = std::chrono::microseconds;
   static constexpr auto raw_destroy = MilkPowder_Message_Destroy;
   static constexpr auto raw_clone = MilkPowder_Message_Clone;
   static constexpr auto raw_parse = MilkPowder_Message_Parse;

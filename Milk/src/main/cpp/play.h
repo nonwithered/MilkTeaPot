@@ -233,6 +233,7 @@ Usage: milk play [OPTIONS] [FILES]
     renderer.seek_ = &seek;
     renderer.OnPrepareListener = [&](auto time) {
       pos = time - duration_type(10'000'000);
+//      pos = duration_type::zero();
       timer.Post([&]() {
         player->Start();
       });

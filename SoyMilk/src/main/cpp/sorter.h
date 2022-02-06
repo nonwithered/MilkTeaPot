@@ -14,7 +14,7 @@ namespace Codec {
 class TickClock final {
   static constexpr char TAG[] = "SoyMilk::Codec::TickClock";
   using duration_type = TeaPot::TimerUnit::duration_type;
-  using tempo_type = std::chrono::microseconds;
+  using tempo_type = MilkPowder::Mapping::Message::tempo_type;
  public:
   explicit TickClock(uint16_t division)
   : division_(division),
@@ -55,8 +55,10 @@ class TickClock final {
   }
  private:
   duration_type Compute(uint32_t tick, uint32_t tempo) const {
-    int64_t tempo_ = static_cast<int64_t>(static_cast<double>(tick) * tempo / division_);
-    return std::chrono::duration_cast<duration_type>(tempo_type(tempo_));
+    uint64_t count = tick;
+    count *= tempo;
+    count /= division_;
+    return std::chrono::duration_cast<duration_type>(tempo_type(static_cast<int64_t>(count)));
   }
   std::vector<std::tuple<uint32_t, uint32_t>>::const_iterator Find(uint32_t tick) const {
     for (auto i = tempo_map_.begin(), n = tempo_map_.end(); ; ++i) {
@@ -70,12 +72,16 @@ class TickClock final {
     return (division_ & 0x8000) != 0;
   }
   duration_type ComputeByTimeCode(uint32_t tick) const {
-    return std::chrono::duration_cast<duration_type>(std::chrono::seconds(1)) * tick / GetAccuracy();
+    auto duration = std::chrono::duration_cast<tempo_type>(std::chrono::seconds(1));
+    duration *= tick;
+    duration /= GetAccuracy();
+    return std::chrono::duration_cast<duration_type>(duration);
   }
-  uint32_t GetAccuracy() const {
-    uint32_t result = 1;
-    result *= division_ & 0x00ff;
-    result *= -(*reinterpret_cast<const int16_t *>(&division_) >> 010);
+  int16_t GetAccuracy() const {
+    int16_t result = 1;
+    int16_t division = division_;
+    result *= division & 0x00ff;
+    result *= -(division >> 010);
     return result;
   }
   static uint32_t GetTick(const std::tuple<uint32_t, uint32_t> &tuple) {
