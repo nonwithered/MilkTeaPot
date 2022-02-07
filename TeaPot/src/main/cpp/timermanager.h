@@ -76,10 +76,10 @@ class TimerBinderImpl final {
     worker_ = worker;
     manager_type::Instance().Register(Identity(), std::move(worker));
   }
-  void Unbind(worker_type &&worker) {
+  void Unbind(worker_type worker) {
     auto guard = Guard();
+    worker_type p = std::move(worker);
     manager_type::Instance().Unregister(Identity());
-    worker.~shared_ptr();
   }
   worker_identity Identity() {
     return reinterpret_cast<worker_identity>(lock_.get());

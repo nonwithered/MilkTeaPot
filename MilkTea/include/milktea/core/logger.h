@@ -67,8 +67,12 @@ MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *
 #endif // ifndef MilkTea_log_msg_size
 
 #ifdef NDEBUG
+#define MilkTea_ignore_log
+#endif // ifdef NDEBUG
+
+#ifdef MilkTea_ignore_log
 #define MilkTea_log(...) MilkTea_block({})
-#else // ifdef NDEBUG
+#else // ifdef MilkTea_ignore_log
 #define MilkTea_log(LEVEL, TAG, ...) MilkTea_block({ \
   MilkTea_Logger_Level_t level_ = MilkTea_Logger_GetLevel(); \
   if (level_ > MilkTea_Logger_Level_##LEVEL) { \
@@ -78,7 +82,7 @@ MilkTea_Logger_Print(MilkTea_Logger_Level_t level, const char *tag, const char *
   snprintf(msg_, MilkTea_log_msg_size, ##__VA_ARGS__); \
   MilkTea_Logger_Print(MilkTea_Logger_Level_##LEVEL, TAG, msg_); \
 })
-#endif // ifdef NDEBUG
+#endif // ifdef MilkTea_ignore_log
 
 #define MilkTea_logD(...) \
 MilkTea_log(DEBUG, TAG, ##__VA_ARGS__)

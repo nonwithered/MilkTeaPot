@@ -21,7 +21,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     worker->binder_.Bind(worker);
     return worker;
   }
-  static void Close(worker_type &&worker) {
+  static void Close(worker_type worker) {
     worker->ChangeStateOr(State::TERMINATED, State::CLOSED, [](State state) -> void {
       if (state == State::INIT) {
         MilkTea_logW("Close before start");

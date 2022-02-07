@@ -5,6 +5,8 @@
 
 #ifdef __cplusplus
 
+#include <yogurt/common/record.h>
+
 #endif // ifdef __cplusplus
 
 #endif // define LIB_YOGURT_COMMON_H_
