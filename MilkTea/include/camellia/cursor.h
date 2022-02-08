@@ -1,13 +1,13 @@
-#ifndef LIB_COCOA_CURSOR_H_
-#define LIB_COCOA_CURSOR_H_
+#ifndef LIB_CAMELLIA_CURSOR_H_
+#define LIB_CAMELLIA_CURSOR_H_
 
 #include <milktea.h>
 
-namespace Cocoa {
+namespace Camellia {
 
 template<typename container_type>
 class Cursor final {
-  static constexpr char TAG[] = "Cocoa::Cursor";
+  static constexpr char TAG[] = "Camellia::Cursor";
   using value_type = typename container_type::value_type;
   using iterator = typename container_type::iterator;
 public:
@@ -35,6 +35,6 @@ private:
   iterator &cursor_;
 };
 
-} // namespace Cocoa
+} // namespace Camellia
 
-#endif // ifndef LIB_COCOA_CURSOR_H_
+#endif // ifndef LIB_CAMELLIA_CURSOR_H_

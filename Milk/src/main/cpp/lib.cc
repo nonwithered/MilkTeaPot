@@ -23,7 +23,7 @@ auto Args(int argc, char *argv[]) {
 MilkTea_extern(Milk_Main, (int argc, char *argv[], Milk_Context_t context), {
   auto args = Args(argc, argv);
   auto context_wrapper = Milk::ContextWrapper(context);
-  Cocoa::Dispatcher(args, context_wrapper).Start(
+  Camellia::Dispatcher(args, context_wrapper).Start(
     Milk::Mode<Milk::CodecController>(),
     Milk::Mode<Milk::DumpController>(),
     Milk::Mode<Milk::PlayController>()

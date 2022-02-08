@@ -32,12 +32,6 @@ MilkTea_extern(Yogurt_Recorder_GetState, (Yogurt_Recorder_t *self, Yogurt_Record
   *state = Yogurt::ToRawType(yogurt_cast(self)->state());
 })
 
-MilkTea_extern(Yogurt_Recorder_Factory_Create, (Yogurt_Recorder_t *self, uint32_t tempo, SoyBean_Factory_t *factory), {
-  MilkTea_nonnull(self);
-  MilkTea_nonnull(factory);
-  *factory = Yogurt::FactoryImpl(yogurt_cast(self), tempo).ToRawType();
-})
-
 MilkTea_extern(Yogurt_Recorder_Resume, (Yogurt_Recorder_t *self), {
   MilkTea_nonnull(self);
   yogurt_cast(self)->Resume();
@@ -52,4 +46,10 @@ MilkTea_extern(Yogurt_Recorder_Take, (Yogurt_Recorder_t *self, MilkPowder_Midi_t
   MilkTea_nonnull(self);
   MilkTea_nonnull(midi);
   *midi = yogurt_cast(self)->Take().release();
+})
+
+MilkTea_extern(Yogurt_Recorder_Factory_Create, (Yogurt_Recorder_t *self, uint32_t tempo, SoyBean_Factory_t *factory), {
+  MilkTea_nonnull(self);
+  MilkTea_nonnull(factory);
+  *factory = Yogurt::FactoryImpl(yogurt_cast(self), tempo).ToRawType();
 })

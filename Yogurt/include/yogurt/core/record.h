@@ -35,9 +35,6 @@ MilkTea_api
 Yogurt_Recorder_GetState(Yogurt_Recorder_t *self, Yogurt_Recorder_State_t *state);
 
 MilkTea_api
-Yogurt_Recorder_Factory_Create(Yogurt_Recorder_t *self, uint32_t tempo, SoyBean_Factory_t *factory);
-
-MilkTea_api
 Yogurt_Recorder_Resume(Yogurt_Recorder_t *self);
 
 MilkTea_api
@@ -45,6 +42,9 @@ Yogurt_Recorder_Pause(Yogurt_Recorder_t *self);
 
 MilkTea_api
 Yogurt_Recorder_Take(Yogurt_Recorder_t *self, MilkPowder_Midi_t **midi);
+
+MilkTea_api
+Yogurt_Recorder_Factory_Create(Yogurt_Recorder_t *self, uint32_t tempo, SoyBean_Factory_t *factory);
 
 #ifdef __cplusplus
 } // extern "C"

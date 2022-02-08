@@ -7,7 +7,7 @@
 #include <list>
 #include <memory>
 
-#include <cocoa.h>
+#include <camellia.h>
 
 #include "context.h"
 #include "printer.h"
@@ -31,7 +31,7 @@ class BaseController {
   static constexpr char TAG[] = "Milk::BaseController";
  public:
   void Start(args_type &args) {
-    if (!Config(Cocoa::Pipeline(args, dynamic_cast<self_type &>(*this))).Start()) {
+    if (!Config(Camellia::Pipeline(args, dynamic_cast<self_type &>(*this))).Start()) {
       return;
     }
     Prepare();
@@ -41,8 +41,8 @@ class BaseController {
   using self_type = Controller;
   using super_type = BaseController<self_type>;
   using value_type = args_type::value_type;
-  using cursor_type = Cocoa::Cursor<args_type>;
-  using pipeline_type = Cocoa::Pipeline<args_type, self_type>;
+  using cursor_type = Camellia::Cursor<args_type>;
+  using pipeline_type = Camellia::Pipeline<args_type, self_type>;
   virtual void Main(args_type &) = 0;
   virtual pipeline_type Config(pipeline_type &&pipeline) {
     return std::move(pipeline)

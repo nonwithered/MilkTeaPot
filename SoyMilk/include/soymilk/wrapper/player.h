@@ -7,21 +7,21 @@ namespace SoyMilk {
 
 class PlayerWrapper final {
   static constexpr char TAG[] = "SoyMilk::PlayerWrapper";
+  using raw_type = SoyMilk_Player_t;
   using State = Player::State;
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
-  PlayerWrapper(PlayerWrapper &&another) : PlayerWrapper() {
-    std::swap(self_, another.self_);
-  }
+  PlayerWrapper(raw_type *self = nullptr) : self_(self) {}
+  PlayerWrapper(PlayerWrapper &&another) : PlayerWrapper(another.release()) {}
   PlayerWrapper(BaseRenderer &&renderer, TeaPot::Executor::executor_type executor, TeaPot::TimerWorkerWeakWrapper timer) : PlayerWrapper() {
     MilkTea_invoke_panic(SoyMilk_Player_Create, &self_, std::move(renderer).ToRawType(), TeaPot::Executor::ToRawType(executor), timer.release());
   }
   ~PlayerWrapper() {
-    if (self_ == nullptr) {
+    auto self = release();
+    if (self == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(SoyMilk_Player_Destroy, get());
-    self_ = nullptr;
+    MilkTea_invoke_panic(SoyMilk_Player_Destroy, self);
   }
   State GetState() {
     SoyMilk_Player_State_t state = SoyMilk_Player_State_t::SoyMilk_Player_State_INIT;
@@ -49,12 +49,18 @@ class PlayerWrapper final {
   void Reset() {
     MilkTea_invoke_panic(SoyMilk_Player_Reset, get());
   }
- private:
-  SoyMilk_Player_t *get() {
+  raw_type *get() const {
     return self_;
   }
-  PlayerWrapper(SoyMilk_Player_t *self = nullptr) : self_(self) {}
-  SoyMilk_Player_t *self_;
+  raw_type *release() {
+    return reset(nullptr);
+  }
+  raw_type *reset(raw_type *another) {
+    std::swap(another, self_);
+    return another;
+  }
+ private:
+  raw_type *self_;
   MilkTea_NonCopy(PlayerWrapper)
   MilkTea_NonMoveAssign(PlayerWrapper)
 };
