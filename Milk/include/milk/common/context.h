@@ -14,7 +14,7 @@ class BaseContext {
  public:
   virtual raw_type ToRawType() {
     return raw_type{
-      .self_ = this,
+      .obj_ = this,
       .interface_ = &Interface(),
     };
   }

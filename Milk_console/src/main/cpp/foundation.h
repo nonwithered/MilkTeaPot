@@ -10,26 +10,26 @@ class FoundationWrapper final : public BaseFoundation {
   using raw_type = Milk_Console_Foundation_t;
   using interface_type = Milk_Console_Foundation_Interface_t;
  public:
-  FoundationWrapper(raw_type another = {}) : self_(another) {}
+  FoundationWrapper(raw_type another = {}) : obj_(another) {}
   raw_type ToRawType() final {
-    return self_;
+    return obj_;
   }
   SoyBean_Factory_t GetSoyBeanFactory() final {
     SoyBean_Factory_t result = {};
-    MilkTea_invoke_panic(interface().GetSoyBeanFactory, self(), &result);
+    MilkTea_invoke_panic(interface().GetSoyBeanFactory, obj(), &result);
     return result;
   }
  private:
-  void *self() const {
-    return get().self_;
+  void *obj() const {
+    return get().obj_;
   }
   const interface_type &interface() const {
     return *get().interface_;
   }
   const raw_type &get() const {
-    return self_;
+    return obj_;
   }
-  const raw_type self_;
+  const raw_type obj_;
 };
 
 

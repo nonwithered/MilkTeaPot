@@ -4,18 +4,18 @@ namespace {
 
 constexpr char TAG[] = "SoyBean::BaseFactory";
 
-SoyBean::BaseFactory &BaseFactory_cast(void *self) {
-  MilkTea_nonnull(self);
-  return *reinterpret_cast<SoyBean::BaseFactory *>(self);
+SoyBean::BaseFactory &BaseFactory_cast(void *obj) {
+  MilkTea_nonnull(obj);
+  return *reinterpret_cast<SoyBean::BaseFactory *>(obj);
 }
 
-MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Deleter(void *self) MilkTea_with_except({
-  std::move(BaseFactory_cast(self)).Destroy();
+MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Deleter(void *obj) MilkTea_with_except({
+  std::move(BaseFactory_cast(obj)).Destroy();
 })
 
-MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Create(void *self, SoyBean_Handle_t *handle) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call SoyBean_BaseFactory_Interface_Create(void *obj, SoyBean_Handle_t *handle) MilkTea_with_except({
   MilkTea_nonnull(handle);
-  *handle = BaseFactory_cast(self).Create();
+  *handle = BaseFactory_cast(obj).Create();
 })
 
 } // namespace

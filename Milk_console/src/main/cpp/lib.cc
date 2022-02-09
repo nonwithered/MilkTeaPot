@@ -6,32 +6,32 @@ namespace {
 
 constexpr char TAG[] = "Milk_console";
 
-Milk_Console::BaseFoundation &BaseFoundation_cast(void *self) {
-  MilkTea_nonnull(self);
-  return *reinterpret_cast<Milk_Console::BaseFoundation *>(self);
+Milk_Console::BaseFoundation &BaseFoundation_cast(void *obj) {
+  MilkTea_nonnull(obj);
+  return *reinterpret_cast<Milk_Console::BaseFoundation *>(obj);
 }
 
-Milk_Console::ContextImpl &ContextImpl_cast(void *self) {
-  MilkTea_nonnull(self);
-  return *reinterpret_cast<Milk_Console::ContextImpl *>(self);
+Milk_Console::ContextImpl &ContextImpl_cast(void *obj) {
+  MilkTea_nonnull(obj);
+  return *reinterpret_cast<Milk_Console::ContextImpl *>(obj);
 }
 
-MilkTea_Exception_t MilkTea_call Milk_Console_Foundation_Interface_GetSoyBeanFactory(void *self, SoyBean_Factory_t *factory) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Console_Foundation_Interface_GetSoyBeanFactory(void *obj, SoyBean_Factory_t *factory) MilkTea_with_except({
   MilkTea_nonnull(factory);
-  *factory = BaseFoundation_cast(self).GetSoyBeanFactory();
+  *factory = BaseFoundation_cast(obj).GetSoyBeanFactory();
 })
 
 } // namespace
 
-MilkTea_extern(Milk_Console_Context_Create, (Milk_Context_t *self, Milk_Console_Foundation_t foundation), {
-  MilkTea_nonnull(self);
+MilkTea_extern(Milk_Console_Context_Create, (Milk_Context_t *obj, Milk_Console_Foundation_t foundation), {
+  MilkTea_nonnull(obj);
   MilkTea_nonnull(foundation.interface_);
-  *self = (new Milk_Console::ContextImpl(Milk_Console::FoundationWrapper(foundation)))->ToRawType();
+  *obj = (new Milk_Console::ContextImpl(Milk_Console::FoundationWrapper(foundation)))->ToRawType();
 })
 
-MilkTea_extern(Milk_Console_Context_Destroy, (Milk_Context_t self), {
-  MilkTea_nonnull(self.self_);
-  delete &ContextImpl_cast(self.self_);
+MilkTea_extern(Milk_Console_Context_Destroy, (Milk_Context_t obj), {
+  MilkTea_nonnull(obj.obj_);
+  delete &ContextImpl_cast(obj.obj_);
 })
 
 namespace Milk_Console {

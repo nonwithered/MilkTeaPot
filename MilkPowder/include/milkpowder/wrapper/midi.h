@@ -45,20 +45,20 @@ class MutableInterface<Mapping::Midi> {
  public:
   static MutableWrapper<Mapping::Midi> Parse(std::function<size_t(uint8_t [], size_t)> reader) {
     MilkPowder::Mapping::ByteReader reader_ = reader;
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_parse, &self, reader_);
-    return self;
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_parse, &obj, reader_);
+    return obj;
   }
   template<typename iterator_type>
   static MutableWrapper<Mapping::Midi> Make(uint16_t format, uint16_t ntrk, uint16_t division, iterator_type iterator) {
-    raw_type *self = nullptr;
+    raw_type *obj = nullptr;
     std::vector<Mapping::Track::raw_type *> vec(ntrk);
     for (uint16_t i = 0; i != ntrk; ++i) {
       vec[i] = iterator->release();
       ++iterator;
     }
-    MilkTea_invoke_panic(mapping::raw_create, &self, format, ntrk, division, vec.data());
-    return self;
+    MilkTea_invoke_panic(mapping::raw_create, &obj, format, ntrk, division, vec.data());
+    return obj;
   }
   void AllTrack(std::function<void(MutableWrapper<Mapping::Track> &)> consumer) {
     std::function<void(Mapping::Track::raw_type *)> consumer_ = [&consumer](Mapping::Track::raw_type *it) {

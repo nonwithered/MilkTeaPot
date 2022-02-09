@@ -1,5 +1,5 @@
-#ifndef LIB_CAMELLIA_DISPATCHER_H_
-#define LIB_CAMELLIA_DISPATCHER_H_
+#ifndef LIB_MILKTEA_COMMAND_DISPATCHER_H_
+#define LIB_MILKTEA_COMMAND_DISPATCHER_H_
 
 #include <functional>
 #include <map>
@@ -8,11 +8,11 @@
 
 #include <milktea.h>
 
-namespace Camellia {
+namespace MilkTea_Command {
 
 template<typename container_type, typename context_type>
 struct DispatcherHelper {
-  static constexpr char TAG[] = "Camellia::Dispatcher";
+  static constexpr char TAG[] = "MilkTea_Command::Dispatcher";
   using value_type = typename container_type::value_type;
   using command_type = std::function<void(container_type &, context_type &)>;
   using map_type = std::map<value_type, command_type>;
@@ -83,6 +83,6 @@ class Dispatcher final {
   MilkTea_NonMove(Dispatcher);
 };
 
-} // namespace Camellia
+} // namespace MilkTea_command
 
-#endif // ifndef LIB_CAMELLIA_DISPATCHER_H_
+#endif // ifndef LIB_MILKTEA_COMMAND_DISPATCHER_H_

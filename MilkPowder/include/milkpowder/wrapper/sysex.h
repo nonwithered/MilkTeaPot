@@ -18,9 +18,9 @@ class ConstInterface<Mapping::Sysex> {
   virtual const raw_type *get() const = 0;
  public:
   static ConstWrapper<mapping> From(ConstWrapper<Mapping::Message> another) {
-    const raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_message_to, another.get(), &self);
-    return self;
+    const raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_message_to, another.get(), &obj);
+    return obj;
   }
   uint32_t GetCount() const {
     uint32_t result = 0;
@@ -55,20 +55,20 @@ class MutableInterface<Mapping::Sysex> {
  public:
   static MutableWrapper<mapping> Parse(std::function<size_t(uint8_t [], size_t)> reader) {
     MilkPowder::Mapping::ByteReader reader_ = reader;
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_parse, &self, reader_);
-    return self;
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_parse, &obj, reader_);
+    return obj;
   }
   static MutableWrapper<mapping> Make(const std::vector<SysexItem> &vec) {
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_create, &self, static_cast<uint32_t>(vec.size()), vec.data());
-    return self;
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_create, &obj, static_cast<uint32_t>(vec.size()), vec.data());
+    return obj;
   }
   static MutableWrapper<mapping> From(MutableWrapper<Mapping::Message> &&another) {
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_from_message, &self, another.get());
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_from_message, &obj, another.get());
     another.release();
-    return self;
+    return obj;
   }
   void AllItem(std::function<void(SysexItem_mut)> consumer) {
     std::function<void(mapping::raw_item_mut_type)> consumer_ = [&consumer](mapping::raw_item_mut_type it) {

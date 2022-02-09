@@ -56,15 +56,15 @@ class RecorderImpl final : public std::enable_shared_from_this<RecorderImpl> {
     size_t n = tapes_.size();
     tapes_.emplace_back(std::move(tick_clock), time_point_);
     return [weak = weak_from_this(), n](auto it) {
-      auto self = weak.lock();
-      if (!self) {
+      auto obj = weak.lock();
+      if (!obj) {
         MilkTea_throwf(LogicError, "append event but recorder is dead");
       }
-      auto state = self->state();
+      auto state = obj->state();
       if (state == State::CLOSED) {
         MilkTea_throwf(LogicError, "append event but recorder is closed");
       }
-      auto &tape = self->tapes_[n];
+      auto &tape = obj->tapes_[n];
       switch (state) {
         case State::RESUME:
           tape.Append(std::move(it), Now());

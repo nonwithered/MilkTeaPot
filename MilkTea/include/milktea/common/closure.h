@@ -18,15 +18,15 @@ class BaseFunctionFactory {
  public:
   using function_type = std::function<Res(Args...)>;
  private:
-  static Res MilkTea_call Invoke(void *self, Args... args) {
-    function_type &callback_ = *reinterpret_cast<function_type *>(self);
+  static Res MilkTea_call Invoke(void *obj, Args... args) {
+    function_type &callback_ = *reinterpret_cast<function_type *>(obj);
     return callback_(args...);
   }
  public:
   template<typename raw_type>
   static raw_type ToRawType(const function_type &f) {
     return raw_type{
-      .self_ = const_cast<function_type *>(&f),
+      .obj_ = const_cast<function_type *>(&f),
       .invoke_ = BaseFunctionFactory<Res, Args...>::Invoke,
     };
   }
@@ -48,8 +48,8 @@ class BaseClosureFactory {
   template<typename raw_type>
   static raw_type ToRawType(const function_type &f) {
     return raw_type{
-      .self_ = MilkTea_ClosureToken_t{
-        .self_ = new function_type(f),
+      .obj_ = MilkTea_ClosureToken_t{
+        .obj_ = new function_type(f),
         .deleter_ = Deteler,
       },
       .invoke_ = BaseFunctionFactory<Res, Args...>::Invoke,
@@ -57,16 +57,16 @@ class BaseClosureFactory {
   }
   template<typename raw_type>
   static function_type FromRawType(raw_type f) {
-    MilkTea_nonnull(f.self_.deleter_);
-    auto closure = std::shared_ptr<void>(f.self_.self_, f.self_.deleter_);
+    MilkTea_nonnull(f.obj_.deleter_);
+    auto closure = std::shared_ptr<void>(f.obj_.obj_, f.obj_.deleter_);
     MilkTea_nonnull(f.invoke_);
     return [closure, invoke = f.invoke_](Args... args) -> Res {
       return invoke(closure.get(), args...);
     };
   }
  private:
-  static void MilkTea_call Deteler(void *self) {
-    delete reinterpret_cast<function_type *>(self);
+  static void MilkTea_call Deteler(void *obj) {
+    delete reinterpret_cast<function_type *>(obj);
   }
 };
 
@@ -92,7 +92,7 @@ class ClosureFactory<std::function<Res(Args...)>> final : public BaseClosureFact
 #define MilkTea_Function_t(S, R, ...) \
 struct S { \
   using factory_type = MilkTea::FunctionFactory<R(__VA_ARGS__)>; \
-  void *self_; \
+  void *obj_; \
   R (MilkTea_call *invoke_)(void *, ##__VA_ARGS__); \
 };
 
@@ -100,7 +100,7 @@ struct S { \
 #define MilkTea_Closure_t(S, R, ...) \
 struct S { \
   using factory_type = MilkTea::ClosureFactory<R(__VA_ARGS__)>; \
-  MilkTea_ClosureToken_t self_; \
+  MilkTea_ClosureToken_t obj_; \
   R (MilkTea_call *invoke_)(void *, ##__VA_ARGS__); \
 };
 

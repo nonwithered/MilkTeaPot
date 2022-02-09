@@ -6,43 +6,43 @@ constexpr char TAG[] = "SoyMilk";
 
 using duration_type = TeaPot::TimerUnit::duration_type;
 
-SoyMilk::BaseRenderer &BaseRenderer_cast(void *self) {
-  MilkTea_nonnull(self);
-  return *reinterpret_cast<SoyMilk::BaseRenderer *>(self);
+SoyMilk::BaseRenderer &BaseRenderer_cast(void *obj) {
+  MilkTea_nonnull(obj);
+  return *reinterpret_cast<SoyMilk::BaseRenderer *>(obj);
 }
 
-void MilkTea_call SoyMilk_BaseRenderer_Deleter(void *self) {
-  std::move(BaseRenderer_cast(self)).Destroy();
+void MilkTea_call SoyMilk_BaseRenderer_Deleter(void *obj) {
+  std::move(BaseRenderer_cast(obj)).Destroy();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnFrame(void *self, const SoyMilk::Codec::FrameBufferWrapper::raw_type *fbo) {
-  BaseRenderer_cast(self).OnFrame(fbo);
+void MilkTea_call SoyMilk_BaseRenderer_OnFrame(void *obj, const SoyMilk::Codec::FrameBufferWrapper::raw_type *fbo) {
+  BaseRenderer_cast(obj).OnFrame(fbo);
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnPrepare(void *self, int64_t time) {
-  BaseRenderer_cast(self).OnPrepare(duration_type(time));
+void MilkTea_call SoyMilk_BaseRenderer_OnPrepare(void *obj, int64_t time) {
+  BaseRenderer_cast(obj).OnPrepare(duration_type(time));
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnStart(void *self) {
-  BaseRenderer_cast(self).OnStart();
+void MilkTea_call SoyMilk_BaseRenderer_OnStart(void *obj) {
+  BaseRenderer_cast(obj).OnStart();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnResume(void *self) {
-  BaseRenderer_cast(self).OnResume();
+void MilkTea_call SoyMilk_BaseRenderer_OnResume(void *obj) {
+  BaseRenderer_cast(obj).OnResume();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnSeekBegin(void *self) {
-  BaseRenderer_cast(self).OnSeekBegin();
+void MilkTea_call SoyMilk_BaseRenderer_OnSeekBegin(void *obj) {
+  BaseRenderer_cast(obj).OnSeekBegin();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnSeekEnd(void *self, int64_t time) {
-  BaseRenderer_cast(self).OnSeekEnd(duration_type(time));
+void MilkTea_call SoyMilk_BaseRenderer_OnSeekEnd(void *obj, int64_t time) {
+  BaseRenderer_cast(obj).OnSeekEnd(duration_type(time));
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnPause(void *self, int64_t time) {
-  BaseRenderer_cast(self).OnPause(duration_type(time));
+void MilkTea_call SoyMilk_BaseRenderer_OnPause(void *obj, int64_t time) {
+  BaseRenderer_cast(obj).OnPause(duration_type(time));
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnStop(void *self) {
-  BaseRenderer_cast(self).OnStop();
+void MilkTea_call SoyMilk_BaseRenderer_OnStop(void *obj) {
+  BaseRenderer_cast(obj).OnStop();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnReset(void *self) {
-  BaseRenderer_cast(self).OnReset();
+void MilkTea_call SoyMilk_BaseRenderer_OnReset(void *obj) {
+  BaseRenderer_cast(obj).OnReset();
 }
-void MilkTea_call SoyMilk_BaseRenderer_OnComplete(void *self) {
-  BaseRenderer_cast(self).OnComplete();
+void MilkTea_call SoyMilk_BaseRenderer_OnComplete(void *obj) {
+  BaseRenderer_cast(obj).OnComplete();
 }
 
 } // namespace

@@ -6,69 +6,69 @@ namespace {
 
 constexpr char TAG[] = "SoyMilk";
 
-std::shared_ptr<SoyMilk::PlayerImpl> &soymilk_cast(SoyMilk_Player_t *self) {
-  return *reinterpret_cast<std::shared_ptr<SoyMilk::PlayerImpl> *>(self);
+std::shared_ptr<SoyMilk::PlayerImpl> &soymilk_cast(SoyMilk_Player_t *obj) {
+  return *reinterpret_cast<std::shared_ptr<SoyMilk::PlayerImpl> *>(obj);
 }
 
-SoyMilk_Player_t *soymilk_cast(std::shared_ptr<SoyMilk::PlayerImpl> &self) {
-  return reinterpret_cast<SoyMilk_Player_t *>(&self);
+SoyMilk_Player_t *soymilk_cast(std::shared_ptr<SoyMilk::PlayerImpl> &obj) {
+  return reinterpret_cast<SoyMilk_Player_t *>(&obj);
 }
 
 } // namespace
 
-MilkTea_extern(SoyMilk_Player_Create, (SoyMilk_Player_t **self, SoyMilk_Player_Renderer_t renderer, TeaPot_Executor_t executor, TeaPot_TimerWorker_Weak_t *timer), {
-  MilkTea_nonnull(self);
+MilkTea_extern(SoyMilk_Player_Create, (SoyMilk_Player_t **obj, SoyMilk_Player_Renderer_t renderer, TeaPot_Executor_t executor, TeaPot_TimerWorker_Weak_t *timer), {
+  MilkTea_nonnull(obj);
   MilkTea_nonnull(renderer.interface_);
   MilkTea_nonnull(executor.invoke_);
   MilkTea_nonnull(timer);
   auto player = std::make_shared<SoyMilk::PlayerImpl>(renderer, TeaPot::Executor::FromRawType(executor), timer);
   player->Init();
-  *self = soymilk_cast(*new std::shared_ptr<SoyMilk::PlayerImpl>(std::move(player)));
+  *obj = soymilk_cast(*new std::shared_ptr<SoyMilk::PlayerImpl>(std::move(player)));
 })
 
-MilkTea_extern(SoyMilk_Player_Destroy, (SoyMilk_Player_t *self), {
-  MilkTea_nonnull(self);
-  delete &soymilk_cast(self);
+MilkTea_extern(SoyMilk_Player_Destroy, (SoyMilk_Player_t *obj), {
+  MilkTea_nonnull(obj);
+  delete &soymilk_cast(obj);
 })
 
-MilkTea_extern(SoyMilk_Player_GetState, (SoyMilk_Player_t *self, SoyMilk_Player_State_t *state), {
-  MilkTea_nonnull(self);
+MilkTea_extern(SoyMilk_Player_GetState, (SoyMilk_Player_t *obj, SoyMilk_Player_State_t *state), {
+  MilkTea_nonnull(obj);
   MilkTea_nonnull(state);
-  *state = SoyMilk::Player::ToRawType(soymilk_cast(self)->state());
+  *state = SoyMilk::Player::ToRawType(soymilk_cast(obj)->state());
 })
 
-MilkTea_extern(SoyMilk_Player_Prepare, (SoyMilk_Player_t *self, const MilkPowder_Midi_t *midi), {
-  MilkTea_nonnull(self);
+MilkTea_extern(SoyMilk_Player_Prepare, (SoyMilk_Player_t *obj, const MilkPowder_Midi_t *midi), {
+  MilkTea_nonnull(obj);
   MilkTea_nonnull(midi);
-  soymilk_cast(self)->Prepare(midi);
+  soymilk_cast(obj)->Prepare(midi);
 })
 
-MilkTea_extern(SoyMilk_Player_Start, (SoyMilk_Player_t *self), {
-  MilkTea_nonnull(self);
-  soymilk_cast(self)->Start();
+MilkTea_extern(SoyMilk_Player_Start, (SoyMilk_Player_t *obj), {
+  MilkTea_nonnull(obj);
+  soymilk_cast(obj)->Start();
 })
 
-MilkTea_extern(SoyMilk_Player_Pause, (SoyMilk_Player_t *self), {
-  MilkTea_nonnull(self);
-  soymilk_cast(self)->Pause();
+MilkTea_extern(SoyMilk_Player_Pause, (SoyMilk_Player_t *obj), {
+  MilkTea_nonnull(obj);
+  soymilk_cast(obj)->Pause();
 })
 
-MilkTea_extern(SoyMilk_Player_Seek, (SoyMilk_Player_t *self, int64_t time), {
-  MilkTea_nonnull(self);
-  soymilk_cast(self)->Seek(TeaPot::TimerUnit::duration_type(time));
+MilkTea_extern(SoyMilk_Player_Seek, (SoyMilk_Player_t *obj, int64_t time), {
+  MilkTea_nonnull(obj);
+  soymilk_cast(obj)->Seek(TeaPot::TimerUnit::duration_type(time));
 })
 
-MilkTea_extern(SoyMilk_Player_Resume, (SoyMilk_Player_t *self), {
-  MilkTea_nonnull(self);
-  soymilk_cast(self)->Resume();
+MilkTea_extern(SoyMilk_Player_Resume, (SoyMilk_Player_t *obj), {
+  MilkTea_nonnull(obj);
+  soymilk_cast(obj)->Resume();
 })
 
-MilkTea_extern(SoyMilk_Player_Stop, (SoyMilk_Player_t *self), {
-  MilkTea_nonnull(self);
-  soymilk_cast(self)->Stop();
+MilkTea_extern(SoyMilk_Player_Stop, (SoyMilk_Player_t *obj), {
+  MilkTea_nonnull(obj);
+  soymilk_cast(obj)->Stop();
 })
 
-MilkTea_extern(SoyMilk_Player_Reset, (SoyMilk_Player_t *self), {
-  MilkTea_nonnull(self);
-  soymilk_cast(self)->Reset();
+MilkTea_extern(SoyMilk_Player_Reset, (SoyMilk_Player_t *obj), {
+  MilkTea_nonnull(obj);
+  soymilk_cast(obj)->Reset();
 })

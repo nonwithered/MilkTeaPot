@@ -6,29 +6,29 @@ namespace {
 
 constexpr char TAG[] = "MilkTea";
 
-MilkTea::BaseLogger &BaseLogger_cast(void *self) {
-  MilkTea_nonnull(self);
-  return *reinterpret_cast<MilkTea::BaseLogger *>(self);
+MilkTea::BaseLogger &BaseLogger_cast(void *obj) {
+  MilkTea_nonnull(obj);
+  return *reinterpret_cast<MilkTea::BaseLogger *>(obj);
 }
 
-void MilkTea_call MilkTea_BaseLogger_Interface_Deleter(void *self) {
-  std::move(BaseLogger_cast(self)).Destroy();
+void MilkTea_call MilkTea_BaseLogger_Interface_Deleter(void *obj) {
+  std::move(BaseLogger_cast(obj)).Destroy();
 }
 
-void MilkTea_call MilkTea_BaseLogger_Interface_Debug(void *self, const char *tag, const char *msg) {
-  BaseLogger_cast(self).Debug(tag, msg);
+void MilkTea_call MilkTea_BaseLogger_Interface_Debug(void *obj, const char *tag, const char *msg) {
+  BaseLogger_cast(obj).Debug(tag, msg);
 }
 
-void MilkTea_call MilkTea_BaseLogger_Interface_Info(void *self, const char *tag, const char *msg) {
-  BaseLogger_cast(self).Info(tag, msg);
+void MilkTea_call MilkTea_BaseLogger_Interface_Info(void *obj, const char *tag, const char *msg) {
+  BaseLogger_cast(obj).Info(tag, msg);
 }
 
-void MilkTea_call MilkTea_BaseLogger_Interface_Warn(void *self, const char *tag, const char *msg) {
-  BaseLogger_cast(self).Warn(tag, msg);
+void MilkTea_call MilkTea_BaseLogger_Interface_Warn(void *obj, const char *tag, const char *msg) {
+  BaseLogger_cast(obj).Warn(tag, msg);
 }
 
-void MilkTea_call MilkTea_BaseLogger_Interface_Error(void *self, const char *tag, const char *msg) {
-  BaseLogger_cast(self).Error(tag, msg);
+void MilkTea_call MilkTea_BaseLogger_Interface_Error(void *obj, const char *tag, const char *msg) {
+  BaseLogger_cast(obj).Error(tag, msg);
 }
 
 } // namespace

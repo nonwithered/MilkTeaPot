@@ -12,17 +12,17 @@ class RecorderWrapper final {
   using raw_type = Yogurt_Recorder_t;
   using State = RecorderState;
  public:
-  RecorderWrapper(raw_type *self = nullptr) : self_(self) {}
+  RecorderWrapper(raw_type *obj = nullptr) : obj_(obj) {}
   RecorderWrapper(RecorderWrapper &&another) : RecorderWrapper(another.release()) {}
   explicit RecorderWrapper(uint16_t division) : RecorderWrapper() {
-    MilkTea_invoke_panic(Yogurt_Recorder_Create, &self_, division);
+    MilkTea_invoke_panic(Yogurt_Recorder_Create, &obj_, division);
   }
   ~RecorderWrapper() {
-    auto self = release();
-    if (self == nullptr) {
+    auto obj = release();
+    if (obj == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(Yogurt_Recorder_Destroy, self);
+    MilkTea_invoke_panic(Yogurt_Recorder_Destroy, obj);
   }
   State GetState() {
     Yogurt_Recorder_State_t state = Yogurt_Recorder_State_CLOSED;
@@ -46,17 +46,17 @@ class RecorderWrapper final {
     return factory;
   }
   raw_type *get() const {
-    return self_;
+    return obj_;
   }
   raw_type *release() {
     return reset(nullptr);
   }
   raw_type *reset(raw_type *another) {
-    std::swap(another, self_);
+    std::swap(another, obj_);
     return another;
   }
  private:
-  raw_type *self_;
+  raw_type *obj_;
   MilkTea_NonCopy(RecorderWrapper)
   MilkTea_NonMoveAssign(RecorderWrapper)
 };

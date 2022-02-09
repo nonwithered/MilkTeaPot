@@ -44,11 +44,11 @@ void DumpArgs(const std::vector<uint8_t> &args, std::vector<uint8_t> &vec) {
   }
 }
 
-void DumpEvent(const EventImpl &self, std::vector<uint8_t> &vec) {
-  DumpUsize(self.delta(), vec);
-  auto type = self.type();
+void DumpEvent(const EventImpl &obj, std::vector<uint8_t> &vec) {
+  DumpUsize(obj.delta(), vec);
+  auto type = obj.type();
   DumpU8(type, vec);
-  const auto &args = self.args();
+  const auto &args = obj.args();
   DumpU8(std::get<0>(args), vec);
   type &= 0xf0;
   if (type != 0xc0 && type != 0xd0) {
@@ -56,17 +56,17 @@ void DumpEvent(const EventImpl &self, std::vector<uint8_t> &vec) {
   }
 }
 
-void DumpMeta(const MetaImpl &self, std::vector<uint8_t> &vec) {
-  DumpUsize(self.delta(), vec);
+void DumpMeta(const MetaImpl &obj, std::vector<uint8_t> &vec) {
+  DumpUsize(obj.delta(), vec);
   DumpU8(0xff, vec);
-  DumpU8(self.type(), vec);
-  DumpArgs(self.args(), vec);
+  DumpU8(obj.type(), vec);
+  DumpArgs(obj.args(), vec);
 }
 
-void DumpSysex(const SysexImpl &self, std::vector<uint8_t> &vec) {
-  DumpUsize(self.delta(), vec);
+void DumpSysex(const SysexImpl &obj, std::vector<uint8_t> &vec) {
+  DumpUsize(obj.delta(), vec);
   DumpU8(0xf0, vec);
-  const auto &items = self.items();
+  const auto &items = obj.items();
   DumpArgs(items[0].args_, vec);
   if (items.size() != 1) {
     std::for_each(items.begin() + 1, items.end(), [&vec](const auto &it) {
@@ -77,7 +77,7 @@ void DumpSysex(const SysexImpl &self, std::vector<uint8_t> &vec) {
   }
 }
 
-void DumpTrack(const TrackImpl &self, std::vector<uint8_t> &vec) {
+void DumpTrack(const TrackImpl &obj, std::vector<uint8_t> &vec) {
   DumpU8(static_cast<uint8_t>('M'), vec);
   DumpU8(static_cast<uint8_t>('T'), vec);
   DumpU8(static_cast<uint8_t>('r'), vec);
@@ -87,7 +87,7 @@ void DumpTrack(const TrackImpl &self, std::vector<uint8_t> &vec) {
   DumpU8(0, vec);
   DumpU8(0, vec);
   DumpU8(0, vec);
-  for (const auto &it : self.items()) {
+  for (const auto &it : obj.items()) {
     if (it->IsEvent()) {
       DumpEvent(dynamic_cast<const EventImpl &>(*it), vec);
     } else if (it->IsMeta()) {
@@ -105,7 +105,7 @@ void DumpTrack(const TrackImpl &self, std::vector<uint8_t> &vec) {
   }
 }
 
-void DumpMidi(const MidiImpl &self, std::vector<uint8_t> &vec) {
+void DumpMidi(const MidiImpl &obj, std::vector<uint8_t> &vec) {
   DumpU8(static_cast<uint8_t>('M'), vec);
   DumpU8(static_cast<uint8_t>('T'), vec);
   DumpU8(static_cast<uint8_t>('h'), vec);
@@ -114,10 +114,10 @@ void DumpMidi(const MidiImpl &self, std::vector<uint8_t> &vec) {
   DumpU8(0, vec);
   DumpU8(0, vec);
   DumpU8(6, vec);
-  DumpU16(self.format(), vec);
-  DumpU16(static_cast<uint16_t>(self.items().size()), vec);
-  DumpU16(self.division(), vec);
-  for (const std::unique_ptr<TrackImpl> &it : self.items()) {
+  DumpU16(obj.format(), vec);
+  DumpU16(static_cast<uint16_t>(obj.items().size()), vec);
+  DumpU16(obj.division(), vec);
+  for (const std::unique_ptr<TrackImpl> &it : obj.items()) {
     DumpTrack(*it, vec);
   }
 }

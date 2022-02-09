@@ -20,11 +20,11 @@ typedef enum MilkTea_Logger_Level_t MilkTea_Logger_Level_t;
 #endif // ifndef __cplusplus
 
 struct MilkTea_Logger_Interface_t {
-  void (MilkTea_call *Deleter)(void *self);
-  void (MilkTea_call *Debug)(void *self, const char *tag, const char *msg);
-  void (MilkTea_call *Info)(void *self, const char *tag, const char *msg);
-  void (MilkTea_call *Warn)(void *self, const char *tag, const char *msg);
-  void (MilkTea_call *Error)(void *self, const char *tag, const char *msg);
+  void (MilkTea_call *Deleter)(void *obj);
+  void (MilkTea_call *Debug)(void *obj, const char *tag, const char *msg);
+  void (MilkTea_call *Info)(void *obj, const char *tag, const char *msg);
+  void (MilkTea_call *Warn)(void *obj, const char *tag, const char *msg);
+  void (MilkTea_call *Error)(void *obj, const char *tag, const char *msg);
 };
 
 #ifndef __cplusplus
@@ -32,7 +32,7 @@ typedef struct MilkTea_Logger_Interface_t MilkTea_Logger_Interface_t;
 #endif // ifndef __cplusplus
 
 struct MilkTea_Logger_t {
-  void *self_;
+  void *obj_;
   enum MilkTea_Logger_Level_t level_;
   const MilkTea_Logger_Interface_t *interface_;
 };

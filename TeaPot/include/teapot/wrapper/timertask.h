@@ -10,27 +10,27 @@ class TimerTaskWrapper final {
   static constexpr char TAG[] = "TeaPot::TimerTaskWrapper";
   friend class TimerWorkerWrapper;
  public:
-  TimerTaskWrapper(TeaPot_TimerTask_t *self = nullptr) : self_(self) {}
+  TimerTaskWrapper(TeaPot_TimerTask_t *obj = nullptr) : obj_(obj) {}
   TimerTaskWrapper(TimerTaskWrapper &&another) : TimerTaskWrapper() {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
   }
   ~TimerTaskWrapper() {
-    if (self_ == nullptr) {
+    if (obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(TeaPot_TimerTask_Destroy, self_);
-    self_ = nullptr;
+    MilkTea_invoke_panic(TeaPot_TimerTask_Destroy, obj_);
+    obj_ = nullptr;
   }
   TimerFutureWrapper GetFuture() {
     TeaPot_TimerFuture_t *future = nullptr;
-    MilkTea_invoke_panic(TeaPot_TimerTask_GetFuture, self_, &future);
+    MilkTea_invoke_panic(TeaPot_TimerTask_GetFuture, obj_, &future);
     return future;
   }
   void Run() {
-    MilkTea_invoke_panic(TeaPot_TimerTask_Run, self_);
+    MilkTea_invoke_panic(TeaPot_TimerTask_Run, obj_);
   }
  private:
-  TeaPot_TimerTask_t *self_;
+  TeaPot_TimerTask_t *obj_;
   MilkTea_NonCopy(TimerTaskWrapper)
   MilkTea_NonMoveAssign(TimerTaskWrapper)
 };

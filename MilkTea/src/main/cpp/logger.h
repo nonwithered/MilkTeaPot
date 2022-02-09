@@ -10,17 +10,17 @@ class LoggerWrapper final : public BaseLogger {
   MilkTea_Logger_t ToRawType() && final {
     return release();
   }
-  LoggerWrapper(MilkTea_Logger_t another) : BaseLogger(Logger::FromRawType(another.level_)), self_(another) {}
+  LoggerWrapper(MilkTea_Logger_t another) : BaseLogger(Logger::FromRawType(another.level_)), obj_(another) {}
   LoggerWrapper(LoggerWrapper &&another) : LoggerWrapper(another.level()) {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
     another.~LoggerWrapper();
   }
   ~LoggerWrapper() final {
-    if (Self() == nullptr) {
+    if (obj() == nullptr) {
       return;
     }
-    Interface().Deleter(Self());
-    self_ = {};
+    Interface().Deleter(obj());
+    obj_ = {};
   }
   BaseLogger &Move() && final {
     return *new LoggerWrapper(std::move(*this));
@@ -29,32 +29,32 @@ class LoggerWrapper final : public BaseLogger {
     delete this;
   }
   void Debug(std::string_view tag, std::string_view msg) final {
-    Interface().Debug(Self(), tag.data(), msg.data());
+    Interface().Debug(obj(), tag.data(), msg.data());
   }
   void Info(std::string_view tag, std::string_view msg) final {
-    Interface().Info(Self(), tag.data(), msg.data());
+    Interface().Info(obj(), tag.data(), msg.data());
   }
   void Warn(std::string_view tag, std::string_view msg) final {
-    Interface().Warn(Self(), tag.data(), msg.data());
+    Interface().Warn(obj(), tag.data(), msg.data());
   }
   void Error(std::string_view tag, std::string_view msg) final {
-    Interface().Error(Self(), tag.data(), msg.data());
+    Interface().Error(obj(), tag.data(), msg.data());
   }
   MilkTea_Logger_t release() {
-    MilkTea_Logger_t self = {};
-    std::swap(self, self_);
-    return self;
+    MilkTea_Logger_t obj = {};
+    std::swap(obj, obj_);
+    return obj;
   }
  private:
-  void *Self() const {
-    return self_.self_;
+  void *obj() const {
+    return obj_.obj_;
   }
   const MilkTea_Logger_Interface_t &Interface() const {
-    return *self_.interface_;
+    return *obj_.interface_;
   }
   LoggerWrapper() : LoggerWrapper(Logger::Level::ASSERT) {}
-  LoggerWrapper(Logger::Level level) : BaseLogger(level), self_{nullptr, Logger::ToRawType(Logger::Level::ASSERT), nullptr} {}
-  MilkTea_Logger_t self_;
+  LoggerWrapper(Logger::Level level) : BaseLogger(level), obj_{nullptr, Logger::ToRawType(Logger::Level::ASSERT), nullptr} {}
+  MilkTea_Logger_t obj_;
   MilkTea_NonCopy(LoggerWrapper)
   MilkTea_NonMoveAssign(LoggerWrapper)
 };

@@ -12,14 +12,14 @@ class ReaderWrapper final : public BaseReader {
   raw_type ToRawType() && final {
     return release();
   }
-  ReaderWrapper(raw_type another = {}) : self_(another) {}
+  ReaderWrapper(raw_type another = {}) : obj_(another) {}
   ReaderWrapper(ReaderWrapper &&another) : ReaderWrapper(another.release()) {}
   ~ReaderWrapper() final {
-    auto self = release();
-    if (self.self_ == nullptr) {
+    auto obj = release();
+    if (obj.obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(MilkTea_Reader_Destroy, self);
+    MilkTea_invoke_panic(MilkTea_Reader_Destroy, obj);
   }
   BaseReader &Move() && final {
     return *new ReaderWrapper(std::move(*this));
@@ -33,14 +33,14 @@ class ReaderWrapper final : public BaseReader {
   }
   raw_type release() {
     raw_type result = {};
-    std::swap(self_, result);
+    std::swap(obj_, result);
     return result;
   }
   raw_type get() {
-    return self_;
+    return obj_;
   }
 private:
-  raw_type self_;
+  raw_type obj_;
   MilkTea_NonCopy(ReaderWrapper)
   MilkTea_NonMoveAssign(ReaderWrapper)
 };
@@ -52,14 +52,14 @@ class WriterWrapper final : public BaseWriter {
   raw_type ToRawType() && final {
     return release();
   }
-  WriterWrapper(raw_type another = {}) : self_(another) {}
+  WriterWrapper(raw_type another = {}) : obj_(another) {}
   WriterWrapper(WriterWrapper &&another) : WriterWrapper(another.release()) {}
   ~WriterWrapper() final {
-    auto self = release();
-    if (self.self_ == nullptr) {
+    auto obj = release();
+    if (obj.obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(MilkTea_Writer_Destroy, self);
+    MilkTea_invoke_panic(MilkTea_Writer_Destroy, obj);
   }
   BaseWriter &Move() && final {
     return *new WriterWrapper(std::move(*this));
@@ -72,14 +72,14 @@ class WriterWrapper final : public BaseWriter {
   }
   raw_type release() {
     raw_type result = {};
-    std::swap(self_, result);
+    std::swap(obj_, result);
     return result;
   }
   raw_type get() {
-    return self_;
+    return obj_;
   }
 private:
-  raw_type self_;
+  raw_type obj_;
   MilkTea_NonCopy(WriterWrapper)
   MilkTea_NonMoveAssign(WriterWrapper)
 };

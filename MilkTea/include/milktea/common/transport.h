@@ -14,7 +14,7 @@ class BaseReader {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = &std::move(*this).Move(),
+      .obj_ = &std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }
@@ -32,7 +32,7 @@ class BaseWriter {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = &std::move(*this).Move(),
+      .obj_ = &std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }

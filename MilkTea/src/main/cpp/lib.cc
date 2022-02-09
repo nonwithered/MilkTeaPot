@@ -54,9 +54,9 @@ void MilkTea_Exception_Throw(MilkTea_Exception_t type, const char *what) {
 
 MilkTea_Exception_t MilkTea_Exception_Catch(MilkTea_Exception_Block_t block) {
   try {
-    MilkTea_nonnull(block.self_);
+    MilkTea_nonnull(block.obj_);
     MilkTea_nonnull(block.invoke_);
-    block.invoke_(block.self_);
+    block.invoke_(block.obj_);
   } catch (const MilkTea::ExceptionImpl &e) {
     MilkTea::ExceptionImpl::What(e.what());
     return MilkTea::Exception::ToRawType(e.type());

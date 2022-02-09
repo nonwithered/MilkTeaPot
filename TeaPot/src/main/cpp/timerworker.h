@@ -241,8 +241,8 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
   std::function<void(future_type)> GetCancel() {
     return [binder = binder_](future_type future) -> void {
       auto binder_ = binder;
-      binder_.WithGuard([future](worker_type self) -> void {
-        self->OnCancel(future);
+      binder_.WithGuard([future](worker_type obj) -> void {
+        obj->OnCancel(future);
       });
     };
   }

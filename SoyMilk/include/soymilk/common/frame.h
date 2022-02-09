@@ -15,7 +15,7 @@ class FrameEventWrapper final {
   static constexpr char TAG[] = "SoyMilk::Codec::FrameEvent";
  public:
   using raw_type = SoyMilk_FrameEvent_t;
-  FrameEventWrapper(const raw_type *another) : self_(another) {}
+  FrameEventWrapper(const raw_type *another) : obj_(another) {}
   uint16_t GetNtrk() const {
     uint16_t result = 0;
     MilkTea_invoke_panic(SoyMilk_FrameEvent_GetNtrk, get(), &result);
@@ -32,10 +32,10 @@ class FrameEventWrapper final {
     return result;
   }
   const raw_type *get() const {
-    return self_;
+    return obj_;
   }
  private:
-  const raw_type *const self_;
+  const raw_type *const obj_;
 };
 
 class FrameBufferWrapper final {
@@ -43,7 +43,7 @@ class FrameBufferWrapper final {
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   using raw_type = SoyMilk_FrameBuffer_t;
-  FrameBufferWrapper(const raw_type *self) : self_(self) {}
+  FrameBufferWrapper(const raw_type *obj) : obj_(obj) {}
   duration_type GetTime() const {
     int64_t result = 0;
     MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetTime, get(), &result);
@@ -60,46 +60,46 @@ class FrameBufferWrapper final {
     return result;
   }
   const raw_type *get() const {
-    return self_;
+    return obj_;
   }
  private:
-  const raw_type *const self_;
+  const raw_type *const obj_;
 };
 
 class FrameBufferHolder final {
   static constexpr char TAG[] = "SoyMilk::Codec::FrameBufferHolder";
   using raw_type = FrameBufferWrapper::raw_type;
  public:
-  FrameBufferHolder(raw_type *self = nullptr) : self_(self) {}
+  FrameBufferHolder(raw_type *obj = nullptr) : obj_(obj) {}
   FrameBufferHolder(FrameBufferHolder &&another) : FrameBufferHolder() {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
   }
   explicit FrameBufferHolder(FrameBufferWrapper another) : FrameBufferHolder() {
-    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Clone, &self_, another.get());
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Clone, &obj_, another.get());
   }
   ~FrameBufferHolder() {
-    if (self_ == nullptr) {
+    if (obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Destroy, self_);
-    self_ = nullptr;
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Destroy, obj_);
+    obj_ = nullptr;
   }
   operator FrameBufferWrapper() const {
     return get();
   }
   const raw_type *get() const {
-    return self_;
+    return obj_;
   }
   raw_type *get() {
-    return self_;
+    return obj_;
   }
   raw_type *release() {
-    raw_type *result = self_;
-    self_ = nullptr;
+    raw_type *result = obj_;
+    obj_ = nullptr;
     return result;
   }
  private:
-  raw_type *self_;
+  raw_type *obj_;
   MilkTea_NonCopy(FrameBufferHolder)
   MilkTea_NonMoveAssign(FrameBufferHolder)
 };

@@ -15,9 +15,9 @@ class ConstInterface<Mapping::Meta> {
   virtual const raw_type *get() const = 0;
  public:
   static ConstWrapper<mapping> From(ConstWrapper<Mapping::Message> another) {
-    const raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_message_to, another.get(), &self);
-    return self;
+    const raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_message_to, another.get(), &obj);
+    return obj;
   }
   uint8_t GetType() const {
     uint8_t res = 0;
@@ -46,22 +46,22 @@ class MutableInterface<Mapping::Meta> {
  public:
   static MutableWrapper<mapping> Parse(std::function<size_t(uint8_t [], size_t)> reader) {
     MilkPowder::Mapping::ByteReader reader_ = reader;
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_parse, &self, reader_);
-    return self;
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_parse, &obj, reader_);
+    return obj;
   }
   static MutableWrapper<mapping> Make(uint32_t delta, uint8_t type, std::vector<uint8_t> args) {
     uint32_t argc = static_cast<uint32_t>(args.size());
     uint8_t *argv = args.data();
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_create, &self, delta, type, argv, argc);
-    return self;
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_create, &obj, delta, type, argv, argc);
+    return obj;
   }
   static MutableWrapper<mapping> From(MutableWrapper<Mapping::Message> &&another) {
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(mapping::raw_from_message, &self, another.get());
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(mapping::raw_from_message, &obj, another.get());
     another.release();
-    return self;
+    return obj;
   }
 };
 

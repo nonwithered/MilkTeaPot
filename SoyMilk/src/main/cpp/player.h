@@ -35,33 +35,33 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   ~PlayerImpl() = default;
   void Init() {
     Perform().post([weak = weak_from_this()](auto action, auto delay) -> auto {
-      auto self = Lock(weak);
-      if (!self) {
+      auto obj = Lock(weak);
+      if (!obj) {
         return future_type();
       }
-      return self->Post([action](auto &self) {
-        action(self.Perform());
+      return obj->Post([action](auto &obj) {
+        action(obj.Perform());
       }, delay);
     });
-    Perform().complete(Command([](auto &self) {
-      self.Execute([](auto &self) {
-        auto state = self.state();
+    Perform().complete(Command([](auto &obj) {
+      obj.Execute([](auto &obj) {
+        auto state = obj.state();
         if (state != State::PLAYING) {
           MilkTea_logI("complete try but fail -- state: %s" , StateName(state));
           return;
         }
-        self.ChangeState(State::PLAYING, State::PREPARED);
-        self.Post([](self_type &self) {
-          self.Renderer().OnComplete();
+        obj.ChangeState(State::PLAYING, State::PREPARED);
+        obj.Post([](self_type &obj) {
+          obj.Renderer().OnComplete();
         });
       });
     }));
     Perform().frame([weak = weak_from_this()](auto fbo) {
-      auto self = Lock(weak);
-      if (!self) {
+      auto obj = Lock(weak);
+      if (!obj) {
         return;
       }
-      self->Renderer().OnFrame(std::move(fbo));
+      obj->Renderer().OnFrame(std::move(fbo));
     });
   }
   State state() const {
@@ -69,62 +69,62 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   }
   TeaPot::TimerFutureWrapper Prepare(MilkPowder::MidiConstWrapper midi) {
     ChangeState(State::INIT, State::PREPARING);
-    return Post([midi_ = std::make_shared<MilkPowder::MidiMutableWrapper>(midi)](auto &self) {
-      auto length = self.Perform().Prepare(midi_->get());
-      self.ChangeStateAsync(State::PREPARING, State::PREPARED);
-      self.Renderer().OnPrepare(length);
+    return Post([midi_ = std::make_shared<MilkPowder::MidiMutableWrapper>(midi)](auto &obj) {
+      auto length = obj.Perform().Prepare(midi_->get());
+      obj.ChangeStateAsync(State::PREPARING, State::PREPARED);
+      obj.Renderer().OnPrepare(length);
     });
   }
   void Start() {
     ChangeState(State::PREPARED, State::STARTED);
-    Post([](auto &self) {
-      self.Perform().Start();
-      self.ChangeStateAsync(State::STARTED, State::SUSPEND);
-      self.Renderer().OnStart();
+    Post([](auto &obj) {
+      obj.Perform().Start();
+      obj.ChangeStateAsync(State::STARTED, State::SUSPEND);
+      obj.Renderer().OnStart();
     });
   }
   void Resume() {
     ChangeState(State::SUSPEND, State::RESUMED);
-    Post([](auto &self) {
-      self.Perform().Resume();
-      self.ChangeStateAsync(State::RESUMED, State::PLAYING);
-      self.Renderer().OnResume();
-      self.Perform().Loop();
+    Post([](auto &obj) {
+      obj.Perform().Resume();
+      obj.ChangeStateAsync(State::RESUMED, State::PLAYING);
+      obj.Renderer().OnResume();
+      obj.Perform().Loop();
     });
   }
   void Pause() {
     ChangeState(State::PLAYING, State::PAUSED);
-    Post([](auto &self) {
-      self.Post([command = self.Perform().Pause()](auto &self) {
-        auto pos = command(self.Perform());
-        self.ChangeStateAsync(State::PAUSED, State::PAUSED);
-        self.Renderer().OnPause(pos);
+    Post([](auto &obj) {
+      obj.Post([command = obj.Perform().Pause()](auto &obj) {
+        auto pos = command(obj.Perform());
+        obj.ChangeStateAsync(State::PAUSED, State::PAUSED);
+        obj.Renderer().OnPause(pos);
       });
     });
   }
   TeaPot::TimerFutureWrapper Seek(duration_type time) {
     ChangeState(State::SUSPEND, State::SEEKING);
-    return Post([time](auto &self) {
-      self.Renderer().OnSeekBegin();
-      auto pos = self.Perform().Seek(time);
-      self.ChangeStateAsync(State::SEEKING, State::SUSPEND);
-      self.Renderer().OnSeekEnd(pos);
+    return Post([time](auto &obj) {
+      obj.Renderer().OnSeekBegin();
+      auto pos = obj.Perform().Seek(time);
+      obj.ChangeStateAsync(State::SEEKING, State::SUSPEND);
+      obj.Renderer().OnSeekEnd(pos);
     });
   }
   void Stop() {
     ChangeState(State::SUSPEND, State::STOPPED);
-    Post([](auto &self) {
-      self.Perform().Stop();
-      self.ChangeStateAsync(State::STOPPED, State::PREPARED);
-      self.Renderer().OnStop();
+    Post([](auto &obj) {
+      obj.Perform().Stop();
+      obj.ChangeStateAsync(State::STOPPED, State::PREPARED);
+      obj.Renderer().OnStop();
     });
   }
   void Reset() {
     ChangeState(State::PREPARED, State::RESET);
-    Post([](auto &self) {
-      self.Perform().Reset();
-      self.ChangeStateAsync(State::RESET, State::INIT);
-      self.Renderer().OnReset();
+    Post([](auto &obj) {
+      obj.Perform().Reset();
+      obj.ChangeStateAsync(State::RESET, State::INIT);
+      obj.Renderer().OnReset();
     });
   }
  private:
@@ -140,11 +140,11 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   }
   action_type Command(command_type action) {
     return [weak = weak_from_this(), action]() {
-      auto self = Lock(weak);
-      if (!self) {
+      auto obj = Lock(weak);
+      if (!obj) {
         return;
       }
-      action(*self);
+      action(*obj);
     };
   }
   void ChangeState(const State expect, const State target) {
@@ -166,16 +166,16 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     return perform_;
   }
   void ChangeStateAsync(State expect, State target) {
-    Execute([expect, target](self_type &self) {
-      self.ChangeState(expect, target);
+    Execute([expect, target](self_type &obj) {
+      obj.ChangeState(expect, target);
     });
   }
   static player_type Lock(player_weak weak) {
-    auto self = weak.lock();
-    if (!self) {
+    auto obj = weak.lock();
+    if (!obj) {
       MilkTea_logW("try lock weak but nullptr");
     }
-    return self;
+    return obj;
   }
   static const char *StateName(State state) {
     return Player::StateName(state).data();

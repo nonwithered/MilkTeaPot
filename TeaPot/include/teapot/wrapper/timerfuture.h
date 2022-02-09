@@ -14,42 +14,42 @@ class TimerFutureWrapper final {
   using duration_type = TeaPot::TimerUnit::duration_type;
   using time_point_type = TeaPot::TimerUnit::time_point_type;
  public:
-  TimerFutureWrapper(raw_type *self = nullptr) : self_(self) {}
+  TimerFutureWrapper(raw_type *obj = nullptr) : obj_(obj) {}
   TimerFutureWrapper(TimerFutureWrapper &&another) : TimerFutureWrapper() {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
   }
   ~TimerFutureWrapper() {
-    if (self_ == nullptr) {
+    if (obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(TeaPot_TimerFuture_Destroy, self_);
-    self_ = nullptr;
+    MilkTea_invoke_panic(TeaPot_TimerFuture_Destroy, obj_);
+    obj_ = nullptr;
   }
   bool Cancel() {
     bool success = false;
-    MilkTea_invoke_panic(TeaPot_TimerFuture_Cancel, self_, &success);
+    MilkTea_invoke_panic(TeaPot_TimerFuture_Cancel, obj_, &success);
     return success;
   }
   State GetState() {
     TeaPot_TimerFuture_State_t state = TeaPot_TimerFuture_State_EXCEPTIONAL;
-    MilkTea_invoke_panic(TeaPot_TimerFuture_GetState, self_, &state);
+    MilkTea_invoke_panic(TeaPot_TimerFuture_GetState, obj_, &state);
     return TeaPot::TimerFuture::FromRawType(state);
   }
   time_point_type GetTime() {
     int64_t time = 0;
-    MilkTea_invoke_panic(TeaPot_TimerFuture_GetTime, self_, &time);
+    MilkTea_invoke_panic(TeaPot_TimerFuture_GetTime, obj_, &time);
     return time_point_type(duration_type(time));
   }
   raw_type *release() {
-    raw_type *self = self_;
-    self_ = nullptr;
-    return self;
+    raw_type *obj = obj_;
+    obj_ = nullptr;
+    return obj;
   }
   raw_type *get() const {
-    return self_;
+    return obj_;
   }
  private:
-  raw_type *self_;
+  raw_type *obj_;
   MilkTea_NonCopy(TimerFutureWrapper)
   MilkTea_NonMoveAssign(TimerFutureWrapper)
 };

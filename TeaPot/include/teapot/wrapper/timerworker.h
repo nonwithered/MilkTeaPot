@@ -21,27 +21,27 @@ class TimerWorkerWrapper final {
     std::function<bool(MilkTea_Exception_t, const char *)> termination_ = [termination](MilkTea_Exception_t type, const char *what) -> bool {
       return termination(MilkTea::Exception::FromRawType(type), what);
     };
-    raw_type *self = nullptr;
-    MilkTea_invoke_panic(TeaPot_TimerWorker_Create, &self, MilkTea::FunctionAdapter::ToRawType<TeaPot_TimerWorker_Termination>(termination_));
-    std::swap(self_, self);
+    raw_type *obj = nullptr;
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Create, &obj, MilkTea::FunctionAdapter::ToRawType<TeaPot_TimerWorker_Termination>(termination_));
+    std::swap(obj_, obj);
   }
-  TimerWorkerWrapper(raw_type *self = nullptr) : self_(self) {}
+  TimerWorkerWrapper(raw_type *obj = nullptr) : obj_(obj) {}
   TimerWorkerWrapper(TimerWorkerWrapper &&another) : TimerWorkerWrapper() {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
   }
   ~TimerWorkerWrapper() {
-    auto self = release();
-    if (self == nullptr) {
+    auto obj = release();
+    if (obj == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(TeaPot_TimerWorker_Destroy, self);
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Destroy, obj);
   }
   void Close() {
-    auto self = release();
-    if (self == nullptr) {
+    auto obj = release();
+    if (obj == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(TeaPot_TimerWorker_Close, self);
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Close, obj);
   }
   void Start() {
     MilkTea_invoke_panic(TeaPot_TimerWorker_Start, get());
@@ -77,18 +77,18 @@ class TimerWorkerWrapper final {
     return success;
   }
   raw_type *get() const {
-    return self_;
+    return obj_;
   }
   operator bool() const {
     return get() != nullptr;
   }
   raw_type *release() {
-    raw_type *self = self_;
-    self_ = nullptr;
-    return self;
+    raw_type *obj = obj_;
+    obj_ = nullptr;
+    return obj;
   }
  private:
-  raw_type *self_;
+  raw_type *obj_;
   MilkTea_NonCopy(TimerWorkerWrapper)
   MilkTea_NonMoveAssign(TimerWorkerWrapper)
 };
@@ -96,19 +96,19 @@ class TimerWorkerWrapper final {
 class TimerWorkerWeakWrapper final {
  public:
   using raw_type = TeaPot_TimerWorker_Weak_t;
-  TimerWorkerWeakWrapper(raw_type *self = nullptr) : self_(self) {}
+  TimerWorkerWeakWrapper(raw_type *obj = nullptr) : obj_(obj) {}
   TimerWorkerWeakWrapper(const TimerWorkerWrapper &another) : TimerWorkerWeakWrapper() {
-    MilkTea_invoke_panic(TeaPot_TimerWorker_Weak_Create, &self_, another.get());
+    MilkTea_invoke_panic(TeaPot_TimerWorker_Weak_Create, &obj_, another.get());
   }
   TimerWorkerWeakWrapper(TimerWorkerWeakWrapper &&another) : TimerWorkerWeakWrapper() {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
   }
   ~TimerWorkerWeakWrapper() {
-    if (self_ == nullptr) {
+    if (obj_ == nullptr) {
       return;
     }
     MilkTea_invoke_panic(TeaPot_TimerWorker_Weak_Destroy, get());
-    self_ = nullptr;
+    obj_ = nullptr;
   }
   TimerWorkerWrapper lock() {
     TimerWorkerWrapper::raw_type *lock_ = nullptr;
@@ -116,18 +116,18 @@ class TimerWorkerWeakWrapper final {
     return lock_;
   }
   raw_type *get() const {
-    return self_;
+    return obj_;
   }
   operator bool() const {
     return get() != nullptr;
   }
   raw_type *release() {
-    raw_type *self = self_;
-    self_ = nullptr;
-    return self;
+    raw_type *obj = obj_;
+    obj_ = nullptr;
+    return obj;
   }
  private:
-  raw_type *self_;
+  raw_type *obj_;
   MilkTea_NonCopy(TimerWorkerWeakWrapper)
   MilkTea_NonMoveAssign(TimerWorkerWeakWrapper)
 };

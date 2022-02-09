@@ -14,7 +14,7 @@ class BaseRenderer {
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
-      .self_ = std::move(*this).Move(),
+      .obj_ = std::move(*this).Move(),
       .interface_ = &Interface(),
     };
   }
@@ -42,16 +42,16 @@ class RendererWrapper final : public BaseRenderer {
   raw_type ToRawType() && final {
     return release();
   }
-  RendererWrapper(raw_type another = {}) : self_(another) {}
+  RendererWrapper(raw_type another = {}) : obj_(another) {}
   RendererWrapper(RendererWrapper &&another) : RendererWrapper() {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
   }
   ~RendererWrapper() final {
     if (get() == nullptr) {
       return;
     }
     GetInterface().Deleter(get());
-    self_ = {};
+    obj_ = {};
   }
   BaseRenderer *Move() && final {
     return new RendererWrapper(std::move(*this));
@@ -90,18 +90,18 @@ class RendererWrapper final : public BaseRenderer {
     GetInterface().OnComplete(get());
   }
   raw_type release() {
-    raw_type self = self_;
-    self_ = {};
-    return self;
+    raw_type obj = obj_;
+    obj_ = {};
+    return obj;
   }
  private:
   void *get() const {
-    return self_.self_;
+    return obj_.obj_;
   }
   const SoyMilk_Player_Renderer_Interface_t &GetInterface() const {
-    return *self_.interface_;
+    return *obj_.interface_;
   }
-  raw_type self_;
+  raw_type obj_;
   MilkTea_NonCopy(RendererWrapper)
   MilkTea_NonMoveAssign(RendererWrapper)
 };
@@ -111,9 +111,9 @@ class RendererProxy final : public BaseRenderer {
   using base_type = BaseRenderer;
   using self_type = RendererProxy;
  public:
-  RendererProxy(base_type &another) : self_(another) {}
-  RendererProxy(const self_type &another) : self_(another.self_) {}
-  RendererProxy(self_type &&another) :self_(another.self_) {}
+  RendererProxy(base_type &another) : obj_(another) {}
+  RendererProxy(const self_type &another) : obj_(another.obj_) {}
+  RendererProxy(self_type &&another) :obj_(another.obj_) {}
  public:
   ~RendererProxy() final {
   }
@@ -155,9 +155,9 @@ class RendererProxy final : public BaseRenderer {
   }
  private:
   base_type &get() {
-    return self_;
+    return obj_;
   }
-  base_type &self_;
+  base_type &obj_;
 };
 
 } // namespace SoyMilk

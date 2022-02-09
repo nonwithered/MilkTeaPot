@@ -11,17 +11,17 @@ class HandleImpl final : public SoyBean::BaseHandle {
   static constexpr char TAG[] = "SoyBean_Windows::HandleImpl";
  public:
   HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : HandleImpl() {
-    ThrowOrNot(Proxy_midiOutOpen(&self_, uDeviceID, dwCallback, dwInstance, fdwOpen));
+    ThrowOrNot(Proxy_midiOutOpen(&obj_, uDeviceID, dwCallback, dwInstance, fdwOpen));
   }
   HandleImpl(HandleImpl &&another) : HandleImpl() {
-    std::swap(self_, another.self_);
+    std::swap(obj_, another.obj_);
   }
   ~HandleImpl() final {
-    if (self_ == nullptr) {
+    if (obj_ == nullptr) {
       return;
     }
-    ThrowOrNot(Proxy_midiOutClose(self_));
-    self_ = nullptr;
+    ThrowOrNot(Proxy_midiOutClose(obj_));
+    obj_ = nullptr;
   }
   BaseHandle &Move() && final {
     return *new HandleImpl(std::move(*this));
@@ -33,41 +33,41 @@ class HandleImpl final : public SoyBean::BaseHandle {
     CheckChannel(channel);
     CheckArgs(note, "note");
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0x80 | channel, note, pressure)));
+    ThrowOrNot(Proxy_midiOutShortMsg(obj_, Dword(0x80 | channel, note, pressure)));
   }
   void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) final {
     CheckChannel(channel);
     CheckArgs(note, "note");
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0x90 | channel, note, pressure)));
+    ThrowOrNot(Proxy_midiOutShortMsg(obj_, Dword(0x90 | channel, note, pressure)));
   }
   void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) final {
     CheckChannel(channel);
     CheckArgs(note, "note");
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xa0 | channel, note, pressure)));
+    ThrowOrNot(Proxy_midiOutShortMsg(obj_, Dword(0xa0 | channel, note, pressure)));
   }
   void ControlChange(uint8_t channel, uint8_t control, uint8_t argument) final {
     CheckChannel(channel);
     CheckArgs(control, "control");
     CheckArgs(argument, "argument");
-    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xb0 | channel, control, argument)));
+    ThrowOrNot(Proxy_midiOutShortMsg(obj_, Dword(0xb0 | channel, control, argument)));
   }
   void ProgramChange(uint8_t channel, uint8_t program) final {
     CheckChannel(channel);
     CheckArgs(program, "program");
-    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xc0 | channel, program, 0)));
+    ThrowOrNot(Proxy_midiOutShortMsg(obj_, Dword(0xc0 | channel, program, 0)));
   }
   void ChannelPressure(uint8_t channel, uint8_t pressure) final {
     CheckChannel(channel);
     CheckArgs(pressure, "pressure");
-    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xd0 | channel, pressure, 0)));
+    ThrowOrNot(Proxy_midiOutShortMsg(obj_, Dword(0xd0 | channel, pressure, 0)));
   }
   void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
     CheckChannel(channel);
     CheckArgs(low, "low");
     CheckArgs(height, "height");
-    ThrowOrNot(Proxy_midiOutShortMsg(self_, Dword(0xe0 | channel, low, height)));
+    ThrowOrNot(Proxy_midiOutShortMsg(obj_, Dword(0xe0 | channel, low, height)));
   }
  private:
   static void CheckChannel(uint8_t channel) {
@@ -95,8 +95,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
       MilkTea_throwf(Unknown, "MMRESULT %u", r);
     }
   }
-  HandleImpl() : self_(nullptr) {}
-  Proxy_HMIDIOUT self_;
+  HandleImpl() : obj_(nullptr) {}
+  Proxy_HMIDIOUT obj_;
   MilkTea_NonCopy(HandleImpl)
   MilkTea_NonMoveAssign(HandleImpl)
 };

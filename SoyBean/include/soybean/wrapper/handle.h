@@ -12,14 +12,14 @@ class HandleWrapper final : public BaseHandle {
   raw_type ToRawType() && final {
     return release();
   }
-  HandleWrapper(raw_type another = {}) : self_(another) {}
+  HandleWrapper(raw_type another = {}) : obj_(another) {}
   HandleWrapper(HandleWrapper &&another) : HandleWrapper(another.release()) {}
   ~HandleWrapper() final {
-    auto self = release();
-    if (self.self_ == nullptr) {
+    auto obj = release();
+    if (obj.obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(SoyBean_Handle_Destroy, self);
+    MilkTea_invoke_panic(SoyBean_Handle_Destroy, obj);
   }
   BaseHandle &Move() && final {
     return *new HandleWrapper(std::move(*this));
@@ -50,14 +50,14 @@ class HandleWrapper final : public BaseHandle {
   }
   raw_type release() {
     raw_type result = {};
-    std::swap(self_, result);
+    std::swap(obj_, result);
     return result;
   }
   raw_type get() {
-    return self_;
+    return obj_;
   }
  private:
-  raw_type self_;
+  raw_type obj_;
   MilkTea_NonCopy(HandleWrapper)
   MilkTea_NonMoveAssign(HandleWrapper)
 };

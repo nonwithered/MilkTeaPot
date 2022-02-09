@@ -50,10 +50,10 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   }
   std::function<duration_type(PerformImpl &)> Pause() {
     future_cancel();
-    return [](PerformImpl &self) -> duration_type {
-      auto time = self.now();
-      self.idle(time);
-      return time - self.tag();
+    return [](PerformImpl &obj) -> duration_type {
+      auto time = obj.now();
+      obj.idle(time);
+      return time - obj.tag();
     };
   }
   void Stop() {
@@ -104,8 +104,8 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   }
  private:
   void Post(duration_type delay = duration_type::zero()) {
-    auto future = post_([](auto &self) {
-      self.Loop();
+    auto future = post_([](auto &obj) {
+      obj.Loop();
     }, delay);
     if (future.get() != nullptr) {
       future_ = std::make_unique<future_type>(std::move(future));

@@ -1,5 +1,5 @@
-#ifndef LIB_CAMELLIA_PIPELINE_H_
-#define LIB_CAMELLIA_PIPELINE_H_
+#ifndef LIB_MILKTEA_COMMAND_PIPELINE_H_
+#define LIB_MILKTEA_COMMAND_PIPELINE_H_
 
 #include <map>
 #include <set>
@@ -8,13 +8,13 @@
 #include <sstream>
 #include <functional>
 
-#include <camellia/cursor.h>
+#include <milktea_command/cursor.h>
 
-namespace Camellia {
+namespace MilkTea_Command {
 
 template<typename container_type, typename extra_type>
 class Pipeline final {
-  static constexpr char TAG[] = "Camellia::Pipeline";
+  static constexpr char TAG[] = "MilkTea_Command::Pipeline";
   using self_type = Pipeline<container_type, extra_type>;
   using value_type = typename container_type::value_type;
   using cursor_type = Cursor<container_type>;
@@ -146,6 +146,6 @@ class Pipeline final {
   MilkTea_NonMoveAssign(Pipeline);
 };
 
-} // namespace Camellia
+} // namespace MilkTea_command
 
-#endif // ifndef LIB_CAMELLIA_PIPELINE_H_
+#endif // ifndef LIB_MILKTEA_COMMAND_PIPELINE_H_

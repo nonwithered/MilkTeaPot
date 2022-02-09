@@ -45,7 +45,7 @@ class BaseLogger {
   virtual MilkTea_Logger_t ToRawType() && {
     auto level_ = Logger::ToRawType(level());
     return MilkTea_Logger_t{
-      .self_ = &std::move(*this).Move(),
+      .obj_ = &std::move(*this).Move(),
       .level_ = level_,
       .interface_ = &Interface(),
     };

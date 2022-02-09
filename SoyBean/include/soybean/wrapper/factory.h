@@ -12,14 +12,14 @@ class FactoryWrapper final : public BaseFactory {
   raw_type ToRawType() && final {
     return release();
   }
-  FactoryWrapper(raw_type another = {}) : self_(another) {}
+  FactoryWrapper(raw_type another = {}) : obj_(another) {}
   FactoryWrapper(FactoryWrapper &&another) : FactoryWrapper(another.release()) {}
   ~FactoryWrapper() final {
-    auto self = release();
-    if (self.self_ == nullptr) {
+    auto obj = release();
+    if (obj.obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(SoyBean_Factory_Destroy, self);
+    MilkTea_invoke_panic(SoyBean_Factory_Destroy, obj);
   }
   BaseFactory &Move() && final {
     return *new FactoryWrapper(std::move(*this));
@@ -34,14 +34,14 @@ class FactoryWrapper final : public BaseFactory {
   }
   raw_type release() {
     raw_type result = {};
-    std::swap(self_, result);
+    std::swap(obj_, result);
     return result;
   }
   raw_type get() {
-    return self_;
+    return obj_;
   }
 private:
-  raw_type self_;
+  raw_type obj_;
   MilkTea_NonCopy(FactoryWrapper)
   MilkTea_NonMoveAssign(FactoryWrapper)
 };

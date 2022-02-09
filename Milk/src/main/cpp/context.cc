@@ -4,31 +4,31 @@ namespace {
 
 constexpr char TAG[] = "Milk#Context";
 
-Milk::BaseContext &BaseContext_cast(void *self) {
-  MilkTea_nonnull(self);
-  return *reinterpret_cast<Milk::BaseContext *>(self);
+Milk::BaseContext &BaseContext_cast(void *obj) {
+  MilkTea_nonnull(obj);
+  return *reinterpret_cast<Milk::BaseContext *>(obj);
 }
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_SetLogLevel(void *self, MilkTea_Logger_Level_t level) MilkTea_with_except({
-  BaseContext_cast(self).SetLogLevel(MilkTea::Logger::FromRawType(level));
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_SetLogLevel(void *obj, MilkTea_Logger_Level_t level) MilkTea_with_except({
+  BaseContext_cast(obj).SetLogLevel(MilkTea::Logger::FromRawType(level));
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetSoyBeanFactory(void *self, SoyBean_Factory_t *factory) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetSoyBeanFactory(void *obj, SoyBean_Factory_t *factory) MilkTea_with_except({
   MilkTea_nonnull(factory);
-  *factory = BaseContext_cast(self).GetSoyBeanFactory();
+  *factory = BaseContext_cast(obj).GetSoyBeanFactory();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetOutWriter(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetOutWriter(void *obj, MilkTea_Writer_t *writer) MilkTea_with_except({
   MilkTea_nonnull(writer);
-  *writer = BaseContext_cast(self).GetOutWriter();
+  *writer = BaseContext_cast(obj).GetOutWriter();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetErrWriter(void *self, MilkTea_Writer_t *writer) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetErrWriter(void *obj, MilkTea_Writer_t *writer) MilkTea_with_except({
   MilkTea_nonnull(writer);
-  *writer = BaseContext_cast(self).GetErrWriter();
+  *writer = BaseContext_cast(obj).GetErrWriter();
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileReader(void *self, MilkTea_Reader_t *reader, const char name[], size_t len) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileReader(void *obj, MilkTea_Reader_t *reader, const char name[], size_t len) MilkTea_with_except({
   MilkTea_nonnull(name);
   std::string s;
   std::string_view sv;
@@ -38,10 +38,10 @@ MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileReader(void *self
     s = std::string(name, len);
     sv = s;
   }
-  *reader = BaseContext_cast(self).GetFileReader(sv);
+  *reader = BaseContext_cast(obj).GetFileReader(sv);
 })
 
-MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileWriter(void *self, MilkTea_Writer_t *writer, const char name[], size_t len) MilkTea_with_except({
+MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileWriter(void *obj, MilkTea_Writer_t *writer, const char name[], size_t len) MilkTea_with_except({
   MilkTea_nonnull(name);
   std::string s;
   std::string_view sv;
@@ -51,7 +51,7 @@ MilkTea_Exception_t MilkTea_call Milk_Context_Interface_GetFileWriter(void *self
     s = std::string(name, len);
     sv = s;
   }
-  *writer = BaseContext_cast(self).GetFileWriter(sv);
+  *writer = BaseContext_cast(obj).GetFileWriter(sv);
 })
 
 } // namespace
