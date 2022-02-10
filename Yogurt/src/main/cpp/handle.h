@@ -48,6 +48,7 @@ class HandleImpl final : public SoyBean::BaseHandle {
     consumer_(std::move(event));
   }
   void Frame(uint8_t type, uint8_t channel, uint8_t arg0, uint8_t arg1 = 0) {
+    channel &= 0x0f;
     Consume(make_event(type | channel, arg0, arg1));
   }
   const consumer_type consumer_;

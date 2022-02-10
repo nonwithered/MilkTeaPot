@@ -55,9 +55,9 @@ Usage: milk [OPTIONS] [FILES]
       accuracy_ = GetAccuracy(division_);
     }
     if (target_ == "") {
-      TornApart(args);
+      SeparateTracks(args);
     } else {
-      GenTarget(args, target_);
+      MergeTarget(args, target_);
     }
   }
   pipeline_type Config(pipeline_type &&pipeline) final {
@@ -173,7 +173,7 @@ Usage: milk [OPTIONS] [FILES]
       });
     }
   }
-  void TornApart(const args_type &filenames) {
+  void SeparateTracks(const args_type &filenames) {
     for (auto filename : filenames) {
       auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
         auto reader = Context().GetFileReader(filename);
@@ -214,7 +214,7 @@ Usage: milk [OPTIONS] [FILES]
       }
     }
   }
-  void GenTarget(const args_type &filenames, std::string_view name) {
+  void MergeTarget(const args_type &filenames, std::string_view name) {
     uint16_t f = [this]() -> auto {
       switch (format_) {
         case FormatType::SINGLE:
