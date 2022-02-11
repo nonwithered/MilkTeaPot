@@ -2,6 +2,9 @@
 
 #include <windows.h>
 
+#include <string>
+#include <sstream>
+#include <array>
 #include <cstdint>
 
 namespace SoyBean_Windows {
@@ -23,6 +26,25 @@ Proxy_MMRESULT Proxy_midiOutClose(Proxy_HMIDIOUT p) {
 
 Proxy_MMRESULT Proxy_midiOutShortMsg(Proxy_HMIDIOUT p, uint32_t msg) {
   return midiOutShortMsg(p->handler_, msg);
+}
+
+std::string Proxy_midiInGetErrorTextA(Proxy_MMRESULT result) {
+  std::stringstream ss;
+  ss << "MMRESULT";
+  ss << " ";
+  ss << result;
+  const char *s = Proxy_MMRESULT_What(result);
+  if (s != nullptr) {
+    ss << " ";
+    ss << s;
+  }
+  std::array<char, 128> arr;
+  auto r = midiInGetErrorTextA(result, (LPSTR) arr.data(), (UINT) 128);
+  if (r == MMSYSERR_NOERROR) {
+    ss << " ";
+    ss << arr.data();
+  }
+  return ss.str();
 }
 
 } // namespace SoyBean_Windows

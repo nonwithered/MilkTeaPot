@@ -88,12 +88,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
     if (r == 0) {
       return;
     }
-    const char *what = Proxy_MMRESULT_What(r);
-    if (what != nullptr) {
-      MilkTea_throw(Unknown, what);
-    } else {
-      MilkTea_throwf(Unknown, "MMRESULT %u", r);
-    }
+    auto what = Proxy_midiInGetErrorTextA(r);
+    MilkTea_throwf(Unknown, "%s", what.data());
   }
   HandleImpl() : obj_(nullptr) {}
   Proxy_HMIDIOUT obj_;
