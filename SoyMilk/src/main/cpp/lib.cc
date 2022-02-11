@@ -37,10 +37,10 @@ MilkTea_extern(SoyMilk_Player_GetState, (SoyMilk_Player_t *obj, SoyMilk_Player_S
   *state = SoyMilk::Player::ToRawType(soymilk_cast(obj)->state());
 })
 
-MilkTea_extern(SoyMilk_Player_Prepare, (SoyMilk_Player_t *obj, const MilkPowder_Midi_t *midi), {
+MilkTea_extern(SoyMilk_Player_Prepare, (SoyMilk_Player_t *obj, const MilkPowder_Midi_t *midi[], size_t count), {
   MilkTea_nonnull(obj);
   MilkTea_nonnull(midi);
-  soymilk_cast(obj)->Prepare(midi);
+  soymilk_cast(obj)->Prepare(std::vector<MilkPowder::MidiConstWrapper>(midi, midi + count));
 })
 
 MilkTea_extern(SoyMilk_Player_Start, (SoyMilk_Player_t *obj), {

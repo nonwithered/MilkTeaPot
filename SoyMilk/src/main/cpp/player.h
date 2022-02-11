@@ -56,21 +56,29 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
         });
       });
     }));
-    Perform().frame([weak = weak_from_this()](auto fbo) {
+    Perform().frame([weak = weak_from_this()](auto &fbo) {
       auto obj = Lock(weak);
       if (!obj) {
         return;
       }
-      obj->Renderer().OnFrame(std::move(fbo));
+      FrameBufferWrapper fbo_ = reinterpret_cast<FrameBufferWrapper::raw_type *>(const_cast<FrameBufferImpl *>(&fbo));
+      MilkTea::Defer defer([&fbo_]() {
+        fbo_.release();
+      });
+      obj->Renderer().OnFrame(fbo_);
     });
   }
   State state() const {
     return state_;
   }
-  TeaPot::TimerFutureWrapper Prepare(MilkPowder::MidiConstWrapper midi) {
+  TeaPot::TimerFutureWrapper Prepare(std::vector<MilkPowder::MidiConstWrapper> vec) {
     ChangeState(State::INIT, State::PREPARING);
-    return Post([midi_ = std::make_shared<MilkPowder::MidiMutableWrapper>(midi)](auto &obj) {
-      auto length = obj.Perform().Prepare(midi_->get());
+    return Post([vec_ = std::make_shared<std::vector<MilkPowder::MidiMutableWrapper>>(vec.begin(), vec.end())](auto &obj) {
+      std::vector<MilkPowder::MidiConstWrapper> v;
+      std::for_each(vec_->begin(), vec_->end(), [&v](auto &it) {
+        v.push_back(it.get());
+      });
+      auto length = obj.Perform().Prepare(std::move(v));
       obj.ChangeStateAsync(State::PREPARING, State::PREPARED);
       obj.Renderer().OnPrepare(length);
     });

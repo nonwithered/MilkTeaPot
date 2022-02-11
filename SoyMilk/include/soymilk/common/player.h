@@ -1,7 +1,7 @@
 #ifndef LIB_SOYMILK_WRAPPER_PLAYER_H_
 #define LIB_SOYMILK_WRAPPER_PLAYER_H_
 
-#include <soymilk/common.h>
+#include <soymilk/core.h>
 
 namespace SoyMilk {
 

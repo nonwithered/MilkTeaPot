@@ -28,8 +28,14 @@ class PlayerWrapper final {
     MilkTea_invoke_panic(SoyMilk_Player_GetState, get(), &state);
     return Player::FromRawType(state);
   }
-  void Prepare(MilkPowder::MidiConstWrapper midi) {
-    MilkTea_invoke_panic(SoyMilk_Player_Prepare, get(), midi.get());
+  template<typename iterator_type>
+  void Prepare(iterator_type iterator, size_t size) {
+    std::vector<const MilkPowder::Mapping::Midi::raw_type *> vec(size);
+    for (size_t i = 0; i != size; ++i) {
+      MilkPowder::ConstInterface<MilkPowder::Mapping::Midi> &it = *iterator;
+      vec[i] = it.get();
+    }
+    MilkTea_invoke_panic(SoyMilk_Player_Prepare, get(), vec.data(), size);
   }
   void Start() {
     MilkTea_invoke_panic(SoyMilk_Player_Start, get());

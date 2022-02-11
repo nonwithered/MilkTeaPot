@@ -9,102 +9,49 @@
 
 namespace SoyMilk {
 
-namespace Codec {
-
-class FrameEventWrapper final {
-  static constexpr char TAG[] = "SoyMilk::Codec::FrameEvent";
- public:
-  using raw_type = SoyMilk_FrameEvent_t;
-  FrameEventWrapper(const raw_type *another) : obj_(another) {}
-  uint16_t GetNtrk() const {
-    uint16_t result = 0;
-    MilkTea_invoke_panic(SoyMilk_FrameEvent_GetNtrk, get(), &result);
-    return result;
-  }
-  size_t GetLen() const {
-    size_t result = 0;
-    MilkTea_invoke_panic(SoyMilk_FrameEvent_GetLen, get(), &result);
-    return result;
-  }
-  MilkPowder::MessageConstWrapper GetMsg(size_t idx) const {
-    const MilkPowder::Mapping::Message::raw_type *result = nullptr;
-    MilkTea_invoke_panic(SoyMilk_FrameEvent_GetMsg, get(), idx, &result);
-    return result;
-  }
-  const raw_type *get() const {
-    return obj_;
-  }
- private:
-  const raw_type *const obj_;
-};
-
 class FrameBufferWrapper final {
-  static constexpr char TAG[] = "SoyMilk::Codec::FrameBufferWrapper";
-  using duration_type = TeaPot::TimerUnit::duration_type;
+  static constexpr char TAG[] = "SoyMilk::FrameBufferWrapper";
+  using tempo_type = MilkPowder::Mapping::Message::tempo_type;
  public:
   using raw_type = SoyMilk_FrameBuffer_t;
-  FrameBufferWrapper(const raw_type *obj) : obj_(obj) {}
-  duration_type GetTime() const {
-    int64_t result = 0;
-    MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetTime, get(), &result);
-    return duration_type(result);
-  }
-  size_t GetLen() const {
-    size_t result = 0;
-    MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetLen, get(), &result);
-    return result;
-  }
-  FrameEventWrapper GetItem(size_t idx) const {
-    const FrameEventWrapper::raw_type *result = nullptr;
-    MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetItem, get(), idx, &result);
-    return result;
-  }
-  const raw_type *get() const {
-    return obj_;
-  }
- private:
-  const raw_type *const obj_;
-};
-
-class FrameBufferHolder final {
-  static constexpr char TAG[] = "SoyMilk::Codec::FrameBufferHolder";
-  using raw_type = FrameBufferWrapper::raw_type;
- public:
-  FrameBufferHolder(raw_type *obj = nullptr) : obj_(obj) {}
-  FrameBufferHolder(FrameBufferHolder &&another) : FrameBufferHolder() {
-    std::swap(obj_, another.obj_);
-  }
-  explicit FrameBufferHolder(FrameBufferWrapper another) : FrameBufferHolder() {
-    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Clone, &obj_, another.get());
-  }
-  ~FrameBufferHolder() {
-    if (obj_ == nullptr) {
+  FrameBufferWrapper(raw_type *obj = nullptr) : obj_(obj) {}
+  FrameBufferWrapper(const FrameBufferWrapper &another) : FrameBufferWrapper() {
+    if (another.obj_ == nullptr) {
       return;
     }
-    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Destroy, obj_);
-    obj_ = nullptr;
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Clone, another.obj_, &obj_);
   }
-  operator FrameBufferWrapper() const {
-    return get();
+  FrameBufferWrapper(FrameBufferWrapper &&another) : FrameBufferWrapper(another.release()) {}
+  ~FrameBufferWrapper() {
+    auto obj = release();
+    if (obj == nullptr) {
+      return;
+    }
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_Destroy, obj);
   }
-  const raw_type *get() const {
-    return obj_;
+  tempo_type GetTime() const {
+    int64_t result = 0;
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_GetTime, get(), &result);
+    return tempo_type(result);
   }
-  raw_type *get() {
+  void AllMessage(std::function<void(size_t, uint16_t, MilkPowder::MessageConstWrapper)> f) const {
+    MilkTea_invoke_panic(SoyMilk_FrameBuffer_AllMessage, get(), MilkTea::FunctionAdapter::ToRawType<SoyMilk_FrameBuffer_Consumer_t>(f));
+  }
+  raw_type *get() const {
     return obj_;
   }
   raw_type *release() {
-    raw_type *result = obj_;
-    obj_ = nullptr;
-    return result;
+    return reset(nullptr);
+  }
+  raw_type *reset(raw_type *another) {
+    std::swap(another, obj_);
+    return another;
   }
  private:
   raw_type *obj_;
-  MilkTea_NonCopy(FrameBufferHolder)
-  MilkTea_NonMoveAssign(FrameBufferHolder)
+  MilkTea_NonAssign(FrameBufferWrapper)
 };
 
-} // namespace Codec
 } // namespace SoyMilk
 
 #endif // ifndef LIB_SOYMILK_COMMON_FRAME_H_

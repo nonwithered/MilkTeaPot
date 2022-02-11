@@ -10,11 +10,10 @@
 
 namespace SoyMilk {
 
-namespace Codec {
-
 class FrameBufferCursorImpl final {
-  static constexpr char TAG[] = "SoyMilk::Codec::FrameBufferCursorImpl";
-  using iterator_type = std::list<FrameBufferImpl>::const_iterator;
+  static constexpr char TAG[] = "SoyMilk::FrameBufferCursorImpl";
+  using queue_type = FrameBufferSorterImpl::queue_type;
+  using iterator_type = queue_type::const_iterator;
  public:
   FrameBufferCursorImpl(iterator_type begin, iterator_type end)
   : tail_(end), iterator_(begin) {}
@@ -36,20 +35,21 @@ class FrameBufferCursorImpl final {
 };
 
 class FrameBufferQueueImpl final {
-  static constexpr char TAG[] = "SoyMilk::Codec::FrameBufferQueueImpl";
+  static constexpr char TAG[] = "SoyMilk::FrameBufferQueueImpl";
   using duration_type = TeaPot::TimerUnit::duration_type;
+  using queue_type = FrameBufferSorterImpl::queue_type;
   using cursor_type = FrameBufferCursorImpl;
  public:
   FrameBufferQueueImpl()
   : queue_() {}
-  duration_type Fill(MilkPowder::MidiConstWrapper midi) {
+  duration_type Fill(std::vector<MilkPowder::MidiConstWrapper> vec) {
     auto &queue = queue_;
     if (!queue.empty()) {
       MilkTea_assert("fill but not empty");
     }
 
     auto time_begin = TeaPot::TimerUnit::Now();
-    queue = FrameBufferSorterImpl::Sort(midi);
+    queue = FrameBufferSorterImpl::Generate(std::move(vec));
     auto time_end = TeaPot::TimerUnit::Now();
     auto time_duration = time_end - time_begin;
     MilkTea_logI("fill midi fbo queue during %" PRId64 " us", time_duration.count());
@@ -75,12 +75,11 @@ class FrameBufferQueueImpl final {
     return cursor_type(queue.begin(), queue.end());
   }
  private:
-  std::list<FrameBufferImpl> queue_;
+  queue_type queue_;
   MilkTea_NonCopy(FrameBufferQueueImpl)
   MilkTea_NonMove(FrameBufferQueueImpl)
 };
 
-} // namespace Codec
 } // namespace SoyMilk
 
 #endif // ifndef SOYMILK_BUFFER_H_

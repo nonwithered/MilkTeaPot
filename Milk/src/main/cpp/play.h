@@ -14,22 +14,22 @@ namespace Milk {
 class RendererImpl final : public SoyMilk::BaseRenderer {
   using duration_type = TeaPot::TimerUnit::duration_type;
  public:
-  RendererImpl(SoyBean::FactoryWrapper factory, uint16_t format, uint16_t ntrks)
+  RendererImpl(SoyBean::FactoryWrapper factory, std::vector<uint16_t> format, std::vector<uint16_t> ntrks)
   : format_(format),
-    ntrks_(ntrks),
-    handle_(),
+    handle_(format.size()),
     seek_(nullptr) {
-    if (format == 0x02) {
-      for (uint16_t i = 0; i != ntrks; ++i) {
-        handle_.emplace_back(factory.Create());
+    for (size_t i = 0, n = format.size(); i != n; ++i) {
+      if (format_[i] == 0x02) {
+        for (uint16_t j = 0; j != ntrks[i]; ++j) {
+          handle_[i].emplace_back(factory.Create());
+        }
+      } else {
+        handle_[i].emplace_back(factory.Create());
       }
-    } else {
-      handle_.emplace_back(factory.Create());
     }
   }
   RendererImpl(RendererImpl &&another)
   : format_(another.format_),
-    ntrks_(another.ntrks_),
     handle_(std::move(another.handle_)),
     OnPrepareListener(another.OnPrepareListener),
     OnStartListener(another.OnStartListener),
@@ -48,25 +48,21 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   void Destroy() && final {
     delete this;
   }
-  void OnFrame(SoyMilk::Codec::FrameBufferWrapper fbo) final {
+  void OnFrame(const SoyMilk::FrameBufferWrapper &fbo) final {
     if (*seek_) {
       return;
     }
-    for (size_t i = 0, n = fbo.GetLen(); i != n; ++i) {
-      auto item = fbo.GetItem(i);
-      for (size_t j = 0, m = item.GetLen(); j != m; ++j) {
-        auto message = item.GetMsg(j);
-        if (!message.IsEvent()) {
-          continue;
-        }
-        auto event = MilkPowder::EventConstWrapper::From(message);
-        if (format_ == 0x02) {
-          OnFrame(item.GetNtrk(), event);
-        } else {
-          OnFrame(0, event);
-        }
+    fbo.AllMessage([this](size_t index, uint16_t ntrk, auto msg) {
+      if (!msg.IsEvent()) {
+        return;
       }
-    }
+      auto event = MilkPowder::EventConstWrapper::From(msg);
+      if (format_[index] == 0x02) {
+        OnFrame(handle_[index][ntrk], event);
+      } else {
+        OnFrame(handle_[index][0], event);
+      }
+    });
   }
   std::function<void(duration_type)> OnPrepareListener;
   void OnPrepare(duration_type time) final {
@@ -133,8 +129,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
   }
   bool *seek_;
  private:
-  void OnFrame(uint16_t index, MilkPowder::EventConstWrapper event) {
-    auto &handle = handle_[index];
+  void OnFrame(SoyBean::HandleWrapper &handle, MilkPowder::EventConstWrapper event) {
     uint8_t type = event.GetType();
     uint8_t channel = type & 0x0f;
     type &= 0xf0;
@@ -163,9 +158,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
         break;
     }
   }
-  const uint16_t format_;
-  const uint16_t ntrks_;
-  std::vector<SoyBean::HandleWrapper> handle_;
+  const std::vector<uint16_t> format_;
+  std::vector<std::vector<SoyBean::HandleWrapper>> handle_;
 };
 
 class PlayController final : public BaseController<PlayController> {
@@ -212,13 +206,14 @@ Usage: milk play [OPTIONS] [FILES]
       Err() << Tip() << "no input files" << End();
       return;
     }
-    auto midi = [&]() -> MilkPowder::MidiMutableWrapper {
-      auto filename = args.front();
+    std::vector<MilkPowder::MidiMutableWrapper> vec;
+    std::for_each(args.begin(), args.end(), [this, &vec](auto &filename) {
       auto reader = Context().GetFileReader(filename);
-      return MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
+      auto midi = MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
         return reader.Read(bytes, len);
       });
-    }();
+      vec.push_back(std::move(midi));
+    });
     TeaPot::TimerWorkerWrapper timer([this](auto type, auto what) -> bool {
       if (type == MilkTea::Exception::Type::Nil) {
         return false;
@@ -227,13 +222,19 @@ Usage: milk play [OPTIONS] [FILES]
       return false;
     });
     std::unique_ptr<SoyMilk::PlayerWrapper> player(nullptr);
-    RendererImpl renderer(Context().GetSoyBeanFactory(), midi.GetFormat(), midi.GetNtrks());
+    std::vector<std::uint16_t> format_vec(vec.size());
+    std::vector<std::uint16_t> ntrk_vec(vec.size());
+    for (size_t i = 0, n = vec.size(); i != n; ++i) {
+      format_vec[i] = vec[i].GetFormat();
+      ntrk_vec[i] = vec[i].GetNtrks();
+    }
+    RendererImpl renderer(Context().GetSoyBeanFactory(), std::move(format_vec), std::move(ntrk_vec));
     duration_type pos = duration_type::zero();
     bool seek = false;
     renderer.seek_ = &seek;
     renderer.OnPrepareListener = [&](auto time) {
       pos = time - duration_type(10'000'000);
-//      pos = duration_type::zero();
+      pos = duration_type::zero();
       timer.Post([&]() {
         player->Start();
       });
@@ -267,7 +268,8 @@ Usage: milk play [OPTIONS] [FILES]
       timer.Post(action);
     }, timer));
     timer.Post([&]() {
-      player->Prepare(midi.get());
+      player->Prepare(vec.begin(), vec.size());
+      vec.clear();
     });
     timer.Start();
     timer.AwaitTermination();

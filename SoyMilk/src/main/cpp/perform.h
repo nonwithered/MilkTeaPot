@@ -16,7 +16,7 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   using action_type = TeaPot::Action::action_type;
   using command_type = std::function<void(PerformImpl &)>;
   using post_type = std::function<future_type(command_type, duration_type)>;
-  using frame_type = std::function<void(Codec::FrameBufferWrapper)>;
+  using frame_type = std::function<void(const FrameBufferImpl &)>;
  public:
   void post(post_type f) {
     post_ = f;
@@ -35,8 +35,8 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
     idle_(),
     position_(duration_type(-1)) {}
   ~PerformImpl() = default;
-  duration_type Prepare(MilkPowder::MidiConstWrapper midi) {
-    return queue_fill(midi);
+  duration_type Prepare(std::vector<MilkPowder::MidiConstWrapper> vec) {
+    return queue_fill(std::move(vec));
   }
   void Start() {
     auto time = TeaPot::TimerUnit::Now();
@@ -111,9 +111,9 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
       future_ = std::make_unique<future_type>(std::move(future));
     }
   }
-  void Frame(const Codec::FrameBufferImpl &fbo) {
+  void Frame(const FrameBufferImpl &fbo) {
     position(fbo.time());
-    frame_(fbo.operator Codec::FrameBufferWrapper());
+    frame_(fbo);
   }
   void Complete() {
     complete_();
@@ -148,7 +148,7 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   void cursor_reset() {
     cursor_ = queue_.Cursor();
   }
-  Codec::FrameBufferCursorImpl &cursor() {
+  FrameBufferCursorImpl &cursor() {
     return cursor_;
   }
   void future_cancel() {
@@ -161,8 +161,8 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   std::unique_ptr<future_type> &future() {
     return future_;
   }
-  duration_type queue_fill(MilkPowder::MidiConstWrapper midi) {
-    auto time = queue_.Fill(midi);
+  duration_type queue_fill(std::vector<MilkPowder::MidiConstWrapper> vec) {
+    auto time = queue_.Fill(std::move(vec));
     cursor_reset();
     return time;
   }
@@ -173,8 +173,8 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   static time_point_type now() {
     return TeaPot::TimerUnit::Now();
   }
-  Codec::FrameBufferQueueImpl queue_;
-  Codec::FrameBufferCursorImpl cursor_;
+  FrameBufferQueueImpl queue_;
+  FrameBufferCursorImpl cursor_;
   std::unique_ptr<future_type> future_;
   time_point_type tag_;
   time_point_type idle_;

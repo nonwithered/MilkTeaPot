@@ -46,7 +46,8 @@ class MutableInterface<Mapping::Track> {
     raw_type *obj = nullptr;
     std::vector<Mapping::Message::raw_type *> vec(size);
     for (size_t i = 0; i != size; ++i) {
-      vec[i] = iterator->release();
+      MutableWrapper<Mapping::Message> &it = *iterator;
+      vec[i] = it.release();
       ++iterator;
     }
     MilkTea_invoke_panic(mapping::raw_create, &obj, vec.data(), size);

@@ -54,7 +54,8 @@ class MutableInterface<Mapping::Midi> {
     raw_type *obj = nullptr;
     std::vector<Mapping::Track::raw_type *> vec(ntrk);
     for (uint16_t i = 0; i != ntrk; ++i) {
-      vec[i] = iterator->release();
+      MutableWrapper<Mapping::Track> it = *iterator;
+      vec[i] = it.release();
       ++iterator;
     }
     MilkTea_invoke_panic(mapping::raw_create, &obj, format, ntrk, division, vec.data());

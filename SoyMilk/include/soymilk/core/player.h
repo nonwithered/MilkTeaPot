@@ -44,7 +44,7 @@ MilkTea_api
 SoyMilk_Player_GetState(SoyMilk_Player_t *obj, SoyMilk_Player_State_t *state);
 
 MilkTea_api
-SoyMilk_Player_Prepare(SoyMilk_Player_t *obj, const MilkPowder_Midi_t *midi);
+SoyMilk_Player_Prepare(SoyMilk_Player_t *obj, const MilkPowder_Midi_t *midi[], size_t count);
 
 MilkTea_api
 SoyMilk_Player_Start(SoyMilk_Player_t *obj);

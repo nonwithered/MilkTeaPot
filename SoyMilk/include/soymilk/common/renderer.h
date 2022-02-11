@@ -21,7 +21,7 @@ class BaseRenderer {
   virtual ~BaseRenderer() = default;
   virtual BaseRenderer *Move() && = 0;
   virtual void Destroy() && = 0;
-  virtual void OnFrame(Codec::FrameBufferWrapper fbo) = 0;
+  virtual void OnFrame(const FrameBufferWrapper &fbo) = 0;
   virtual void OnPrepare(duration_type time) = 0;
   virtual void OnStart() = 0;
   virtual void OnResume() = 0;
@@ -59,7 +59,7 @@ class RendererWrapper final : public BaseRenderer {
   void Destroy() && final {
     delete this;
   }
-  void OnFrame(Codec::FrameBufferWrapper fbo) final {
+  void OnFrame(const FrameBufferWrapper &fbo) final {
     GetInterface().OnFrame(get(), fbo.get());
   }
   void OnPrepare(duration_type time) final {
@@ -123,7 +123,7 @@ class RendererProxy final : public BaseRenderer {
   void Destroy() && final {
     delete this;
   }
-  void OnFrame(Codec::FrameBufferWrapper fbo) final {
+  void OnFrame(const FrameBufferWrapper &fbo) final {
     get().OnFrame(std::move(fbo));
   }
   void OnPrepare(duration_type time) final {
