@@ -28,7 +28,7 @@ class PrinterImpl final {
   }
   template<typename T>
   PrinterImpl &operator<<(T t) {
-    buf_ += MilkTea::ToString::From(t);
+    buf_ += MilkTea::ToString::From()(t);
     return *this;
   }
   PrinterImpl &operator<<(std::string s) {

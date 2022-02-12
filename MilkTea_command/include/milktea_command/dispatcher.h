@@ -39,7 +39,7 @@ struct DispatcherGenerator<container_type, context_type, T, Y...> final {
     auto m = DispatcherGenerator<container_type, context_type, Y...>::Make();
     auto n = T::Name();
     if (m.count(n) != 0) {
-      auto s = MilkTea::ToString::From(n);
+      auto s = MilkTea::ToString::From()(n);
       MilkTea_throwf(InvalidParam, "Make: duplicate %s", s.data());
     }
     m[n] = T::Start;

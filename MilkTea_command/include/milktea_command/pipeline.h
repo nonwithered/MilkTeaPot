@@ -33,7 +33,7 @@ class Pipeline final {
     ) && {
     for (auto it : candidate) {
       if (callbacks_.count(it) != 0) {
-        auto s = MilkTea::ToString::From(it);
+        auto s = MilkTea::ToString::From()(it);
         MilkTea_throwf(InvalidParam, "append a redundant candidate: %s", s.data());
       }
       callbacks_[it] = f;
@@ -99,7 +99,7 @@ class Pipeline final {
       for (auto i = value_map.begin(), n = value_map.end(); i != n; ++i) {
         for (auto &it : i->second) {
           if (candidate_map.count(it) != 0) {
-            auto s = MilkTea::ToString::From(it);
+            auto s = MilkTea::ToString::From()(it);
             MilkTea_throwf(InvalidParam, "append a redundant sub candidate: %s", s.data());
           }
           candidate_map[it] = i->first;

@@ -7,16 +7,44 @@
 #include <cstdint>
 #include <cinttypes>
 
+#include <milktea/common.h>
+
 namespace MilkTea {
 
 namespace ToString {
 
-template<typename T>
-std::string From(const T &t) {
-  std::stringstream ss;
-  ss << t;
-  return ss.str();
-}
+class From final {
+ public:
+  explicit From(std::string_view delimiter = "", std::string_view prefix = "", std::string_view suffix = "")
+  : delimiter_(delimiter),
+    prefix_(prefix),
+    suffix_(suffix),
+    ss_() {}
+  template<typename ...T>
+  std::string operator()(const T &...t) && {
+    Append(prefix_);
+    Append(t...);
+    Append(suffix_);
+    return ss_.str();
+  }
+ private:
+  template<typename T>
+  void Append(const T &t) {
+    ss_ << t;
+  }
+  template<typename T, typename ...U>
+  void Append(const T &t, const U &...u) {
+    Append(t);
+    Append(delimiter_);
+    Append(u...);
+  }
+  const std::string delimiter_;
+  const std::string prefix_;
+  const std::string suffix_;
+  std::stringstream ss_;
+  MilkTea_NonCopy(From)
+  MilkTea_NonMove(From)
+};
 
 inline
 std::string FromU8(uint8_t n) {

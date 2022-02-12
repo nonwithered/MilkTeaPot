@@ -99,19 +99,10 @@ class BaseController {
     return self_type::kUsage;
   }
   std::string Tip(std::string_view option) const {
-    std::stringstream ss;
-    ss <<
-    Context().name() << " " <<
-    Name() << " " <<
-    option << ": ";
-    return ss.str();
+    return MilkTea::ToString::From(" ", "", ": ")(Context().path(), Name(), option);
   }
   std::string Tip() const {
-    std::stringstream ss;
-    ss <<
-    Context().name() << " " <<
-    Name() << ": ";
-    return ss.str();
+    return MilkTea::ToString::From(" ", "", ": ")(Context().path(), Name());
   }
  private:
   void Prepare() {

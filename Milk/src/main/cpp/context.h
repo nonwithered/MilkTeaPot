@@ -12,8 +12,8 @@ class ContextWrapper final {
   using raw_type = Milk_Context_t;
   using interface_type = Milk_Context_Interface_t;
  public:
-  ContextWrapper(std::string_view name, raw_type another = {})
-  : name_(name),
+  ContextWrapper(std::string_view path, raw_type another = {})
+  : path_(path),
     obj_(another),
     out_([another]() -> auto {
       MilkTea_Writer_t result = {};
@@ -49,8 +49,8 @@ class ContextWrapper final {
     MilkTea_invoke_panic(interface().GetSoyBeanFactory, obj(), &result);
     return result;
   }
-  std::string_view name() const {
-    return name_;
+  std::string_view path() const {
+    return path_;
   }
  private:
   void *obj() const {
@@ -62,7 +62,7 @@ class ContextWrapper final {
   const raw_type &get() const {
     return obj_;
   }
-  const std::string_view name_;
+  const std::string_view path_;
   const raw_type obj_;
   MilkTea::WriterWrapper out_;
   MilkTea::WriterWrapper err_;
