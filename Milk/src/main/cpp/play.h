@@ -181,6 +181,8 @@ Usage: milk play [OPTIONS] [FILES]
     the parameters can be signed integer described in decimal, hexadecimal, octal
     the absolute value cannot be greater than 10 ^ 18 - 1 in decimal
                                            or  2 ^ 60 - 1 in hexadecimal and octal
+  --listen
+    only listen to music, no need to do play together
   -o <filename>
     name of target file
     the input events will be recorded
@@ -283,10 +285,13 @@ Usage: milk play [OPTIONS] [FILES]
           "--range",
         }, &self_type::SetRange)
       .Append({
+          "--listen",
+        }, &self_type::listen_, true)
+      .Append({
           "-o",
         }, &self_type::target_,
-        [this]() {
-          Err() << Tip() << "-o: need target name" << End();
+        [this](auto &option) {
+          Err() << Tip(option) << "need target name" << End();
         })
       .Append({
           "-b",
@@ -303,10 +308,10 @@ Usage: milk play [OPTIONS] [FILES]
       ;
   }
  private:
-  bool SetRange(cursor_type &cursor) {
-    auto f = [this, &cursor](int64_t &position_, std::string_view name) -> bool {
+  bool SetRange(const value_type &option, cursor_type &cursor) {
+    auto f = [this, &option, &cursor](int64_t &position_, std::string_view name) -> bool {
       if (!cursor) {
-        Err() << Tip() << "-r: need " << name << " position value" << End();
+        Err() << Tip(option) << "need " << name << " position value" << End();
         return false;
       }
       auto sv = *cursor;
@@ -354,11 +359,11 @@ Usage: milk play [OPTIONS] [FILES]
         }
       });
       if (l) {
-        Err() << Tip() << "-m: the " << name << " position value is too long -- " << sv << End();
+        Err() << Tip(option) << "the " << name << " position value is too long -- " << sv << End();
         return false;
       }
       if (len != n) {
-        Err() << Tip() << "-m: invalid " << name << " position value -- " << sv << End();
+        Err() << Tip(option) << "invalid " << name << " position value -- " << sv << End();
         return false;
       }
       if (negative) {
@@ -377,9 +382,9 @@ Usage: milk play [OPTIONS] [FILES]
     }
     return true;
   }
-  bool SetTick(cursor_type &cursor) {
+  bool SetTick(const value_type &option, cursor_type &cursor) {
     if (!cursor) {
-      Err() << Tip() << "-t: need division value" << End();
+      Err() << Tip(option) << "need division value" << End();
       return false;
     }
     auto sv = *cursor;
@@ -393,26 +398,26 @@ Usage: milk play [OPTIONS] [FILES]
         n -= 2;
       }
       if (n > 4) {
-        Err() << Tip() << "-t: the division value is too long -- " << sv << End();
+        Err() << Tip(option) << "the division value is too long -- " << sv << End();
         return false;
       }
       len = MilkTea::FromStringHex::ToInt<uint16_t>(s, n, &division);
     }
     if (len != n) {
-      Err() << Tip() << "-t: invalid division value -- " << sv << End();
+      Err() << Tip(option) << "invalid division value -- " << sv << End();
       return false;
     }
     if (division == 0) {
-      Err() << Tip() << "-t: division value can not be zero" << End();
+      Err() << Tip(option) << "division value can not be zero" << End();
       return false;
     }
     division_ = division;
     ++cursor;
     return true;
   }
-  bool SetTempo(cursor_type &cursor) {
+  bool SetTempo(const value_type &option, cursor_type &cursor) {
     if (!cursor) {
-      Err() << Tip() << "-m: need tempo value" << End();
+      Err() << Tip(option) << "need tempo value" << End();
       return false;
     }
     auto sv = *cursor;
@@ -458,15 +463,15 @@ Usage: milk play [OPTIONS] [FILES]
       }
     });
     if (l) {
-      Err() << Tip() << "-m: the tempo value is too long -- " << sv << End();
+      Err() << Tip(option) << "the tempo value is too long -- " << sv << End();
       return false;
     }
     if (len != n) {
-      Err() << Tip() << "-m: invalid tempo value -- " << sv << End();
+      Err() << Tip(option) << "invalid tempo value -- " << sv << End();
       return false;
     }
     if (tempo == 0) {
-      Err() << Tip() << "-m: tempo value can not be zero" << End();
+      Err() << Tip(option) << "tempo value can not be zero" << End();
       return false;
     }
     tempo_ = tempo;
@@ -480,6 +485,7 @@ Usage: milk play [OPTIONS] [FILES]
   uint32_t tempo_ = 60'000'000 / 120;
   int64_t begin_ = 0;
   int64_t end_ = 0;
+  bool listen_ = false;
 };
 
 } // namespace Milk

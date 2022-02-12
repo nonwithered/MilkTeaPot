@@ -56,11 +56,11 @@ Usage: milk dump [OPTIONS] [FILES]
           "-L",
           "--level",
         }, &self_type::detail_,
-        [this]() {
-          Err() << Tip() << "-L: need detail level" << End();
+        [this](auto &option) {
+          Err() << Tip(option) << "need detail level" << End();
         },
-        [this](auto &it) {
-          Err() << Tip() << "-L: invalid detail level: " << it << End();
+        [this](auto &option, auto &it) {
+          Err() << Tip(option) << "invalid detail level: " << it << End();
         }, {
           { DetailLevel::HEADER, { "h", "header" } },
           { DetailLevel::DATA, { "d", "data" } },

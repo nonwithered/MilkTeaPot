@@ -57,11 +57,11 @@ class BaseController {
       .Append({
           "--log",
         }, &self_type::level_,
-        [this]() {
-          Err() << Tip() << "--log: need log level" << End();
+        [this](auto &option) {
+          Err() << Tip(option) << "need log level" << End();
         },
-        [this](auto &it) {
-          Err() << Tip() << "--log: invalid log level: " << it << End();
+        [this](auto &option, auto &it) {
+          Err() << Tip(option) << "invalid log level: " << it << End();
         }, {
           { MilkTea::Logger::Level::DEBUG, { "d", "debug" } },
           { MilkTea::Logger::Level::INFO, { "i", "info" } },
@@ -83,6 +83,9 @@ class BaseController {
   ContextWrapper &Context() {
     return context_;
   }
+  const ContextWrapper &Context() const {
+    return context_;
+  }
   PrinterImpl &Out() {
     return out_;
   }
@@ -95,8 +98,20 @@ class BaseController {
   std::string_view Usage() const {
     return self_type::kUsage;
   }
+  std::string Tip(std::string_view option) const {
+    std::stringstream ss;
+    ss <<
+    Context().name() << " " <<
+    Name() << " " <<
+    option << ": ";
+    return ss.str();
+  }
   std::string Tip() const {
-    return std::string(kName) + " " + Name().data() + ": ";
+    std::stringstream ss;
+    ss <<
+    Context().name() << " " <<
+    Name() << ": ";
+    return ss.str();
   }
  private:
   void Prepare() {

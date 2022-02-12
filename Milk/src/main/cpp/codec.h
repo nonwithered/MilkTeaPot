@@ -65,8 +65,8 @@ Usage: milk [OPTIONS] [FILES]
       .Append({
           "-o",
         }, &self_type::target_,
-        [this]() {
-          Err() << Tip() << "-o: need target name" << End();
+        [this](auto &option) {
+          Err() << Tip(option) << "need target name" << End();
         })
       .Append({
           "-t",
@@ -80,11 +80,11 @@ Usage: milk [OPTIONS] [FILES]
           "-f",
           "--format",
         }, &self_type::format_,
-        [this]() {
-          Err() << Tip() << "-f: need format value" << End();
+        [this](auto &option) {
+          Err() << Tip(option) << "need format value" << End();
         },
-        [this](auto &it) {
-          Err() << Tip() << "-f: invalid format value: " << it << End();
+        [this](auto &option, auto &it) {
+          Err() << Tip(option) << "invalid format value: " << it << End();
         }, {
           { FormatType::SINGLE, { "0" } },
           { FormatType::SIMULTANEOUS, { "1" } },
@@ -93,9 +93,9 @@ Usage: milk [OPTIONS] [FILES]
       ;
   }
  private:
-  bool SetTick(cursor_type &cursor) {
+  bool SetTick(const value_type &option, cursor_type &cursor) {
     if (!cursor) {
-      Err() << Tip() << "-t: need division value" << End();
+      Err() << Tip(option) << "need division value" << End();
       return false;
     }
     auto sv = *cursor;
@@ -109,17 +109,17 @@ Usage: milk [OPTIONS] [FILES]
         n -= 2;
       }
       if (n > 4) {
-        Err() << Tip() << "-t: the division value is too long -- " << s << End();
+        Err() << Tip(option) << "the division value is too long -- " << s << End();
         return false;
       }
       len = MilkTea::FromStringHex::ToInt<uint16_t>(s, n, &division);
     }
     if (len != n) {
-      Err() << Tip() << "-t: invalid division value -- " << sv << End();
+      Err() << Tip(option) << "invalid division value -- " << sv << End();
       return false;
     }
     if (division == 0) {
-      Err() << Tip() << "-t: division value can not be zero" << End();
+      Err() << Tip(option) << "division value can not be zero" << End();
       return false;
     }
     division_ = division;
