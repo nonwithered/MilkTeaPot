@@ -10,17 +10,24 @@
 namespace SoyBean_Windows {
 
 struct Proxy_HMIDIOUT_t {
+  Proxy_HMIDIOUT_t(HMIDIOUT handler) : handler_(handler) {}
   HMIDIOUT handler_;
 };
 
 Proxy_MMRESULT Proxy_midiOutOpen(Proxy_HMIDIOUT *p, unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) {
-  *p = new Proxy_HMIDIOUT_t();
-  return midiOutOpen((LPHMIDIOUT) &(*p)->handler_, (UINT) uDeviceID, (DWORD_PTR) dwCallback, (DWORD_PTR) dwInstance, (DWORD) fdwOpen);
+  Proxy_HMIDIOUT_t q = nullptr;
+  Proxy_MMRESULT r = midiOutOpen((LPHMIDIOUT) &q.handler_, (UINT) uDeviceID, (DWORD_PTR) dwCallback, (DWORD_PTR) dwInstance, (DWORD) fdwOpen);
+  if (r == Proxy_MMSYSERR_NOERROR) {
+    *p = new Proxy_HMIDIOUT_t(q.handler_);
+  }
+  return r;
 }
 
 Proxy_MMRESULT Proxy_midiOutClose(Proxy_HMIDIOUT p) {
   Proxy_MMRESULT r = midiOutClose(p->handler_);
-  delete p;
+  if (r == Proxy_MMSYSERR_NOERROR) {
+    delete p;
+  }
   return r;
 }
 
@@ -33,14 +40,9 @@ std::string Proxy_midiInGetErrorTextA(Proxy_MMRESULT result) {
   ss << "MMRESULT";
   ss << " ";
   ss << result;
-  const char *s = Proxy_MMRESULT_What(result);
-  if (s != nullptr) {
-    ss << " ";
-    ss << s;
-  }
   std::array<char, 128> arr;
   auto r = midiInGetErrorTextA(result, (LPSTR) arr.data(), (UINT) 128);
-  if (r == MMSYSERR_NOERROR) {
+  if (r == Proxy_MMSYSERR_NOERROR) {
     ss << " ";
     ss << arr.data();
   }
