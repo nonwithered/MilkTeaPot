@@ -8,17 +8,17 @@
 
 namespace MilkTea {
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class BaseClosureFactory;
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class BaseFunctionFactory {
   static constexpr char TAG[] = "MilkTea#BaseFunctionFactory";
   friend class BaseClosureFactory<Res, Args...>;
  public:
   using function_type = std::function<Res(Args...)>;
  private:
-  static Res MilkTea_call Invoke(void *obj, Args... args) {
+  static Res MilkTea_call Invoke(void *obj, Args ...args) {
     function_type &callback_ = *reinterpret_cast<function_type *>(obj);
     return callback_(args...);
   }
@@ -33,13 +33,13 @@ class BaseFunctionFactory {
   template<typename raw_type>
   static function_type FromRawType(raw_type f) {
     MilkTea_nonnull(f.invoke_);
-    return [f](Args... args) -> Res {
+    return [f](Args ...args) -> Res {
       return MilkTea_Function_Invoke(f, args...);
     };
   }
 };
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class BaseClosureFactory {
   static constexpr char TAG[] = "MilkTea#BaseClosureFactory";
  public:
@@ -60,7 +60,7 @@ class BaseClosureFactory {
     MilkTea_nonnull(f.obj_.deleter_);
     auto closure = std::shared_ptr<void>(f.obj_.obj_, f.obj_.deleter_);
     MilkTea_nonnull(f.invoke_);
-    return [closure, invoke = f.invoke_](Args... args) -> Res {
+    return [closure, invoke = f.invoke_](Args ...args) -> Res {
       return invoke(closure.get(), args...);
     };
   }
@@ -70,22 +70,22 @@ class BaseClosureFactory {
   }
 };
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class FunctionFactory final : public BaseFunctionFactory<Res, Args...> {};
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class FunctionFactory<Res(Args...)> final : public BaseFunctionFactory<Res, Args...> {};
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class FunctionFactory<std::function<Res(Args...)>> final : public BaseFunctionFactory<Res(Args...)> {};
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class ClosureFactory final : public BaseClosureFactory<Res, Args...> {};
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class ClosureFactory<Res(Args...)> final : public BaseClosureFactory<Res, Args...> {};
 
-template<typename Res, typename... Args>
+template<typename Res, typename ...Args>
 class ClosureFactory<std::function<Res(Args...)>> final : public BaseClosureFactory<Res(Args...)> {};
 
 #undef MilkTea_Function_t

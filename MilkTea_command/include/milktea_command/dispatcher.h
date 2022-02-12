@@ -18,7 +18,7 @@ struct DispatcherHelper {
   using map_type = std::map<value_type, command_type>;
 };
 
-template<typename container_type, typename context_type, typename... T>
+template<typename container_type, typename context_type, typename ...T>
 struct DispatcherGenerator final {
   using helper_type = DispatcherHelper<container_type, context_type>;
 };
@@ -30,7 +30,7 @@ struct DispatcherGenerator<container_type, context_type> final {
     return map_type();
   }
 };
-template<typename container_type, typename context_type, typename T, typename... Y>
+template<typename container_type, typename context_type, typename T, typename ...Y>
 struct DispatcherGenerator<container_type, context_type, T, Y...> final {
   using helper_type = DispatcherHelper<container_type, context_type>;
   static constexpr auto TAG = helper_type::TAG;
@@ -54,7 +54,7 @@ class Dispatcher final {
   using value_type = typename helper_type::value_type;
   using map_type = typename helper_type::map_type;
  public:
-  template<typename... T>
+  template<typename ...T>
   void Start(T...) && {
     auto m = DispatcherGenerator<container_type, context_type, T...>::Make();
     if (m.empty()) {
