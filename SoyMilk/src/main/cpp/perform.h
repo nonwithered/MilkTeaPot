@@ -10,12 +10,11 @@ namespace SoyMilk {
 
 class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   static constexpr char TAG[] = "SoyMilk::PerformImpl";
-  using duration_type = TeaPot::TimerUnit::duration_type;
   using time_point_type = TeaPot::TimerUnit::time_point_type;
   using future_type = TeaPot::TimerFutureWrapper;
   using action_type = TeaPot::Action::action_type;
   using command_type = std::function<void(PerformImpl &)>;
-  using post_type = std::function<future_type(command_type, duration_type)>;
+  using post_type = std::function<future_type(command_type, tempo_type)>;
   using frame_type = std::function<void(const FrameBufferImpl &)>;
  public:
   void post(post_type f) {
@@ -33,9 +32,9 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
     future_(nullptr),
     tag_(),
     idle_(),
-    position_(duration_type(-1)) {}
+    position_(tempo_type(-1)) {}
   ~PerformImpl() = default;
-  duration_type Prepare(std::vector<MilkPowder::MidiConstWrapper> vec) {
+  tempo_type Prepare(std::vector<MilkPowder::MidiConstWrapper> vec) {
     return queue_fill(std::move(vec));
   }
   void Start() {
@@ -48,9 +47,9 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   void Resume() {
     tag_delay(idle_diff(now()));
   }
-  std::function<duration_type(PerformImpl &)> Pause() {
+  std::function<tempo_type(PerformImpl &)> Pause() {
     future_cancel();
-    return [](PerformImpl &obj) -> duration_type {
+    return [](PerformImpl &obj) -> tempo_type {
       auto time = obj.now();
       obj.idle(time);
       return time - obj.tag();
@@ -61,9 +60,9 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   void Reset() {
     queue_sweep();
   }
-  duration_type Seek(duration_type time) {
-    if (time < duration_type(-1)) {
-      time = duration_type(-1);
+  tempo_type Seek(tempo_type time) {
+    if (time < tempo_type(-1)) {
+      time = tempo_type(-1);
     }
     if (time < position()) {
       position_reset();
@@ -94,7 +93,7 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
         return;
       }
       auto delay = tag() + fbo->time() - TeaPot::TimerUnit::Now();
-      if (delay > duration_type::zero()) {
+      if (delay > tempo_type::zero()) {
         Post(delay);
         return;
       }
@@ -103,7 +102,7 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
     }
   }
  private:
-  void Post(duration_type delay = duration_type::zero()) {
+  void Post(tempo_type delay = tempo_type::zero()) {
     auto future = post_([](auto &obj) {
       obj.Loop();
     }, delay);
@@ -124,10 +123,10 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   time_point_type tag() const {
     return tag_;
   }
-  void tag_delay(duration_type time) {
+  void tag_delay(tempo_type time) {
     tag_ += time;
   }
-  duration_type idle_diff(time_point_type time) const {
+  tempo_type idle_diff(time_point_type time) const {
     return time - idle();
   }
   void idle(time_point_type time) {
@@ -136,14 +135,14 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   time_point_type idle() const {
     return idle_;
   }
-  void position(duration_type time) {
+  void position(tempo_type time) {
     position_ = time;
   }
-  duration_type position() const {
+  tempo_type position() const {
     return position_;
   }
   void position_reset() {
-    position(duration_type(-1));
+    position(tempo_type(-1));
   }
   void cursor_reset() {
     cursor_ = queue_.Cursor();
@@ -161,7 +160,7 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   std::unique_ptr<future_type> &future() {
     return future_;
   }
-  duration_type queue_fill(std::vector<MilkPowder::MidiConstWrapper> vec) {
+  tempo_type queue_fill(std::vector<MilkPowder::MidiConstWrapper> vec) {
     auto time = queue_.Fill(std::move(vec));
     cursor_reset();
     return time;
@@ -178,7 +177,7 @@ class PerformImpl final : public std::enable_shared_from_this<PerformImpl> {
   std::unique_ptr<future_type> future_;
   time_point_type tag_;
   time_point_type idle_;
-  duration_type position_;
+  tempo_type position_;
   post_type post_;
   action_type complete_;
   frame_type frame_;

@@ -12,7 +12,7 @@
 namespace Milk {
 
 class RendererImpl final : public SoyMilk::BaseRenderer {
-  using duration_type = TeaPot::TimerUnit::duration_type;
+  using tempo_type = SoyMilk::tempo_type;
  public:
   RendererImpl(SoyBean::FactoryWrapper factory, std::vector<uint16_t> format, std::vector<uint16_t> ntrks)
   : format_(format),
@@ -64,8 +64,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
       }
     });
   }
-  std::function<void(duration_type)> OnPrepareListener;
-  void OnPrepare(duration_type time) final {
+  std::function<void(tempo_type)> OnPrepareListener;
+  void OnPrepare(tempo_type time) final {
 //    Err() << "OnPrepareListener" << " " << time.count() << End();
     if (OnPrepareListener) {
       OnPrepareListener(time);
@@ -78,8 +78,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
       OnStartListener();
     }
   }
-  std::function<void(duration_type)> OnPauseListener;
-  void OnPause(duration_type time) final {
+  std::function<void(tempo_type)> OnPauseListener;
+  void OnPause(tempo_type time) final {
 //    Err() << "OnPauseListener" << End();
     if (OnPauseListener) {
       OnPauseListener(time);
@@ -92,8 +92,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
       OnSeekBeginListener();
     }
   }
-  std::function<void(duration_type)> OnSeekEndListener;
-  void OnSeekEnd(duration_type time) final {
+  std::function<void(tempo_type)> OnSeekEndListener;
+  void OnSeekEnd(tempo_type time) final {
 //    Err() << "OnSeekEndListener" << " " << time.count() << End();
     if (OnSeekEndListener) {
       OnSeekEndListener(time);
@@ -164,7 +164,7 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
 
 class PlayController final : public BaseController<PlayController> {
   static constexpr char TAG[] = "Milk::PlayController";
-  using duration_type = TeaPot::TimerUnit::duration_type;
+  using tempo_type = SoyMilk::tempo_type;
  public:
   static constexpr auto kName = "play";
   static constexpr auto kUsage = R"(
@@ -229,12 +229,12 @@ Usage: milk play [OPTIONS] [FILES]
       ntrk_vec[i] = vec[i].GetNtrks();
     }
     RendererImpl renderer(Context().GetSoyBeanFactory(), std::move(format_vec), std::move(ntrk_vec));
-    duration_type pos = duration_type::zero();
+    tempo_type pos = tempo_type::zero();
     bool seek = false;
     renderer.seek_ = &seek;
     renderer.OnPrepareListener = [&](auto time) {
-      pos = time - duration_type(10'000'000);
-      pos = duration_type::zero();
+      pos = time - tempo_type(10'000'000);
+      pos = tempo_type::zero();
       timer.Post([&]() {
         player->Start();
       });

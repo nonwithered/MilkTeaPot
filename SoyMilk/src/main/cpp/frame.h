@@ -1,7 +1,7 @@
 #ifndef SOYMILK_FRAME_H_
 #define SOYMILK_FRAME_H_
 
-#include <list>
+#include <vector>
 #include <map>
 
 #include <soymilk/common.h>
@@ -10,7 +10,7 @@ namespace SoyMilk {
 
 class FrameTrackImpl final {
   static constexpr char TAG[] = "SoyMilk::FrameTrackImpl";
-  using items_type = std::list<MilkPowder::MessageMutableWrapper>;
+  using items_type = std::vector<MilkPowder::MessageMutableWrapper>;
  public:
   FrameTrackImpl() : FrameTrackImpl(items_type{}) {}
   FrameTrackImpl(const FrameTrackImpl &another) : FrameTrackImpl(another.items_) {}
@@ -96,7 +96,6 @@ class FramePackageImpl final {
 
 class FrameBufferImpl final {
   static constexpr char TAG[] = "SoyMilk::FrameBufferImpl";
-  using tempo_type = MilkPowder::Mapping::Message::tempo_type;
  public:
   FrameBufferImpl() = default;
   FrameBufferImpl(tempo_type time, FramePackageImpl items)

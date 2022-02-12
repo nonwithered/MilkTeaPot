@@ -55,7 +55,7 @@ MilkTea_extern(SoyMilk_Player_Pause, (SoyMilk_Player_t *obj), {
 
 MilkTea_extern(SoyMilk_Player_Seek, (SoyMilk_Player_t *obj, int64_t time), {
   MilkTea_nonnull(obj);
-  soymilk_cast(obj)->Seek(TeaPot::TimerUnit::duration_type(time));
+  soymilk_cast(obj)->Seek(SoyMilk::tempo_type(time));
 })
 
 MilkTea_extern(SoyMilk_Player_Resume, (SoyMilk_Player_t *obj), {

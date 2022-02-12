@@ -7,7 +7,6 @@ namespace SoyMilk {
 
 class TickClock final {
   static constexpr char TAG[] = "SoyMilk::TickClock";
-  using tempo_type = MilkPowder::Mapping::Message::tempo_type;
  public:
   explicit TickClock(uint16_t division)
   : division_(division),

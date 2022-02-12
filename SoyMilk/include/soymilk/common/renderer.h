@@ -10,7 +10,6 @@ namespace SoyMilk {
 
 class BaseRenderer {
   using raw_type = SoyMilk_Player_Renderer_t;
-  using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   virtual raw_type ToRawType() && {
     return raw_type{
@@ -22,12 +21,12 @@ class BaseRenderer {
   virtual BaseRenderer *Move() && = 0;
   virtual void Destroy() && = 0;
   virtual void OnFrame(const FrameBufferWrapper &fbo) = 0;
-  virtual void OnPrepare(duration_type time) = 0;
+  virtual void OnPrepare(tempo_type time) = 0;
   virtual void OnStart() = 0;
   virtual void OnResume() = 0;
   virtual void OnSeekBegin() = 0;
-  virtual void OnSeekEnd(duration_type time) = 0;
-  virtual void OnPause(duration_type time) = 0;
+  virtual void OnSeekEnd(tempo_type time) = 0;
+  virtual void OnPause(tempo_type time) = 0;
   virtual void OnStop() = 0;
   virtual void OnReset() = 0;
   virtual void OnComplete() = 0;
@@ -37,7 +36,6 @@ class BaseRenderer {
 
 class RendererWrapper final : public BaseRenderer {
   using raw_type = SoyMilk_Player_Renderer_t;
-  using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   raw_type ToRawType() && final {
     return release();
@@ -62,7 +60,7 @@ class RendererWrapper final : public BaseRenderer {
   void OnFrame(const FrameBufferWrapper &fbo) final {
     GetInterface().OnFrame(get(), fbo.get());
   }
-  void OnPrepare(duration_type time) final {
+  void OnPrepare(tempo_type time) final {
     GetInterface().OnPrepare(get(), time.count());
   }
   void OnStart() final {
@@ -74,10 +72,10 @@ class RendererWrapper final : public BaseRenderer {
   void OnSeekBegin() final {
     GetInterface().OnSeekBegin(get());
   }
-  void OnSeekEnd(duration_type time) final {
+  void OnSeekEnd(tempo_type time) final {
     GetInterface().OnSeekEnd(get(), time.count());
   }
-  void OnPause(duration_type time) final {
+  void OnPause(tempo_type time) final {
     GetInterface().OnPause(get(), time.count());
   }
   void OnStop() final {
@@ -107,7 +105,6 @@ class RendererWrapper final : public BaseRenderer {
 };
 
 class RendererProxy final : public BaseRenderer {
-  using duration_type = TeaPot::TimerUnit::duration_type;
   using base_type = BaseRenderer;
   using self_type = RendererProxy;
  public:
@@ -126,7 +123,7 @@ class RendererProxy final : public BaseRenderer {
   void OnFrame(const FrameBufferWrapper &fbo) final {
     get().OnFrame(std::move(fbo));
   }
-  void OnPrepare(duration_type time) final {
+  void OnPrepare(tempo_type time) final {
     get().OnPrepare(time);
   }
   void OnStart() final {
@@ -138,10 +135,10 @@ class RendererProxy final : public BaseRenderer {
   void OnSeekBegin() final {
     get().OnSeekBegin();
   }
-  void OnSeekEnd(duration_type time) final {
+  void OnSeekEnd(tempo_type time) final {
     get().OnSeekEnd(time);
   }
-  void OnPause(duration_type time) final {
+  void OnPause(tempo_type time) final {
     get().OnPause(time);
   }
   void OnStop() final {

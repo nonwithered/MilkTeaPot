@@ -36,13 +36,12 @@ class FrameBufferCursorImpl final {
 
 class FrameBufferQueueImpl final {
   static constexpr char TAG[] = "SoyMilk::FrameBufferQueueImpl";
-  using duration_type = TeaPot::TimerUnit::duration_type;
   using queue_type = FrameBufferSorterImpl::queue_type;
   using cursor_type = FrameBufferCursorImpl;
  public:
   FrameBufferQueueImpl()
   : queue_() {}
-  duration_type Fill(std::vector<MilkPowder::MidiConstWrapper> vec) {
+  tempo_type Fill(std::vector<MilkPowder::MidiConstWrapper> vec) {
     auto &queue = queue_;
     if (!queue.empty()) {
       MilkTea_assert("fill but not empty");
@@ -56,7 +55,7 @@ class FrameBufferQueueImpl final {
 
     if (queue.empty()) {
       MilkTea_logW("fill but empty");
-      return duration_type(-1);
+      return tempo_type(-1);
     }
     return queue_.back().time();
   }

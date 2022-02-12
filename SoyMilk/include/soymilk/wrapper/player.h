@@ -9,7 +9,6 @@ class PlayerWrapper final {
   static constexpr char TAG[] = "SoyMilk::PlayerWrapper";
   using raw_type = SoyMilk_Player_t;
   using State = Player::State;
-  using duration_type = TeaPot::TimerUnit::duration_type;
  public:
   PlayerWrapper(raw_type *obj = nullptr) : obj_(obj) {}
   PlayerWrapper(PlayerWrapper &&another) : PlayerWrapper(another.release()) {}
@@ -43,7 +42,7 @@ class PlayerWrapper final {
   void Pause() {
     MilkTea_invoke_panic(SoyMilk_Player_Pause, get());
   }
-  void Seek(duration_type time) {
+  void Seek(tempo_type time) {
     MilkTea_invoke_panic(SoyMilk_Player_Seek, get(), time.count());
   }
   void Resume() {

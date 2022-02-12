@@ -1,17 +1,17 @@
 #ifndef YOGURT_CLOCK_H_
 #define YOGURT_CLOCK_H_
 
-#include <chrono>
-
 #include <milkpowder.h>
 
 namespace Yogurt {
 
 using clock_type = std::chrono::system_clock;
-using duration_type = std::chrono::microseconds;
-using time_point_type = std::chrono::time_point<clock_type, duration_type>;
-
 using tempo_type = MilkPowder::Mapping::Message::tempo_type;
+using time_point_type = std::chrono::time_point<clock_type, tempo_type>;
+
+inline time_point_type Now() {
+  return std::chrono::time_point_cast<tempo_type>(clock_type::now());
+}
 
 using consumer_type = std::function<void(MilkPowder::EventMutableWrapper)>;
 
@@ -27,12 +27,11 @@ class TickClock final {
   }
   TickClock(TickClock &&another)
   : TickClock(another.division_, another.tempo_) {}
-  uint32_t operator()(duration_type duration) const {
-    auto t = std::chrono::duration_cast<tempo_type>(duration);
+  uint32_t operator()(tempo_type duration) const {
     if (BaseOnTimeCode()) {
-      return ComputeByTimeCode(t);
+      return ComputeByTimeCode(duration);
     }
-    return Compute(t);
+    return Compute(duration);
   }
   bool BaseOnTimeCode() const {
     return (division_ & 0x8000) != 0;

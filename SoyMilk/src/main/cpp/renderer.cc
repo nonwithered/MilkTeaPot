@@ -4,8 +4,6 @@ namespace {
 
 constexpr char TAG[] = "SoyMilk";
 
-using duration_type = TeaPot::TimerUnit::duration_type;
-
 SoyMilk::BaseRenderer &BaseRenderer_cast(void *obj) {
   MilkTea_nonnull(obj);
   return *reinterpret_cast<SoyMilk::BaseRenderer *>(obj);
@@ -22,7 +20,7 @@ void MilkTea_call SoyMilk_BaseRenderer_OnFrame(void *obj, const SoyMilk::FrameBu
   BaseRenderer_cast(obj).OnFrame(fbo_);
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnPrepare(void *obj, int64_t time) {
-  BaseRenderer_cast(obj).OnPrepare(duration_type(time));
+  BaseRenderer_cast(obj).OnPrepare(SoyMilk::tempo_type(time));
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnStart(void *obj) {
   BaseRenderer_cast(obj).OnStart();
@@ -34,10 +32,10 @@ void MilkTea_call SoyMilk_BaseRenderer_OnSeekBegin(void *obj) {
   BaseRenderer_cast(obj).OnSeekBegin();
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnSeekEnd(void *obj, int64_t time) {
-  BaseRenderer_cast(obj).OnSeekEnd(duration_type(time));
+  BaseRenderer_cast(obj).OnSeekEnd(SoyMilk::tempo_type(time));
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnPause(void *obj, int64_t time) {
-  BaseRenderer_cast(obj).OnPause(duration_type(time));
+  BaseRenderer_cast(obj).OnPause(SoyMilk::tempo_type(time));
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnStop(void *obj) {
   BaseRenderer_cast(obj).OnStop();

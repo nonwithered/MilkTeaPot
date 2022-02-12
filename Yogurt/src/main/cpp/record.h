@@ -114,9 +114,6 @@ class RecorderImpl final : public std::enable_shared_from_this<RecorderImpl> {
     return MilkPowder::MidiMutableWrapper::Make(format, ntrk, division, vec.begin());
   }
  private:
-  static time_point_type Now() {
-    return std::chrono::time_point_cast<duration_type>(clock_type::now());
-  }
   const uint16_t division_;
   State state_;
   time_point_type time_point_;

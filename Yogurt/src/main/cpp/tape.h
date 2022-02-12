@@ -18,16 +18,16 @@ class TrackTape final {
   TrackTape(TrackTape &&another)
   : TrackTape(std::move(another.tick_clock_), another.time_point_, std::move(another.items_)) {}
   void Append(MilkPowder::EventMutableWrapper event, time_point_type time_point = time_point_type()) {
-    duration_type duration = time_point - time_point_;
+    tempo_type duration = time_point - time_point_;
     time_point_ = time_point;
-    if (duration < duration_type::zero()) {
-      duration = duration_type::zero();
+    if (duration < tempo_type::zero()) {
+      duration = tempo_type::zero();
     }
     auto message = MilkPowder::MutableInterface<MilkPowder::Mapping::Message>::From(std::move(event));
     message.SetDelta(tick_clock_(duration));
     items_.emplace_back(MilkPowder::MutableInterface<MilkPowder::Mapping::Event>::From(std::move(message)));
   }
-  void Walk(duration_type duration) {
+  void Walk(tempo_type duration) {
     time_point_ += duration;
   }
   uint32_t GetTempo() const {

@@ -16,7 +16,6 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   using player_type = std::shared_ptr<PlayerImpl>;
   using player_weak = std::weak_ptr<PlayerImpl>;
   using State = Player::State;
-  using duration_type = TeaPot::TimerUnit::duration_type;
   using time_point_type = TeaPot::TimerUnit::time_point_type;
   using clock_type = TeaPot::TimerUnit::clock_type;
   using executor_type = TeaPot::Executor::executor_type;
@@ -110,7 +109,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
       });
     });
   }
-  TeaPot::TimerFutureWrapper Seek(duration_type time) {
+  TeaPot::TimerFutureWrapper Seek(tempo_type time) {
     ChangeState(State::SUSPEND, State::SEEKING);
     return Post([time](auto &obj) {
       obj.Renderer().OnSeekBegin();
@@ -136,12 +135,12 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     });
   }
  private:
-  TeaPot::TimerFutureWrapper Post(command_type action, duration_type delay = duration_type::zero()) {
+  TeaPot::TimerFutureWrapper Post(command_type action, tempo_type delay = tempo_type::zero()) {
     auto timer = timer_.lock();
     if (!timer) {
       MilkTea_throw(LogicError, "execute but timer is null");
     }
-    return timer.Post(Command(action), delay);
+    return timer.Post(Command(action), std::chrono::duration_cast<TeaPot::TimerUnit::duration_type>(delay));
   }
   void Execute(command_type action) {
     executor_(Command(action));

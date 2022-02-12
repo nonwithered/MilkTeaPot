@@ -9,6 +9,8 @@
 
 namespace SoyMilk {
 
+using tempo_type = MilkPowder::Mapping::Message::tempo_type;
+
 class FrameBufferWrapper final {
   static constexpr char TAG[] = "SoyMilk::FrameBufferWrapper";
   using tempo_type = MilkPowder::Mapping::Message::tempo_type;
