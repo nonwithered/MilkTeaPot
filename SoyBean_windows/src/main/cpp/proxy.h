@@ -14,7 +14,7 @@ Proxy_MMRESULT Proxy_midiOutOpen(Proxy_HMIDIOUT *p, unsigned int uDeviceID, uint
 Proxy_MMRESULT Proxy_midiOutClose(Proxy_HMIDIOUT p);
 Proxy_MMRESULT Proxy_midiOutShortMsg(Proxy_HMIDIOUT p, uint32_t msg);
 
-std::string Proxy_midiInGetErrorTextA(Proxy_MMRESULT);
+std::string Proxy_midiInGetErrorText(Proxy_MMRESULT);
 
 constexpr Proxy_MMRESULT Proxy_MMSYSERR_NOERROR = 0;
 

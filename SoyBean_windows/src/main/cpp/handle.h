@@ -93,7 +93,7 @@ class HandleImpl final : public SoyBean::BaseHandle {
     if (r == Proxy_MMSYSERR_NOERROR) {
       return;
     }
-    auto what = Proxy_midiInGetErrorTextA(r);
+    auto what = Proxy_midiInGetErrorText(r);
     MilkTea_throwf(Unknown, "%s: %s", tag.data(), what.data());
   }
   HandleImpl() : obj_(nullptr) {}

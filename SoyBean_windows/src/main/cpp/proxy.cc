@@ -35,13 +35,13 @@ Proxy_MMRESULT Proxy_midiOutShortMsg(Proxy_HMIDIOUT p, uint32_t msg) {
   return midiOutShortMsg(p->handler_, msg);
 }
 
-std::string Proxy_midiInGetErrorTextA(Proxy_MMRESULT result) {
+std::string Proxy_midiInGetErrorText(Proxy_MMRESULT result) {
   std::stringstream ss;
   ss << "MMRESULT";
   ss << " ";
   ss << result;
   std::array<char, 128> arr;
-  auto r = midiInGetErrorTextA(result, (LPSTR) arr.data(), (UINT) 128);
+  auto r = midiInGetErrorText(result, (LPSTR) arr.data(), (UINT) 128);
   if (r == Proxy_MMSYSERR_NOERROR) {
     ss << " ";
     ss << arr.data();
