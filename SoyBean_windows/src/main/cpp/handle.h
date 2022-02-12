@@ -85,8 +85,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
       MilkTea_throwf(InvalidParam, "CheckArgs -- %s should not large than 0x7f but this value is 0x%02" PRIx8 " now", sym, arg);
     }
   }
-  static uint32_t Dword(uint8_t type, uint8_t arg_0, uint8_t arg_1) {
-    uint8_t msg[4] = {type, arg_0, arg_1, 0};
+  static uint32_t Dword(uint8_t type, uint8_t arg0, uint8_t arg1) {
+    uint32_t msg = type | (arg0 << 010) | (arg1 << 020);
     return *reinterpret_cast<uint32_t *>(&msg);
   }
   static void ThrowOrNot(Proxy_MMRESULT r, std::string_view tag) {
