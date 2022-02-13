@@ -28,24 +28,13 @@ bool Proxy_CloseHandle(Proxy_HANDLE hObject) {
   return CloseHandle(hObject);
 }
 
-static
-Proxy_HANDLE Proxy_GetStdHandle(uint32_t nStdHandle) {
-  return (Proxy_HANDLE) GetStdHandle(nStdHandle);
-}
-
-template<>
-Proxy_HANDLE Proxy_GetStdHandle<Proxy_StdHandle_t::Proxy_STD_INPUT_HANDLE>() {
-  return Proxy_GetStdHandle(STD_INPUT_HANDLE);
-}
-
-template<>
-Proxy_HANDLE Proxy_GetStdHandle<Proxy_StdHandle_t::Proxy_STD_OUTPUT_HANDLE>() {
-  return Proxy_GetStdHandle(STD_OUTPUT_HANDLE);
-}
-
-template<>
-Proxy_HANDLE Proxy_GetStdHandle<Proxy_StdHandle_t::Proxy_STD_ERROR_HANDLE>() {
-  return Proxy_GetStdHandle(STD_ERROR_HANDLE);
+Proxy_HANDLE Proxy_GetStdHandle(Proxy_StdHandle_t nStdHandle) {
+  switch (nStdHandle) {
+    case Proxy_StdHandle_t::Proxy_STD_INPUT_HANDLE: return (Proxy_HANDLE) GetStdHandle(STD_INPUT_HANDLE);
+    case Proxy_StdHandle_t::Proxy_STD_OUTPUT_HANDLE: return (Proxy_HANDLE) GetStdHandle(STD_OUTPUT_HANDLE);
+    case Proxy_StdHandle_t::Proxy_STD_ERROR_HANDLE: return (Proxy_HANDLE) GetStdHandle(STD_ERROR_HANDLE);
+    default: return nullptr;
+  }
 }
 
 bool Proxy_ReadFile(Proxy_HANDLE hFile, uint8_t buffer[], size_t nNumberOfBytesToRead, size_t &nNumberOfBytesRead) {
@@ -105,8 +94,10 @@ bool Proxy_CreateProcess(Proxy_PROCESS_INFORMATION &proc, std::string commandLin
   PROCESS_INFORMATION lpProcessInformation{};
   bool b = CreateProcess(nullptr, commandLine.data(), nullptr, nullptr, bInheritHandles, 0, nullptr, nullptr, &lpStartupInfo, &lpProcessInformation);
   if (b) {
-    proc->hProcess = (Proxy_HANDLE) lpProcessInformation.hProcess;
-    proc->hThread = (Proxy_HANDLE) lpProcessInformation.hThread;
+    proc.hProcess = (Proxy_HANDLE) lpProcessInformation.hProcess;
+    proc.hThread = (Proxy_HANDLE) lpProcessInformation.hThread;
+    proc.dwProcessId = lpProcessInformation.dwProcessId;
+    proc.dwThreadId = lpProcessInformation.dwThreadId;
   }
   return b;
 }

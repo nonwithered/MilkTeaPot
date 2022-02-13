@@ -65,7 +65,6 @@ class PipeWrapper final : public MilkTea::BaseReader, public MilkTea::BaseWriter
   void CloseWriter() {
     Close(&Proxy_Pipe_t::writer_);
   }
- private:
   void Close(Proxy_HANDLE Proxy_Pipe_t::*member) {
     auto h = release(member);
     if (h == nullptr) {
@@ -73,9 +72,10 @@ class PipeWrapper final : public MilkTea::BaseReader, public MilkTea::BaseWriter
     }
     Milk_Windows_Proxy_invoke(Proxy_CloseHandle, h);
   }
-  Proxy_HANDLE get(Proxy_HANDLE Proxy_Pipe_t::*member) {
+  Proxy_HANDLE get(Proxy_HANDLE Proxy_Pipe_t::*member) const {
     return obj_.*member;
   }
+ private:
   Proxy_HANDLE release(Proxy_HANDLE Proxy_Pipe_t::*member) {
     return reset(member, nullptr);
   }
