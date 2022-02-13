@@ -14,12 +14,13 @@ class ProcessWrapper final {
  public:
   explicit ProcessWrapper(std::string_view line, std::array<PipeWrapper *, 3> pipes) : obj_{} {
     std::array<Proxy_HANDLE, 3> hStd = {
-      Inherit(pipes[0], &Proxy_Pipe_t::reader_, Proxy_StdHandle_t::Proxy_STD_INPUT_HANDLE),
-      Inherit(pipes[1], &Proxy_Pipe_t::writer_, Proxy_StdHandle_t::Proxy_STD_OUTPUT_HANDLE),
-      Inherit(pipes[2], &Proxy_Pipe_t::writer_, Proxy_StdHandle_t::Proxy_STD_ERROR_HANDLE),
+      Inherit(pipes[0], PipeWrapper::Type::READER, Proxy_StdHandle_t::Proxy_STD_INPUT_HANDLE),
+      Inherit(pipes[1], PipeWrapper::Type::WRITER, Proxy_StdHandle_t::Proxy_STD_OUTPUT_HANDLE),
+      Inherit(pipes[2], PipeWrapper::Type::WRITER, Proxy_StdHandle_t::Proxy_STD_ERROR_HANDLE),
     };
     Proxy_PROCESS_INFORMATION proc{};
     bool b = Milk_Windows_Proxy_invoke(Proxy_CreateProcess, proc, std::string(line), std::move(hStd));
+    MilkTea_logI("ctor -- success: %d, this: %p, pipes: { %p, %p, %p, }", b, this, pipes[0], pipes[1], pipes[2]);
     if (b) {
       reset(proc);
       CloseInfo();
@@ -35,28 +36,45 @@ class ProcessWrapper final {
     return obj_.dwProcessId != 0 && obj_.dwThreadId != 0;
   }
  private:
-  static Proxy_HANDLE Inherit(PipeWrapper *pipe, Proxy_HANDLE Proxy_Pipe_t::*member, Proxy_StdHandle_t nStdHandle) {
+  enum class InfoType {
+    PROCESS,
+    THREAD,
+  };
+  static Proxy_HANDLE Inherit(PipeWrapper *pipe, PipeWrapper::Type type, Proxy_StdHandle_t nStdHandle) {
     if (pipe == nullptr) {
       return Proxy_GetStdHandle(nStdHandle);
     }
-    return pipe->get(member);
+    return pipe->get(type);
   }
   void CloseInfo() {
-    Close(&Proxy_PROCESS_INFORMATION::hThread);
-    Close(&Proxy_PROCESS_INFORMATION::hProcess);
+    CloseProcess();
+    CloseThread();
   }
-  void Close(Proxy_HANDLE Proxy_PROCESS_INFORMATION::*member) {
-    auto h = release(member);
+  void CloseProcess() {
+    auto h = release(InfoType::PROCESS);
     if (h == nullptr) {
       return;
     }
-    Milk_Windows_Proxy_invoke(Proxy_CloseHandle, h);
+    bool b = Milk_Windows_Proxy_invoke(Proxy_CloseHandle, h);
+    MilkTea_logI("CloseProcess -- success: %d, hProcess: %p", b, h);
   }
-  Proxy_HANDLE release(Proxy_HANDLE Proxy_PROCESS_INFORMATION::*member) {
-    return reset(member, nullptr);
+  void CloseThread() {
+    auto h = release(InfoType::THREAD);
+    if (h == nullptr) {
+      return;
+    }
+    bool b = Milk_Windows_Proxy_invoke(Proxy_CloseHandle, h);
+    MilkTea_logI("CloseThread -- success: %d, hThread: %p", b, h);
   }
-  Proxy_HANDLE reset(Proxy_HANDLE Proxy_PROCESS_INFORMATION::*member, Proxy_HANDLE another) {
-    std::swap(another, obj_.*member);
+  Proxy_HANDLE release(InfoType type) {
+    return reset(type, nullptr);
+  }
+  Proxy_HANDLE reset(InfoType type, Proxy_HANDLE another) {
+    switch (type) {
+      case InfoType::PROCESS: std::swap(another, obj_.hProcess); break;
+      case InfoType::THREAD: std::swap(another, obj_.hThread); break;
+      default: another = nullptr; break;
+    }
     return another;
   }
   Proxy_PROCESS_INFORMATION release() {
