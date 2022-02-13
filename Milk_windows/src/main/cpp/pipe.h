@@ -20,6 +20,9 @@ class PipeWrapper final : public MilkTea::BaseReader, public MilkTea::BaseWriter
     CloseReader();
     CloseWriter();
   }
+  operator bool() const {
+    return get(&Proxy_Pipe_t::reader_) != nullptr && get(&Proxy_Pipe_t::writer_) != nullptr;
+  }
   PipeWrapper &Move() && final {
     return *new PipeWrapper(std::move(*this));
   }
