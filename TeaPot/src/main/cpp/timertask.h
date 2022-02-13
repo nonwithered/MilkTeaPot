@@ -39,7 +39,7 @@ class TimerTaskImpl final {
         }
         MilkTea_assert("Run -- assert SCHEDULED -> EXECUTED");
     }
-    auto type = MilkTea::Exception::Catch(action_);
+    auto type = MilkTea::Exception::Suppress(action_);
     if (type == MilkTea::Exception::Type::Nil) {
       if (!future_->ChangeState(State::EXECUTED, State::NORMAL)) {
         MilkTea_assert("Run -- assert EXECUTED -> NORMAL");
@@ -49,7 +49,7 @@ class TimerTaskImpl final {
       if (!future_->ChangeState(State::EXECUTED, State::EXCEPTIONAL)) {
         MilkTea_assert("Run -- assert EXECUTED -> EXCEPTIONAL");
       }
-      MilkTea::Exception::Throw(type, MilkTea::Exception::What());
+      MilkTea::Exception::Raise(type, MilkTea::Exception::What());
     }
   }
  private:

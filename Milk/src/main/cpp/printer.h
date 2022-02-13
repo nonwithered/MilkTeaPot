@@ -5,27 +5,9 @@
 
 namespace Milk {
 
-struct StringWrapper final {
- public:
-  StringWrapper(std::string s) : s_(std::move(s)) {}
-  StringWrapper(std::string_view s) : s_(s) {}
-  StringWrapper(const char *s) : s_(s) {}
-  operator const std::string &() const {
-    return s_;
-  }
- private:
-  const std::string s_;
-};
-
 class PrinterImpl final {
  public:
   explicit PrinterImpl(MilkTea::BaseWriter &writer) : writer_(writer), buf_() {}
-  PrinterImpl &operator()(std::initializer_list<StringWrapper> s) {
-    for (auto &it : s) {
-      buf_ += it;
-    }
-    return *this;
-  }
   template<typename T>
   PrinterImpl &operator<<(T t) {
     buf_ += MilkTea::ToString::From()(t);

@@ -21,6 +21,9 @@ auto Args(int argc, char *argv[]) {
 } // namespace
 
 MilkTea_extern(Milk_Main, (int argc, char *argv[], Milk_Context_t context), {
+  if (argc <= 0) {
+    MilkTea_assertf("invalid argc: %d", argc);
+  }
   auto args = Args(argc, argv);
   auto context_wrapper = Milk::ContextWrapper(argv[0], context);
   MilkTea_Command::Dispatcher(args, context_wrapper).Start(

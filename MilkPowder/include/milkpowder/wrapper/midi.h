@@ -64,7 +64,7 @@ class MutableInterface<Mapping::Midi> {
   void AllTrack(std::function<void(MutableWrapper<Mapping::Track> &)> consumer) {
     std::function<void(Mapping::Track::raw_type *)> consumer_ = [&consumer](Mapping::Track::raw_type *it) {
       MutableWrapper<Mapping::Track> it_ = it;
-      MilkTea::Defer defer([&it_]() {
+      MilkTea_defer({
         it_.release();
       });
       consumer(it_);

@@ -10,7 +10,7 @@ namespace Milk_Console {
 inline
 Milk_Context_t make_context(BaseFoundation &foundation) {
   Milk_Context_t context = {};
-  MilkTea::Exception::Catch([&]() {
+  MilkTea::Exception::Suppress([&]() {
     MilkTea_invoke_panic(Milk_Console_Context_Create, &context, foundation.ToRawType());
   });
   return context;

@@ -61,7 +61,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
         return;
       }
       FrameBufferWrapper fbo_ = reinterpret_cast<FrameBufferWrapper::raw_type *>(const_cast<FrameBufferImpl *>(&fbo));
-      MilkTea::Defer defer([&fbo_]() {
+      MilkTea_defer({
         fbo_.release();
       });
       obj->Renderer().OnFrame(fbo_);

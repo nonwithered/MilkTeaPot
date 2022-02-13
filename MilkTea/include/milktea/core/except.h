@@ -28,7 +28,7 @@ MilkTea_Exception_What();
 
 MilkTea_noreturn
 MilkTea_decl(void)
-MilkTea_Exception_Throw(MilkTea_Exception_t, const char *);
+MilkTea_Exception_Raise(MilkTea_Exception_t, const char *);
 
 MilkTea_Function_t(MilkTea_Exception_Block_t, void)
 
@@ -37,7 +37,7 @@ typedef struct MilkTea_Exception_Block_t MilkTea_Exception_Block_t;
 #endif
 
 MilkTea_api
-MilkTea_Exception_Catch(MilkTea_Exception_Block_t block);
+MilkTea_Exception_Suppress(MilkTea_Exception_Block_t block);
 
 #ifndef MilkTea_throw_what_size
 #define MilkTea_throw_what_size 1024
@@ -49,7 +49,7 @@ MilkTea_Exception_Catch(MilkTea_Exception_Block_t block);
 #define MilkTea_throwf(type, format, ...) MilkTea_block({ \
   char what_[MilkTea_throw_what_size]; \
   snprintf(what_, MilkTea_throw_what_size, "%s(%d): " format, TAG, __LINE__, ##__VA_ARGS__); \
-  MilkTea_Exception_Throw(MilkTea_Exception_##type, what_); \
+  MilkTea_Exception_Raise(MilkTea_Exception_##type, what_); \
 })
 #endif // ifdef MilkTea_ignore_throw
 
@@ -87,7 +87,7 @@ MilkTea_throwf(Assertion, ##__VA_ARGS__)
 #define MilkTea_panic(e) MilkTea_block({ \
   MilkTea_Exception_t e_ = e; \
   if (e_ != MilkTea_Exception_Nil) { \
-    MilkTea_Exception_Throw(e_, MilkTea_Exception_What()); \
+    MilkTea_Exception_Raise(e_, MilkTea_Exception_What()); \
   } \
 })
 

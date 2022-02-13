@@ -5,6 +5,14 @@
 
 #include <milktea/common/macro.h>
 
+#define MilkTea_defer_sym(s, block) \
+MilkTea::Defer s([&]() { \
+  block \
+})
+
+#define MilkTea_defer(block) \
+MilkTea_defer_sym(defer_, block)
+
 namespace MilkTea {
 
 class Defer final {

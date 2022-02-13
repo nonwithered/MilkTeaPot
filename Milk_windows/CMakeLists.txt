@@ -2,6 +2,7 @@ project(milk_windows)
 
 set(src_files
     "main.cc"
+    "proxy.cc"
 )
 
 set(src_dir

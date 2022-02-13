@@ -2,7 +2,7 @@
 #define LIB_MILKTEA_WRAPPER_EXCEPT_H_
 
 #define MilkTea_with_except(block) { \
-  return MilkTea::Exception::ToRawType(MilkTea::Exception::Catch([&]() block)); \
+  return MilkTea::Exception::ToRawType(MilkTea::Exception::Suppress([&]() block)); \
 }
 
 #define MilkTea_extern(section, list, block) \
@@ -26,13 +26,13 @@ std::string_view What() {
 
 MilkTea_noreturn
 inline
-void Throw(Type type, std::string_view what) {
-  MilkTea_Exception_Throw(ToRawType(type), what.data());
+void Raise(Type type, std::string_view what) {
+  MilkTea_Exception_Raise(ToRawType(type), what.data());
 }
 
 inline
-Type Catch(const std::function<void()> &block) {
-  return FromRawType(MilkTea_Exception_Catch(FunctionFactory<void()>::ToRawType<MilkTea_Exception_Block_t>(block)));
+Type Suppress(const std::function<void()> &block) {
+  return FromRawType(MilkTea_Exception_Suppress(FunctionFactory<void()>::ToRawType<MilkTea_Exception_Block_t>(block)));
 }
 
 } // namespace Exception

@@ -48,11 +48,11 @@ const char *MilkTea_Exception_What() {
 }
 
 MilkTea_noreturn
-void MilkTea_Exception_Throw(MilkTea_Exception_t type, const char *what) {
+void MilkTea_Exception_Raise(MilkTea_Exception_t type, const char *what) {
   throw MilkTea::ExceptionImpl(MilkTea::Exception::FromRawType(type), what);
 }
 
-MilkTea_Exception_t MilkTea_Exception_Catch(MilkTea_Exception_Block_t block) {
+MilkTea_Exception_t MilkTea_Exception_Suppress(MilkTea_Exception_Block_t block) {
   try {
     MilkTea_nonnull(block.obj_);
     MilkTea_nonnull(block.invoke_);

@@ -14,7 +14,7 @@ void MilkTea_call SoyMilk_BaseRenderer_Deleter(void *obj) {
 }
 void MilkTea_call SoyMilk_BaseRenderer_OnFrame(void *obj, const SoyMilk::FrameBufferWrapper::raw_type *fbo) {
   SoyMilk::FrameBufferWrapper fbo_ = const_cast<SoyMilk::FrameBufferWrapper::raw_type *>(fbo);
-  MilkTea::Defer defer([&fbo_]() {
+  MilkTea_defer({
     fbo_.release();
   });
   BaseRenderer_cast(obj).OnFrame(fbo_);

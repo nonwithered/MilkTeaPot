@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <cstdint>
 #include <cinttypes>
+#include <initializer_list>
 
 #include <milktea/common.h>
 
@@ -25,6 +26,19 @@ class From final {
     Append(prefix_);
     Append(t...);
     Append(suffix_);
+    return ss_.str();
+  }
+  template<typename container_type>
+  std::string operator()(typename container_type::const_iterator it, typename container_type::const_iterator n) && {
+    if (it != n) {
+      Append(prefix_);
+      Append(*it);
+      while (++it != n) {
+        Append(delimiter_);
+        Append(*it);
+      }
+      Append(suffix_);
+    }
     return ss_.str();
   }
  private:

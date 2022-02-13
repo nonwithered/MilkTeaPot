@@ -117,7 +117,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     termination_(termination),
     binder_() {}
   void Run() {
-    auto type = MilkTea::Exception::Catch([this]() {
+    auto type = MilkTea::Exception::Suppress([this]() {
       MilkTea_loop {
         auto [b, f] = Take();
         if (!b) {
@@ -147,7 +147,7 @@ class TimerWorkerImpl final : public std::enable_shared_from_this<TimerWorkerImp
     }) && OnTerminate(type, what);
   }
   bool OnTerminate(MilkTea::Exception::Type type, std::string_view what) {
-    MilkTea::Defer defer([this]() {
+    MilkTea_defer({
       if (!ChangeStateAnd(State::TIDYING, State::TERMINATED, [this]() -> void {
         state_cond_.notify_all();
       })) {
