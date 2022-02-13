@@ -10,7 +10,7 @@ namespace SoyBean_Windows {
 class FactoryImpl final : public SoyBean::BaseFactory {
   static constexpr char TAG[] = "SoyBean_Windows::FactoryImpl";
  public:
-  FactoryImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen)
+  FactoryImpl(unsigned int uDeviceID, void *dwCallback, void *dwInstance, uint32_t fdwOpen)
   : enable_(true), uDeviceID_(uDeviceID), dwCallback_(dwCallback), dwInstance_(dwInstance), fdwOpen_(fdwOpen) {}
   FactoryImpl(FactoryImpl &&another) : FactoryImpl() {
     std::swap(enable_, another.enable_);
@@ -42,8 +42,8 @@ class FactoryImpl final : public SoyBean::BaseFactory {
   FactoryImpl() : enable_(false), uDeviceID_(0), dwCallback_(nullptr), dwInstance_(nullptr), fdwOpen_(0) {}
   bool enable_;
   unsigned int uDeviceID_;
-  uint32_t *dwCallback_;
-  uint32_t *dwInstance_;
+  void *dwCallback_;
+  void *dwInstance_;
   uint32_t fdwOpen_;
   MilkTea_NonCopy(FactoryImpl)
   MilkTea_NonMoveAssign(FactoryImpl)

@@ -3,6 +3,8 @@
 #include <milk_console.h>
 #include <soybean_windows.h>
 
+#include "pipe.h"
+
 namespace Milk_Windows {
 
 class FoundationImpl final : public Milk_Console::BaseFoundation {

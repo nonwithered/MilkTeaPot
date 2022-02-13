@@ -15,8 +15,8 @@ ThrowOrNot(S(__VA_ARGS__), #S)
 class HandleImpl final : public SoyBean::BaseHandle {
   static constexpr char TAG[] = "SoyBean_Windows::HandleImpl";
  public:
-  HandleImpl(unsigned int uDeviceID, uint32_t *dwCallback, uint32_t *dwInstance, uint32_t fdwOpen) : HandleImpl() {
-    ThrowOrNot_invoke(Proxy_midiOutOpen, &obj_, uDeviceID, dwCallback, dwInstance, fdwOpen);
+  HandleImpl(unsigned int uDeviceID, void *dwCallback, void *dwInstance, uint32_t fdwOpen) : HandleImpl() {
+    ThrowOrNot_invoke(Proxy_midiOutOpen, obj_, uDeviceID, dwCallback, dwInstance, fdwOpen);
   }
   HandleImpl(HandleImpl &&another) : HandleImpl() {
     std::swap(obj_, another.obj_);
@@ -96,8 +96,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
     auto what = Proxy_midiInGetErrorText(r);
     MilkTea_throwf(Unknown, "%s: %s", tag.data(), what.data());
   }
-  HandleImpl() : obj_(nullptr) {}
-  Proxy_HMIDIOUT obj_;
+  HandleImpl() = default;
+  Proxy_HMIDIOUT obj_ = nullptr;
   MilkTea_NonCopy(HandleImpl)
   MilkTea_NonMoveAssign(HandleImpl)
 };
