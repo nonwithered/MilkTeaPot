@@ -61,6 +61,7 @@ class RemoteImpl final {
     if (!proc) {
       return nullptr;
     }
+    pipe.CloseReader();
     return std::make_shared<RemoteImpl>(std::make_unique<PipeWrapper>(std::move(pipe)));
   }
   explicit RemoteImpl(std::unique_ptr<MilkTea::BaseWriter> writer) : writer_(std::move(writer)) {}

@@ -70,9 +70,9 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
   State state() const {
     return state_;
   }
-  TeaPot::TimerFutureWrapper Prepare(std::vector<MilkPowder::MidiConstWrapper> vec) {
+  TeaPot::TimerFutureWrapper Prepare(std::vector<MilkPowder::MidiMutableWrapper> vec) {
     ChangeState(State::INIT, State::PREPARING);
-    return Post([vec_ = std::make_shared<std::vector<MilkPowder::MidiMutableWrapper>>(vec.begin(), vec.end())](auto &obj) {
+    return Post([vec_ = std::make_shared<std::vector<MilkPowder::MidiMutableWrapper>>(std::move(vec))](auto &obj) {
       std::vector<MilkPowder::MidiConstWrapper> v;
       std::for_each(vec_->begin(), vec_->end(), [&v](auto &it) {
         v.push_back(it.get());

@@ -33,6 +33,7 @@ bool Proxy_CheckLastError(std::string_view tag, std::string_view s, bool b) {
 
 struct Proxy_HANDLE_t;
 using Proxy_HANDLE = Proxy_HANDLE_t *;
+
 bool Proxy_CloseHandle(Proxy_HANDLE hObject);
 
 enum class Proxy_StdHandle_t {

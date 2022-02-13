@@ -20,11 +20,12 @@ class ProcessWrapper final {
     };
     Proxy_PROCESS_INFORMATION proc{};
     bool b = Milk_Windows_Proxy_invoke(Proxy_CreateProcess, proc, std::string(line), std::move(hStd));
-    MilkTea_logI("ctor -- success: %d, this: %p, pipes: { %p, %p, %p, }", b, this, pipes[0], pipes[1], pipes[2]);
     if (b) {
       reset(proc);
       CloseInfo();
     }
+    MilkTea_logI("ctor -- success: %d, this: %p, hStd: { %p, %p, %p, }, dwThreadId: %" PRIu32 ", hProcess: %p, dwThreadId: %" PRIu32 ", hThread: %p",
+      b, this, hStd[0], hStd[1], hStd[2], proc.dwThreadId, proc.hProcess, proc.dwThreadId, proc.hThread);
   }
   ProcessWrapper(ProcessWrapper &&another) : obj_(another.release()) {}
   ~ProcessWrapper() {
@@ -56,7 +57,7 @@ class ProcessWrapper final {
       return;
     }
     bool b = Milk_Windows_Proxy_invoke(Proxy_CloseHandle, h);
-    MilkTea_logI("CloseProcess -- success: %d, hProcess: %p", b, h);
+    MilkTea_logI("CloseProcess -- success: %d, dwProcessId: %" PRIu32 ", hProcess: %p", b, obj_.dwProcessId, h);
   }
   void CloseThread() {
     auto h = release(InfoType::THREAD);
@@ -64,7 +65,7 @@ class ProcessWrapper final {
       return;
     }
     bool b = Milk_Windows_Proxy_invoke(Proxy_CloseHandle, h);
-    MilkTea_logI("CloseThread -- success: %d, hThread: %p", b, h);
+    MilkTea_logI("CloseThread -- success: %d, dwThreadId: %" PRIu32 ", hThread: %p", b, obj_.dwThreadId, h);
   }
   Proxy_HANDLE release(InfoType type) {
     return reset(type, nullptr);

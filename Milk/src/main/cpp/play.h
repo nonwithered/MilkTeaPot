@@ -208,14 +208,17 @@ Usage: milk play [OPTIONS] [FILES]
       Err() << Tip() << "no input files" << End();
       return;
     }
-    std::vector<MilkPowder::MidiMutableWrapper> vec;
-    std::for_each(args.begin(), args.end(), [this, &vec](auto &filename) {
-      auto reader = Context().GetFileReader(filename);
-      auto midi = MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
-        return reader.Read(bytes, len);
-      });
-      vec.push_back(std::move(midi));
-    });
+    std::vector<MilkPowder::MidiMutableWrapper> vec = [this, &args]() -> auto {
+      auto n = args.size();
+      std::vector<MilkPowder::MidiMutableWrapper> v(n);
+      for (size_t i = 0; i != n; ++i) {
+        auto reader = Context().GetFileReader(args[i]);
+        v[i] = MilkPowder::MidiMutableWrapper::Parse([&reader](auto bytes[], auto len) -> auto {
+          return reader.Read(bytes, len);
+        });
+      }
+      return v;
+    }();
     TeaPot::TimerWorkerWrapper timer([this](auto type, auto what) -> bool {
       if (type == MilkTea::Exception::Type::Nil) {
         return false;

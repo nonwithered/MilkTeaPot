@@ -29,10 +29,10 @@ class PlayerWrapper final {
   }
   template<typename iterator_type>
   void Prepare(iterator_type iterator, size_t size) {
-    std::vector<const MilkPowder::Mapping::Midi::raw_type *> vec(size);
-    for (size_t i = 0; i != size; ++i) {
-      MilkPowder::ConstInterface<MilkPowder::Mapping::Midi> &it = *iterator;
-      vec[i] = it.get();
+    std::vector<MilkPowder::Mapping::Midi::raw_type *> vec(size);
+    for (size_t i = 0; i != size; ++i, ++iterator) {
+      MilkPowder::MidiMutableWrapper &it = *iterator;
+      vec[i] = it.release();
     }
     MilkTea_invoke_panic(SoyMilk_Player_Prepare, get(), vec.data(), size);
   }
