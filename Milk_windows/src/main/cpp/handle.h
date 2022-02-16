@@ -4,7 +4,7 @@
 #include <array>
 #include <functional>
 
-#include <soybean.h>
+#include <milkpowder.h>
 
 namespace Milk_Windows {
 
@@ -20,26 +20,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
   void Destroy() && final {
     delete this;
   }
-  void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    SendMsg(0x80, channel, note, pressure);
-  }
-  void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    SendMsg(0x90, channel, note, pressure);
-  }
-  void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    SendMsg(0xa0, channel, note, pressure);
-  }
-  void ControlChange(uint8_t channel, uint8_t control, uint8_t argument) final {
-    SendMsg(0xb0, channel, control, argument);
-  }
-  void ProgramChange(uint8_t channel, uint8_t program) final {
-    SendMsg(0xc0, channel, program);
-  }
-  void ChannelPressure(uint8_t channel, uint8_t pressure) final {
-    SendMsg(0xd0, channel, pressure);
-  }
-  void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
-    SendMsg(0xe0, channel, low, height);
+  void SendMessage(uint8_t type, uint8_t arg0, uint8_t arg1) final {
+    SendMsg(0x80, type, arg0, arg1);
   }
  private:
   void SendMsg(uint8_t type, uint8_t channel, uint8_t arg0, uint8_t arg1 = 0) {

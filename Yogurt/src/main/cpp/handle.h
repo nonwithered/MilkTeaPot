@@ -3,7 +3,7 @@
 
 #include <functional>
 
-#include <soybean.h>
+#include <milkpowder.h>
 
 #include "clock.h"
 
@@ -19,26 +19,8 @@ class HandleImpl final : public SoyBean::BaseHandle {
   void Destroy() && final {
     delete this;
   }
-  void NoteOff(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    Frame(0x80, channel, note, pressure);
-  }
-  void NoteOn(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    Frame(0x90, channel, note, pressure);
-  }
-  void AfterTouch(uint8_t channel, uint8_t note, uint8_t pressure) final {
-    Frame(0xa0, channel, note, pressure);
-  }
-  void ControlChange(uint8_t channel, uint8_t control, uint8_t argument) final {
-    Frame(0xb0, channel, control, argument);
-  }
-  void ProgramChange(uint8_t channel, uint8_t program) final {
-    Frame(0xc0, channel, program);
-  }
-  void ChannelPressure(uint8_t channel, uint8_t pressure) final {
-    Frame(0xd0, channel, pressure);
-  }
-  void PitchBend(uint8_t channel, uint8_t low, uint8_t height) final {
-    Frame(0xe0, channel, low, height);
+  void SendMessage(uint8_t type, uint8_t arg0, uint8_t arg1) final {
+    Consume(make_event(type, arg0, arg1));
   }
  private:
   static MilkPowder::EventMutableWrapper make_event(uint8_t type, uint8_t arg0, uint8_t arg1) {

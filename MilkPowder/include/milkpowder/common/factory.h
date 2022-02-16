@@ -1,7 +1,7 @@
 #ifndef LIB_SOYBEAN_COMMON_FACTORY_H_
 #define LIB_SOYBEAN_COMMON_FACTORY_H_
 
-#include <soybean/core.h>
+#include <milkpowder/core.h>
 
 namespace SoyBean {
 

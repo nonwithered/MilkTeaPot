@@ -277,6 +277,56 @@ MilkPowder_Sysex_FromMessage(MilkPowder_Sysex_t **obj, MilkPowder_Message_t *ite
 MilkTea_api
 MilkPowder_Sysex_ToMessage(const MilkPowder_Sysex_t *obj, const MilkPowder_Message_t **item);
 
+// SoyBean
+
+struct SoyBean_Handle_Interface_t {
+  MilkTea_Exception_t (MilkTea_call *Deleter)(void *obj);
+  MilkTea_Exception_t (MilkTea_call *SendMessage)(void *obj, uint8_t type, uint8_t arg0, uint8_t arg1);
+};
+
+#ifndef __cplusplus
+typedef struct SoyBean_Handle_Interface_t SoyBean_Handle_Interface_t;
+#endif
+
+struct SoyBean_Handle_t {
+  void *obj_;
+  const SoyBean_Handle_Interface_t *interface_;
+};
+
+#ifndef __cplusplus
+typedef struct SoyBean_Handle_t SoyBean_Handle_t;
+#endif
+
+struct SoyBean_Factory_Interface_t {
+  MilkTea_Exception_t (MilkTea_call *Deleter)(void *obj);
+  MilkTea_Exception_t (MilkTea_call *Create)(void *obj, SoyBean_Handle_t *handle);
+};
+
+#ifndef __cplusplus
+typedef struct SoyBean_Factory_Interface_t SoyBean_Factory_Interface_t;
+#endif
+
+struct SoyBean_Factory_t {
+  void *obj_;
+  const SoyBean_Factory_Interface_t *interface_;
+};
+
+#ifndef __cplusplus
+typedef struct SoyBean_Factory_t SoyBean_Factory_t;
+#endif
+
+MilkTea_api
+SoyBean_Handle_Create(SoyBean_Handle_t *obj, SoyBean_Factory_t factory);
+
+MilkTea_api
+SoyBean_Handle_Destroy(SoyBean_Handle_t obj);
+
+MilkTea_api
+SoyBean_Handle_SendMessage(SoyBean_Handle_t obj, uint8_t type, uint8_t arg0, uint8_t arg1);
+
+MilkTea_api
+SoyBean_Factory_Destroy(SoyBean_Factory_t obj);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

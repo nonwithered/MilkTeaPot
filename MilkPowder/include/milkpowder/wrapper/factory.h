@@ -1,7 +1,7 @@
 #ifndef LIB_SOYBEAN_WRAPPER_FACTORY_H_
 #define LIB_SOYBEAN_WRAPPER_FACTORY_H_
 
-#include <soybean/common.h>
+#include <milkpowder/common.h>
 
 namespace SoyBean {
 

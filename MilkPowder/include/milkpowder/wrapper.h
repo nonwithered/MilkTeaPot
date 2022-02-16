@@ -15,6 +15,9 @@
 #include <milkpowder/wrapper/reader.h>
 #include <milkpowder/wrapper/writer.h>
 
+#include <milkpowder/wrapper/handle.h>
+#include <milkpowder/wrapper/factory.h>
+
 #endif // ifdef __cplusplus
 
 #endif // ifndef LIB_MILKPOWDER_WRAPPER_H_

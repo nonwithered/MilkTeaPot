@@ -2,7 +2,6 @@
 #define LIB_YOGURT_CORE_RECORD_H_
 
 #include <milktea.h>
-#include <soybean.h>
 #include <milkpowder.h>
 
 #ifdef __cplusplus

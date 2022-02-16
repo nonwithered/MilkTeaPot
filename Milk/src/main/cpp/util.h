@@ -1,8 +1,7 @@
 #ifndef MILK_UTIL_H_
 #define MILK_UTIL_H_
 
-#include <milktea.h>
-#include <soybean.h>
+#include <vector>
 
 namespace Milk {
 

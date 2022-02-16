@@ -1,7 +1,7 @@
 #ifndef LIB_MILK_CORE_H_
 #define LIB_MILK_CORE_H_
 
-#include <soybean.h>
+#include <milkpowder.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -4,6 +4,9 @@ set(src_files
     "lib.cc"
     "parse.cc"
     "dump.cc"
+    "factory.cc"
+    "handle.cc"
+    "soybean.cc"
 )
 
 set(src_dir

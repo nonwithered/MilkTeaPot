@@ -4,9 +4,8 @@
 #include <memory>
 #include <iostream>
 
-#include <soybean_windows.h>
-
 #include "proc.h"
+#include "proxy.h"
 
 namespace Milk_Windows {
 
@@ -16,11 +15,15 @@ class RemoteImpl final {
  public:
   static constexpr char TAG[] = "Milk_Windows::RemoteImpl";
   static void Loop() {
-    auto midi = []() -> auto {
-      SoyBean::FactoryWrapper factory = SoyBean_Windows::make_factory(0, nullptr, nullptr, 0);
-      SoyBean::HandleWrapper handle = factory.Create();
-      return handle;
-    }();
+    Proxy_CloseHandle(Proxy_GetStdHandle(Proxy_StdHandle_t::Proxy_STD_OUTPUT_HANDLE));
+    Proxy_MMRESULT r = Proxy_MMSYSERR_NOERROR;
+    Proxy_HMIDIOUT midi = nullptr;
+    r = Proxy_midiOutOpen(midi, 0, nullptr, nullptr, 0);
+    std::cerr << r << std::endl;
+    MilkTea_defer({
+      r = Proxy_midiOutClose(midi);
+      std::cerr << r << std::endl;
+    });
     msg_type msg{};
     for (size_t c = 0; !std::cin.eof(); ) {
       {
@@ -36,39 +39,35 @@ class RemoteImpl final {
         continue;
       }
       c = 0;
-      RecvMsg(midi, msg[0], msg[1], msg[2], msg[3]);
-    }
-  }
-  static void RecvMsg(SoyBean::BaseHandle &midi, uint8_t type, uint8_t channel, uint8_t arg0, uint8_t arg1) {
-    type &= 0xf0;
-    channel &= 0x0f;
-    switch (type) {
-      case 0x80: midi.NoteOff(channel, arg0, arg1); return;
-      case 0x90: midi.NoteOn(channel, arg0, arg1); return;
-      case 0xa0: midi.AfterTouch(channel, arg0, arg1); return;
-      case 0xb0: midi.ControlChange(channel, arg0, arg1); return;
-      case 0xc0: midi.ProgramChange(channel, arg0); return;
-      case 0xd0: midi.ChannelPressure(channel, arg0); return;
-      case 0xe0: midi.PitchBend(channel, arg0, arg1); return;
+      r = Proxy_midiOutShortMsg(midi, *reinterpret_cast<uint32_t *>(msg.data()));
+      std::cerr << r << std::endl;
     }
   }
   static std::shared_ptr<RemoteImpl> Make(std::string_view work_path) {
-    PipeWrapper pipe({ true, false, });
-    if (!pipe) {
+    PipeWrapper pipe_in({ true, false, });
+    if (!pipe_in) {
       return nullptr;
     }
-    ProcessWrapper proc(MilkTea::ToString::From(" ")(work_path, TAG), { &pipe, nullptr, nullptr, });
+    PipeWrapper pipe_out({ false, true, });
+    if (!pipe_out) {
+      return nullptr;
+    }
+    ProcessWrapper proc(MilkTea::ToString::From(" ")(work_path, TAG), { &pipe_in, &pipe_out, nullptr, });
     if (!proc) {
       return nullptr;
     }
-    pipe.CloseReader();
-    return std::make_shared<RemoteImpl>(std::make_unique<PipeWrapper>(std::move(pipe)));
+    pipe_in.CloseReader();
+    pipe_out.CloseWriter();
+    uint8_t b[4] = { 0, 0, 0, 0, };
+    pipe_out.Read(b, 1);
+    pipe_in.Write(b, 4);
+    return std::make_shared<RemoteImpl>(std::make_unique<PipeWrapper>(std::move(pipe_in)));
   }
   explicit RemoteImpl(std::unique_ptr<MilkTea::BaseWriter> writer) : writer_(std::move(writer)) {}
   RemoteImpl(RemoteImpl &&another) : RemoteImpl(std::move(another.writer_)) {}
   void SendMsg(uint8_t type, uint8_t channel, uint8_t arg0, uint8_t arg1) {
-    msg_type msg = { type, channel, arg0, arg1, };
-    writer_->Write(msg.data(), msg_size);
+    uint32_t msg = arg1 << 020 | arg0 << 010 | type | channel;
+    writer_->Write(reinterpret_cast<const uint8_t *>(&msg), msg_size);
   }
  private:
   std::unique_ptr<MilkTea::BaseWriter> writer_;

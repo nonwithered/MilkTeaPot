@@ -131,32 +131,8 @@ class RendererImpl final : public SoyMilk::BaseRenderer {
  private:
   void OnFrame(SoyBean::HandleWrapper &handle, MilkPowder::EventConstWrapper event) {
     uint8_t type = event.GetType();
-    uint8_t channel = type & 0x0f;
-    type &= 0xf0;
     auto args = event.GetArgs();
-    switch (type) {
-      case 0x80:
-        handle.NoteOff(channel, args[0], args[1]);
-        break;
-      case 0x90:
-        handle.NoteOn(channel, args[0], args[1]);
-        break;
-      case 0xa0:
-        handle.AfterTouch(channel, args[0], args[1]);
-        break;
-      case 0xb0:
-        handle.ControlChange(channel, args[0], args[1]);
-        break;
-      case 0xc0:
-        handle.ProgramChange(channel, args[0]);
-        break;
-      case 0xd0:
-        handle.ChannelPressure(channel, args[0]);
-        break;
-      case 0xe0:
-        handle.PitchBend(channel, args[0], args[1]);
-        break;
-    }
+    handle.SendMessage(type, args[0], args[1]);
   }
   const std::vector<uint16_t> format_;
   std::vector<std::vector<SoyBean::HandleWrapper>> handle_;
@@ -246,7 +222,7 @@ Usage: milk play [OPTIONS] [FILES]
     };
     renderer.OnStartListener = [&]() {
       timer.Post([&]() {
-        player->Seek(pos);
+        player->Resume();
       });
     };
     renderer.OnSeekBeginListener = [&]() {

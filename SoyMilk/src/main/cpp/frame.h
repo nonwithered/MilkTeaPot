@@ -49,7 +49,11 @@ class FrameMidiImpl final {
     items_ = std::move(another.items_);
   }
   FrameTrackImpl &Obtain(key_type index) {
-    return items_.try_emplace(index).first->second;
+    auto it = items_.find(index);
+    if (it == items_.end()) {
+      it = items_.insert(it, { index, FrameTrackImpl() });
+    }
+    return it->second;
   }
   void GetItems(std::function<void(uint16_t, MilkPowder::MessageConstWrapper)> f) const {
     std::for_each(items_.begin(), items_.end(), [f](auto &trk) {
@@ -79,7 +83,11 @@ class FramePackageImpl final {
     items_ = std::move(another.items_);
   }
   FrameMidiImpl &Obtain(key_type time) {
-    return items_.try_emplace(time).first->second;
+    auto it = items_.find(time);
+    if (it == items_.end()) {
+      it = items_.insert(it, { time, FrameMidiImpl() });
+    }
+    return it->second;
   }
   void GetItems(std::function<void(size_t, uint16_t, MilkPowder::MessageConstWrapper)> f) const {
     std::for_each(items_.begin(), items_.end(), [f](auto &midi) {
