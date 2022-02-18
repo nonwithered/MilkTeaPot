@@ -9,7 +9,7 @@ extern "C" {
 
 struct tea_err_meta_t;
 
-typedef struct tea_err_meta (TEA_CALL *tea_err_type_t)();
+typedef struct tea_err_meta_t (TEA_CALL *tea_err_type_t)();
 
 struct tea_err_meta_t {
   tea_err_type_t super_;
@@ -42,6 +42,8 @@ tea_err_emit(tea_err_type_t, const char [], tea_err_t *);
 
 #ifdef __cplusplus
 
+#include <functional>
+
 struct tea_err_t {
  private:
   tea_err_t() = delete;
@@ -51,6 +53,9 @@ struct tea_err_t {
     return tea_err_emit(nullptr, nullptr, nullptr);
   }
   void drop() {
+    if (this == nullptr) {
+      return;
+    }
     assert(tea_err_emit(nullptr, nullptr, this) == nullptr);
   }
   tea_err_type_t type() const {
@@ -73,10 +78,22 @@ struct tea_err_t {
     static_assert(type != nullptr, "type != nullptr");
     assert(tea_err_emit(type, message, e) == nullptr);
   }
+  template<tea_err_type_t type>
+  tea_err_t *check(std::function<tea_err_t *(tea_err_t &)> block) {
+    if (this == nullptr) {
+      return nullptr;
+    }
+    if (!is(type)) {
+      return this;
+    }
+    return block(*this);
+  }
 };
 
 namespace tea {
   using err = ::tea_err_t;
+  using err_meta = ::tea_err_meta_t;
+  using err_type = ::tea_err_type_t;
 } // namespace tea
 
 #endif // ifdef __cplusplus
