@@ -33,6 +33,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_subdirectory(Tea)
 add_subdirectory(MilkTea)
 add_subdirectory(MilkTea_command)
 add_subdirectory(TeaPot)
