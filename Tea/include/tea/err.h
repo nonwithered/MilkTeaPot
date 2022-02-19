@@ -1,7 +1,11 @@
 #ifndef LIB_TEA_ERR_H_
 #define LIB_TEA_ERR_H_
 
-#include <tea/def.h>
+#include <tea/func.h>
+
+#ifdef __cplusplus
+#include <functional>
+#endif // ifdef __cplusplus
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,11 +22,14 @@ struct tea_err_meta_t {
 
 struct tea_err_t;
 
+TEA_API tea_err_t * TEA_CALL
+tea_err_emit(tea_err_type_t, const char [], tea_err_t *);
+
 TEA_API tea_err_type_t TEA_CALL
 tea_err_type(const tea_err_t *);
 
 TEA_API const char * TEA_CALL
-tea_err_message(const tea_err_t *);
+tea_err_what(const tea_err_t *);
 
 TEA_API const tea_err_t * TEA_CALL
 tea_err_cause(const tea_err_t *);
@@ -33,8 +40,16 @@ tea_err_suppressed(const tea_err_t *);
 TEA_API bool TEA_CALL
 tea_err_is(const tea_err_t *, tea_err_type_t);
 
-TEA_API tea_err_t * TEA_CALL
-tea_err_emit(tea_err_type_t, const char [], tea_err_t *);
+struct tea_err_dump_recv_t {
+  struct tea_err_dump_recv_capture_t *capture;
+  void (TEA_CALL *invoke)(struct tea_err_dump_recv_capture_t *, const char [], size_t);
+#ifdef __cplusplus
+  using sign_t = void(const char [], size_t);
+#endif // ifdef __cplusplus
+};
+
+TEA_API void TEA_CALL
+tea_err_dump(const tea_err_t *, tea_err_dump_recv_t);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -42,59 +57,55 @@ tea_err_emit(tea_err_type_t, const char [], tea_err_t *);
 
 #ifdef __cplusplus
 
-#include <functional>
+namespace tea {
+  using err_t = tea_err_t;
+  using err_meta_t = tea_err_meta_t;
+  using err_type_t = tea_err_type_t;
+} // namespace tea
 
-struct tea_err_t {
- private:
-  tea_err_t() = delete;
-  ~tea_err_t() = delete;
- public:
-  static tea_err_t *init() {
+struct tea_err_t : tea::facade_type<tea::err_t> {
+  static
+  auto init() -> tea::err_t * {
     return tea_err_emit(nullptr, nullptr, nullptr);
   }
-  void drop() {
-    if (this == nullptr) {
-      return;
-    }
-    assert(tea_err_emit(nullptr, nullptr, this) == nullptr);
+  auto drop() && -> void {
+    assert(tea_err_emit(nullptr, nullptr, get()) == nullptr);
   }
-  tea_err_type_t type() const {
-    return tea_err_type(this);
+  auto type() const -> tea::err_type_t {
+    return tea_err_type(get());
   }
-  const char *message() const {
-    return tea_err_message(this);
+  auto what() const -> const char * {
+    return tea_err_what(get());
   }
-  const tea_err_t *cause() const {
-    return tea_err_cause(this);
+  auto cause() const -> const tea::err_t * {
+    return tea_err_cause(get());
   }
-  const tea_err_t *suppressed() const {
-    return tea_err_suppressed(this);
+  auto suppressed() const -> const tea::err_t * {
+    return tea_err_suppressed(get());
   }
-  bool is(tea_err_type_t type) const {
-    return tea_err_is(this, type);
+  auto is(tea::err_type_t type) const -> bool {
+    return tea_err_is(get(), type);
   }
-  template<tea_err_type_t type>
-  static void raise(const char message[] = nullptr, tea_err_t *e = nullptr) {
-    static_assert(type != nullptr, "type != nullptr");
-    assert(tea_err_emit(type, message, e) == nullptr);
+  auto dump(std::function<void(const char [], size_t)> func) const -> void {
+    return tea_err_dump(get(), tea::type_cast<tea_err_dump_recv_t>(func));
   }
-  template<tea_err_type_t type>
-  tea_err_t *check(std::function<tea_err_t *(tea_err_t &)> block) {
-    if (this == nullptr) {
+  template<tea::err_type_t type>
+  auto check(std::function<tea::err_t *(tea::err_t &)> block) -> tea::err_t * {
+    if (get() == nullptr) {
       return nullptr;
     }
     if (!is(type)) {
-      return this;
+      return get();
     }
-    return block(*this);
+    return block(*get());
+  }
+  template<tea::err_type_t type,
+           typename = typename std::enable_if<type != nullptr>::type>
+  static
+  auto raise(const char what[] = nullptr, tea::err_t *e = nullptr) -> void {
+    assert(tea_err_emit(type, what, e) == nullptr);
   }
 };
-
-namespace tea {
-  using err = ::tea_err_t;
-  using err_meta = ::tea_err_meta_t;
-  using err_type = ::tea_err_type_t;
-} // namespace tea
 
 #endif // ifdef __cplusplus
 
