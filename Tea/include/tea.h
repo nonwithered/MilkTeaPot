@@ -5,7 +5,6 @@
 #include <tea/facade.h>
 #include <tea/func.h>
 #include <tea/err.h>
-
-#include <tea/wrap.h>
+#include <tea/ref.h>
 
 #endif // ifndef LIB_TEA_H_

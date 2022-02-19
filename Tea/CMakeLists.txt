@@ -2,6 +2,7 @@ project(tea)
 
 set(src_files
     "lib.cc"
+    "err.cc"
 )
 
 set(src_dir

@@ -66,9 +66,6 @@ auto drop(T &&ptr) -> void {
   ptr = nullptr;
 }
 
-template<typename FROM, typename TO>
-auto type_cast(FROM) -> TO = delete;
-
 } // namespace tea
 
 #endif // ifdef __cplusplus

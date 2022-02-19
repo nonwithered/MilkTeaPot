@@ -51,7 +51,7 @@ struct tea_err_dump_recv_t {
 };
 
 TEA_API void TEA_CALL
-tea_err_dump(const tea_err_t *, tea_err_dump_recv_t);
+tea_err_str(const tea_err_t *, tea_err_dump_recv_t);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -87,12 +87,12 @@ struct tea_err_t : tea::facade_type<tea::err_t> {
   auto is(tea::err_type_t type) const -> bool {
     return tea_err_is(get(), type);
   }
-  auto dump(std::function<void(const char [], size_t)> func) const -> void {
-    return tea_err_dump(get(), tea::type_cast<tea_err_dump_recv_t>(func));
+  auto str(std::function<void(const char [], size_t)> func) const -> void {
+    return tea_err_str(get(), tea::type_cast<tea_err_dump_recv_t>(func));
   }
   auto str() const -> std::string {
     std::string s;
-    dump([&s](auto what, auto size) {
+    str([&s](auto what, auto size) {
       s = std::string(what, size);
     });
     return s;
