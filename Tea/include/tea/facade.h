@@ -16,6 +16,24 @@ class remove_destructor {
   ~remove_destructor() = delete;
 };
 
+template<typename T>
+class remove_copy {
+  remove_copy(const T &) = delete;
+  auto operator=(const T &) -> void = delete;
+};
+
+template<typename T>
+class remove_move {
+  remove_move(T &&) = delete;
+  auto operator=(T &&) -> void = delete;
+};
+
+template<typename T>
+class remove_assign {
+  auto operator=(const T &) -> void = delete;
+  auto operator=(T &&) -> void = delete;
+};
+
 class empty_class : remove_constructor, remove_destructor {
 };
 
@@ -36,11 +54,10 @@ template<typename T,
          typename = typename std::enable_if<std::is_pointer_v<pointer_type>>::type,
          typename class_type = typename std::remove_pointer<pointer_type>::type,
          typename = typename std::enable_if<std::is_class_v<class_type>>::type,
-         typename = typename std::enable_if<std::is_base_of_v<facade_type<class_type>, class_type>>::type,
          auto drop_method = &class_type::drop,
          typename drop_method_type = decltype(drop_method),
          typename = typename std::enable_if<std::is_member_function_pointer_v<drop_method_type>>::type,
-         typename = typename std::enable_if<std::is_same_v<drop_method_type, void (class_type::*)() &&>>::type>
+         typename = typename std::enable_if<std::is_same_v<drop_method_type, void (class_type:: *)() &&>>::type>
 auto drop(T &&ptr) -> void {
   if (ptr == nullptr) {
     return;
@@ -50,7 +67,7 @@ auto drop(T &&ptr) -> void {
 }
 
 template<typename FROM, typename TO>
-auto type_cast(FROM) -> TO;
+auto type_cast(FROM) -> TO = delete;
 
 } // namespace tea
 

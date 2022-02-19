@@ -1,14 +1,13 @@
 #ifndef LIB_TEA_FUNC_H_
 #define LIB_TEA_FUNC_H_
 
-#include <tea/facade.h>
-#include <tea/def.h>
-
 #ifdef __cplusplus
+
+#include <tea/def.h>
+#include <tea/facade.h>
 
 #include <type_traits>
 #include <functional>
-
 
 namespace tea {
 
@@ -43,8 +42,7 @@ struct func_adapter;
 
 template<typename capture_type, typename result_type, typename ...args_type>
 struct func_adapter<capture_type, result_type(args_type...)> final : empty_class {
-  static
-  result_type TEA_CALL invoke(capture_type *capture, args_type ...args) {
+  static auto TEA_CALL invoke(capture_type *capture, args_type ...args) -> result_type{
     return (*(std::function<result_type(args_type...)> *) capture)(std::forward<args_type>(args)...);
   }
 };

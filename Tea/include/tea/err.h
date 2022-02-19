@@ -1,11 +1,13 @@
 #ifndef LIB_TEA_ERR_H_
 #define LIB_TEA_ERR_H_
 
-#include <tea/func.h>
-
 #ifdef __cplusplus
 #include <functional>
+#include <string>
+#include <tea/func.h>
 #endif // ifdef __cplusplus
+
+#include <tea/def.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,8 +66,7 @@ namespace tea {
 } // namespace tea
 
 struct tea_err_t : tea::facade_type<tea::err_t> {
-  static
-  auto init() -> tea::err_t * {
+  static auto init() -> tea::err_t * {
     return tea_err_emit(nullptr, nullptr, nullptr);
   }
   auto drop() && -> void {
@@ -89,6 +90,13 @@ struct tea_err_t : tea::facade_type<tea::err_t> {
   auto dump(std::function<void(const char [], size_t)> func) const -> void {
     return tea_err_dump(get(), tea::type_cast<tea_err_dump_recv_t>(func));
   }
+  auto str() const -> std::string {
+    std::string s;
+    dump([&s](auto what, auto size) {
+      s = std::string(what, size);
+    });
+    return s;
+  }
   template<tea::err_type_t type>
   auto check(std::function<tea::err_t *(tea::err_t &)> block) -> tea::err_t * {
     if (get() == nullptr) {
@@ -101,8 +109,7 @@ struct tea_err_t : tea::facade_type<tea::err_t> {
   }
   template<tea::err_type_t type,
            typename = typename std::enable_if<type != nullptr>::type>
-  static
-  auto raise(const char what[] = nullptr, tea::err_t *e = nullptr) -> void {
+  static auto raise(const char what[] = nullptr, tea::err_t *e = nullptr) -> void {
     assert(tea_err_emit(type, what, e) == nullptr);
   }
 };
