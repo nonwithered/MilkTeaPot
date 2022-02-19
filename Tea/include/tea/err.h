@@ -45,13 +45,10 @@ tea_err_is(const tea_err_t *, tea_err_type_t);
 struct tea_err_dump_recv_t {
   struct tea_err_dump_recv_capture_t *capture;
   void (TEA_CALL *invoke)(struct tea_err_dump_recv_capture_t *, const char [], size_t);
-#ifdef __cplusplus
-  using sign_t = void(const char [], size_t);
-#endif // ifdef __cplusplus
 };
 
 TEA_API void TEA_CALL
-tea_err_str(const tea_err_t *, tea_err_dump_recv_t);
+tea_err_dump(const tea_err_t *, tea_err_dump_recv_t);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -64,6 +61,11 @@ namespace tea {
   using err_meta_t = tea_err_meta_t;
   using err_type_t = tea_err_type_t;
 } // namespace tea
+
+template<>
+struct tea::func_sign<tea_err_dump_recv_t> {
+  using type = void(const char [], size_t);
+};
 
 struct tea_err_t : tea::facade_type<tea::err_t> {
   static auto init() -> tea::err_t * {
@@ -87,12 +89,12 @@ struct tea_err_t : tea::facade_type<tea::err_t> {
   auto is(tea::err_type_t type) const -> bool {
     return tea_err_is(get(), type);
   }
-  auto str(std::function<void(const char [], size_t)> func) const -> void {
-    return tea_err_str(get(), tea::type_cast<tea_err_dump_recv_t>(func));
+  auto dump(std::function<void(const char [], size_t)> func) const -> void {
+    return tea_err_dump(get(), tea::type_cast<tea_err_dump_recv_t>(func));
   }
   auto str() const -> std::string {
     std::string s;
-    str([&s](auto what, auto size) {
+    dump([&s](auto what, auto size) {
       s = std::string(what, size);
     });
     return s;

@@ -6,39 +6,12 @@
 #include <type_traits>
 #include <memory>
 
+#include <tea/life.h>
+
 namespace tea {
 
-class remove_constructor {
-  remove_constructor() = delete;
-};
-
-class remove_destructor {
-  ~remove_destructor() = delete;
-};
-
-template<typename T>
-class remove_copy {
-  remove_copy(const T &) = delete;
-  auto operator=(const T &) -> void = delete;
-};
-
-template<typename T>
-class remove_move {
-  remove_move(T &&) = delete;
-  auto operator=(T &&) -> void = delete;
-};
-
-template<typename T>
-class remove_assign {
-  auto operator=(const T &) -> void = delete;
-  auto operator=(T &&) -> void = delete;
-};
-
-class empty_class : remove_constructor, remove_destructor {
-};
-
 template<typename T,
-         typename = typename std::enable_if<std::is_class_v<T>>::type>
+         typename = std::enable_if_t<std::is_class_v<T>>>
 class facade_type : empty_class {
  protected:
   auto get() -> T * {
@@ -50,14 +23,22 @@ class facade_type : empty_class {
 };
 
 template<typename T,
-         typename pointer_type = typename std::remove_reference<T>::type,
-         typename = typename std::enable_if<std::is_pointer_v<pointer_type>>::type,
-         typename class_type = typename std::remove_pointer<pointer_type>::type,
-         typename = typename std::enable_if<std::is_class_v<class_type>>::type,
+         typename class_type = T,
+         typename = std::enable_if_t<std::is_class_v<class_type>>,
+         typename = std::enable_if_t<!std::is_destructible_v<class_type>>>
+struct Drop {
+  auto drop(T &&) -> void;
+};
+
+template<typename T,
+         typename pointer_type = std::remove_reference_t<T>,
+         typename = std::enable_if_t<std::is_pointer_v<pointer_type>>,
+         typename class_type = std::remove_pointer_t<pointer_type>,
+         typename = std::enable_if_t<std::is_base_of_v<Drop<class_type>, class_type>>,
          auto drop_method = &class_type::drop,
          typename drop_method_type = decltype(drop_method),
-         typename = typename std::enable_if<std::is_member_function_pointer_v<drop_method_type>>::type,
-         typename = typename std::enable_if<std::is_same_v<drop_method_type, void (class_type:: *)() &&>>::type>
+         typename = std::enable_if_t<std::is_member_function_pointer_v<drop_method_type>>,
+         typename = std::enable_if_t<std::is_same_v<drop_method_type, void (class_type:: *)() &&>>>
 auto drop(T &&ptr) -> void {
   if (ptr == nullptr) {
     return;

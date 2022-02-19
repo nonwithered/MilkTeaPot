@@ -11,37 +11,43 @@
 
 namespace tea {
 
-template<typename T, auto field,
-         typename class_type = T,
-         typename = typename std::enable_if<std::is_class_v<class_type>>::type,
-         typename field_type = decltype(field),
-         typename = typename std::enable_if<std::is_member_object_pointer_v<field_type>>::type>
-struct field_type_of final : empty_class {
-  using type = typename std::remove_pointer<
-  typename std::remove_reference<
-  decltype(((class_type *) nullptr)->*field)
-  >::type>::type;
+template<typename T>
+struct func_sign {
 };
 
+template<typename T>
+using func_sign_t = typename func_sign<T>::type;
+
+template<typename T, auto field,
+         typename class_type = T,
+         typename = std::enable_if_t<std::is_class_v<class_type>>,
+         typename field_type = decltype(field),
+         typename = std::enable_if_t<std::is_member_object_pointer_v<field_type>>>
+struct field_type_of {
+  using type = std::remove_pointer_t<std::remove_reference_t<decltype(((class_type *) nullptr)->*field)>>;
+};
+
+template<typename T, auto field>
+using field_type_of_t = typename field_type_of<T, field>::type;
+
 template<typename T,
-         typename = typename std::enable_if<std::is_class_v<T>>::type,
-         typename = typename std::enable_if<std::is_trivial_v<T>>::type,
-         typename sign_t = typename T::sign_t,
-         typename = typename std::enable_if<std::is_function_v<sign_t>>::type>
-struct func_info final : empty_class {
+         typename = std::enable_if_t<std::is_class_v<T>>,
+         typename = std::enable_if_t<std::is_trivial_v<T>>,
+         typename = std::enable_if_t<std::is_function_v<func_sign_t<T>>>>
+struct func_info final {
   using class_type = T;
-  using sign_type = sign_t;
+  using sign_type = func_sign_t<T>;
   static constexpr auto capture = &class_type::capture;
-  using capture_type = typename field_type_of<class_type, capture>::type;
+  using capture_type = field_type_of_t<class_type, capture>;
   static constexpr auto invoke =  &class_type::invoke;
-  using invoke_type = typename field_type_of<class_type, invoke>::type;
+  using invoke_type = field_type_of_t<class_type, invoke>;
 };
 
 template<typename capture_type, typename sign_type>
 struct func_adapter;
 
 template<typename capture_type, typename result_type, typename ...args_type>
-struct func_adapter<capture_type, result_type(args_type...)> final : empty_class {
+struct func_adapter<capture_type, result_type(args_type...)> {
   static auto TEA_CALL invoke(capture_type *capture, args_type ...args) -> result_type{
     return (*(std::function<result_type(args_type...)> *) capture)(std::forward<args_type>(args)...);
   }
