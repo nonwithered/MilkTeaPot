@@ -3,35 +3,49 @@
 
 #ifdef __cplusplus
 
+#include <functional>
+#include <memory>
+
 namespace tea {
 
-class remove_constructor {
-  remove_constructor() = delete;
+class remove_ctor {
+  remove_ctor() = delete;
 };
 
-class remove_destructor {
-  ~remove_destructor() = delete;
+class remove_dtor {
+  ~remove_dtor() = delete;
+ protected:
+  remove_dtor() = default;
 };
 
-template<typename T>
 class remove_copy {
-  remove_copy(const T &) = delete;
-  auto operator=(const T &) -> void = delete;
+  remove_copy(const remove_copy &) = delete;
+ protected:
+  remove_copy() = default;
+  remove_copy(remove_copy &&) = default;
 };
 
-template<typename T>
-class remove_move {
-  remove_move(T &&) = delete;
-  auto operator=(T &&) -> void = delete;
+class remove_move : protected remove_copy {
+  remove_move(remove_move &&) = delete;
+ protected:
+  remove_move() = default;
 };
 
-template<typename T>
-class remove_assign {
-  auto operator=(const T &) -> void = delete;
-  auto operator=(T &&) -> void = delete;
+class empty_class : remove_move, remove_ctor, remove_dtor {
 };
 
-class empty_class : remove_constructor, remove_destructor {
+struct defer final : remove_move {
+  template<typename func_type>
+  defer(func_type func) : func_(std::move(func)) {}
+  ~defer() {
+    auto func = std::move(func_);
+    if (!func) {
+      return;
+    }
+    func();
+  }
+ private:
+  std::function<void()> func_;
 };
 
 } // namespace tea

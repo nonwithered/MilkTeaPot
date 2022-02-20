@@ -121,6 +121,11 @@ struct tea_err_t : tea::facade_type<tea::err_t> {
   static auto raise(const char what[] = nullptr, tea::err_t *e = nullptr) -> void {
     assert(tea_err_emit(type, what, e) == nullptr);
   }
+  template<tea::err_type_t type>
+  static auto raise(std::function<std::string()> func, tea::err_t *e = nullptr) -> void {
+    auto what = func();
+    raise<type>(what.data(), e);
+  }
 };
 
 #endif // ifdef __cplusplus
