@@ -64,40 +64,40 @@ tea_err_dump)(const tea_err_t *, tea_err_dump_recv_t);
 #ifdef __cplusplus
 
 namespace tea {
-  using err_t = tea_err_t;
-  using err_meta_t = tea_err_meta_t;
-  using err_type_t = tea_err_type_t;
+  using err = tea_err_t;
+  using err_meta = tea_err_meta_t;
+  using err_type = tea_err_type_t;
 } // namespace tea
 
 template<>
-struct tea::func_sign<tea_err_dump_recv_t> {
+struct tea::meta::func_sign<tea_err_dump_recv_t> {
   using type = void(const char [], size_t);
 };
 
-struct tea_err_t : tea::facade_type<tea::err_t> {
-  static auto init() -> tea::err_t * {
+struct tea_err_t : tea::facade_type<tea::err> {
+  static auto init() -> tea::err * {
     return tea_err_emit(nullptr, nullptr, nullptr);
   }
   auto drop() && -> void {
     assert(tea_err_emit(nullptr, nullptr, get()) == nullptr);
   }
-  auto type() const -> tea::err_type_t {
+  auto type() const -> tea::err_type {
     return tea_err_type(get());
   }
   auto what() const -> const char * {
     return tea_err_what(get());
   }
-  auto cause() const -> const tea::err_t * {
+  auto cause() const -> const tea::err * {
     return tea_err_cause(get());
   }
-  auto suppressed() const -> const tea::err_t * {
+  auto suppressed() const -> const tea::err * {
     return tea_err_suppressed(get());
   }
-  auto is(tea::err_type_t type) const -> bool {
+  auto is(tea::err_type type) const -> bool {
     return tea_err_is(get(), type);
   }
   auto dump(std::function<void(const char [], size_t)> func) const -> void {
-    return tea_err_dump(get(), tea::type_cast<tea_err_dump_recv_t>(func));
+    return tea_err_dump(get(), tea::func_cast<tea_err_dump_recv_t>(func));
   }
   auto str() const -> std::string {
     std::string s;
@@ -106,8 +106,8 @@ struct tea_err_t : tea::facade_type<tea::err_t> {
     });
     return s;
   }
-  template<tea::err_type_t type>
-  auto check(std::function<tea::err_t *(tea::err_t &)> block) -> tea::err_t * {
+  template<tea::err_type type>
+  auto check(std::function<tea::err *(tea::err &)> block) -> tea::err * {
     if (get() == nullptr) {
       return nullptr;
     }
@@ -116,13 +116,13 @@ struct tea_err_t : tea::facade_type<tea::err_t> {
     }
     return block(*get());
   }
-  template<tea::err_type_t type,
-           typename = typename std::enable_if<type != nullptr>::type>
-  static auto raise(const char what[] = nullptr, tea::err_t *e = nullptr) -> void {
+  template<tea::err_type type,
+           typename = std::enable_if_t<type != nullptr>>
+  static auto raise(const char what[] = nullptr, tea::err *e = nullptr) -> void {
     assert(tea_err_emit(type, what, e) == nullptr);
   }
-  template<tea::err_type_t type>
-  static auto raise(std::function<std::string()> func, tea::err_t *e = nullptr) -> void {
+  template<tea::err_type type>
+  static auto raise(std::function<std::string()> func, tea::err *e = nullptr) -> void {
     auto what = func();
     raise<type>(what.data(), e);
   }

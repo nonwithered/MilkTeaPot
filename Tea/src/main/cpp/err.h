@@ -11,26 +11,20 @@ namespace tea {
 
 struct Err;
 
-namespace meta {
-
 template<>
-struct unwrap_pair<Err> {
-  using type = err_t;
+struct meta::unwrap_pair<Err> {
+  using type = err;
 };
 
 template<>
-struct wrap_pair<err_t> {
+struct meta::wrap_pair<err> {
   using type = Err;
 };
-
-} // namespace meta
 
 using namespace meta;
 
 struct Err final {
-  using raw_type = err_t *;
-  using const_raw_type = const err_t *;
-  const err_type_t type_;
+  const err_type type_;
   const std::string what_;
   Err *const cause_;
   Err *const suppressed_;
@@ -41,13 +35,13 @@ struct Err final {
   auto what() const -> const char * {
     return what_.data();
   }
-  auto cause() const -> const err_t * {
+  auto cause() const -> const err * {
     return unwrap_cast(*cause_);
   }
-  auto suppressed() const -> const err_t * {
+  auto suppressed() const -> const err * {
     return unwrap_cast(*suppressed_);
   }
-  auto is(err_type_t type) const -> bool {
+  auto is(err_type type) const -> bool {
     if (type == nullptr) {
       return true;
     }
@@ -63,7 +57,7 @@ struct Err final {
     recv.invoke(recv.capture, s.data(), s.size());
   }
   static
-  auto emit(err_type_t type, const char what[], err_t *cause) -> tea_err_t * {
+  auto emit(err_type type, const char what[], err *cause) -> err * {
     auto *e = cell();
     if (type != nullptr) {
       cell() = new Err {

@@ -11,6 +11,8 @@
 
 namespace tea {
 
+namespace meta {
+
 template<typename T>
 struct func_sign {
 };
@@ -44,23 +46,25 @@ struct func_info final {
 };
 
 template<typename capture_type, typename sign_type>
-struct func_adapter;
+struct func_handle;
 
 template<typename capture_type, typename result_type, typename ...args_type>
-struct func_adapter<capture_type, result_type(args_type...)> {
+struct func_handle<capture_type, result_type(args_type...)> {
   static auto TEA_CALL invoke(capture_type *capture, args_type ...args) -> result_type{
     return (*(std::function<result_type(args_type...)> *) capture)(std::forward<args_type>(args)...);
   }
 };
 
+} // namespace meta
+
 template<typename T,
-         typename info = func_info<T>>
-auto type_cast(std::function<typename info::sign_type> &func) -> T {
+         typename info = meta::func_info<T>>
+auto func_cast(std::function<typename info::sign_type> &func) -> T {
   using capture_type = typename info::capture_type;
   using sign_type = typename info::sign_type;
   return T {
     .capture = (capture_type *) &func,
-    .invoke = func_adapter<capture_type, sign_type>::invoke,
+    .invoke = meta::func_handle<capture_type, sign_type>::invoke,
   };
 }
 
