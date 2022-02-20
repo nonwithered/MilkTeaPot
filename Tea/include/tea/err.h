@@ -5,6 +5,7 @@
 #include <functional>
 #include <string>
 #include <tea/func.h>
+#include <tea/mask.h>
 #endif // ifdef __cplusplus
 
 #include <tea/def.h>
@@ -74,7 +75,7 @@ struct tea::meta::func_sign<tea_err_dump_recv_t> {
   using type = void(const char [], size_t);
 };
 
-struct tea_err_t : tea::facade_type<tea::err> {
+struct tea_err_t : tea::mask_type<tea::err> {
   static auto init() -> tea::err * {
     return tea_err_emit(nullptr, nullptr, nullptr);
   }

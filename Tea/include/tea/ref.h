@@ -7,7 +7,6 @@
 #include <tuple>
 
 #include <tea/def.h>
-#include <tea/facade.h>
 #include <tea/cast.h>
 
 #define TEA_FUNC_LINK(S, F) \

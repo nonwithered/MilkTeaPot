@@ -1,5 +1,5 @@
-#ifndef LIB_TEA_FACADE_H_
-#define LIB_TEA_FACADE_H_
+#ifndef LIB_TEA_MASK_H_
+#define LIB_TEA_MASK_H_
 
 #ifdef __cplusplus
 
@@ -19,7 +19,7 @@ struct Drop {
 
 template<typename T,
          typename = std::enable_if_t<std::is_class_v<T>>>
-class facade_type : empty_class, Drop<T> {
+class mask_type : empty_class, Drop<T> {
  protected:
   auto get() -> T * {
     return (T *) this;
@@ -50,4 +50,4 @@ auto drop(T &&ptr) -> void {
 
 #endif // ifdef __cplusplus
 
-#endif // ifndef LIB_TEA_FACADE_H_
+#endif // ifndef LIB_TEA_MASK_H_

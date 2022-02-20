@@ -3,11 +3,10 @@
 
 #ifdef __cplusplus
 
-#include <tea/def.h>
-#include <tea/facade.h>
-
 #include <type_traits>
 #include <functional>
+
+#include <tea/def.h>
 
 namespace tea {
 
