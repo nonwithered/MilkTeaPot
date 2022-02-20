@@ -11,19 +11,25 @@ namespace tea {
 
 struct Err;
 
+namespace meta {
+
 template<>
-struct type_pair<Err> {
+struct unwrap_pair<Err> {
   using type = err_t;
 };
 
 template<>
-struct type_pair<err_t> {
+struct wrap_pair<err_t> {
   using type = Err;
 };
 
+} // namespace meta
+
+using namespace meta;
+
 struct Err final {
-  using cast_type = err_t *;
-  using const_cast_type = const err_t *;
+  using raw_type = err_t *;
+  using const_raw_type = const err_t *;
   const err_type_t type_;
   const std::string what_;
   Err *const cause_;
