@@ -9,10 +9,17 @@
 #include <tea/life.h>
 
 namespace tea {
+template<typename T,
+         typename class_type = T,
+         typename = std::enable_if_t<std::is_class_v<class_type>>,
+         typename = std::enable_if_t<!std::is_destructible_v<class_type>>>
+struct Drop {
+//  auto drop() && -> void;
+};
 
 template<typename T,
          typename = std::enable_if_t<std::is_class_v<T>>>
-class facade_type : empty_class {
+class facade_type : empty_class, Drop<T> {
  protected:
   auto get() -> T * {
     return (T *) this;
@@ -20,14 +27,6 @@ class facade_type : empty_class {
   auto get() const -> const T * {
     return (T *) this;
   }
-};
-
-template<typename T,
-         typename class_type = T,
-         typename = std::enable_if_t<std::is_class_v<class_type>>,
-         typename = std::enable_if_t<!std::is_destructible_v<class_type>>>
-struct Drop {
-  auto drop(T &&) -> void;
 };
 
 template<typename T,

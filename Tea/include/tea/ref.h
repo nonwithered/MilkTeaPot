@@ -24,7 +24,7 @@ struct Class {
   template<typename ...args_type>
   static
   auto TEA_CALL create(args_type ...args) -> unwrap_type {
-    auto &ref = *std::make_unique<class_type>(std::forward<args_type>(args)...).release();
+    auto &ref = *class_type::init(std::forward<args_type>(args)...);
     return unwrap_cast(ref);
   }
   static

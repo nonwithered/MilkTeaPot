@@ -64,48 +64,51 @@ struct Err final {
   }
   static
   auto emit(err_type_t type, const char what[], err_t *cause) -> tea_err_t * {
+    auto *e = cell();
     if (type != nullptr) {
       cell() = new Err {
           .type_ = type,
           .what_ = what == nullptr ? "" : what,
           .cause_ = &wrap_cast(cause),
-          .suppressed_ = cell(),
-    };
+          .suppressed_ = e,
+      };
       return nullptr;
     }
     if (cause != nullptr) {
       delete &wrap_cast(cause);
       return nullptr;
     }
-    if (cell() == nullptr) {
+    if (e == nullptr) {
       return nullptr;
     }
-    cause = unwrap_cast(*cell());
+    cause = unwrap_cast(*e);
     cell() = nullptr;
     return cause;
   }
  private:
   auto str() const -> std::string {
     std::stringstream ss;
-    dump_to(ss, 0);
+    dump_to(ss, 0, true);
     return ss.str();
   }
-  void dump_to(std::stringstream &ss, size_t n) const {
-    ++n;
+  void dump_to(std::stringstream &ss, size_t n, bool recusive) const {
     ss << type_().name_;
     if (!what_.empty()) {
       ss << ": " << what_;
     }
     ss << "\n";
     if (cause_ != nullptr) {
-      space(ss, n);
+      space(ss, n + 1);
       ss << "Caused by: ";
-      cause_->dump_to(ss, n);
+      cause_->dump_to(ss, n + 1, true);
+    }
+    if (!recusive) {
+      return;
     }
     for (Err *it = suppressed_; it != nullptr; it = it->suppressed_) {
       space(ss, n);
       ss << "Suppressed: ";
-      it->dump_to(ss, n);
+      it->dump_to(ss, n, false);
     }
   }
   static

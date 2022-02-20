@@ -1,5 +1,4 @@
 #include <milk.h>
-
 #include <milk_console.h>
 
 #include "factory.h"
