@@ -10,33 +10,13 @@ Err *&Err::cell() {
 
 extern "C" {
 
-auto tea_err_emit(err_type_t type, const char what[], err_t *cause) -> err_t * {
-  return Err::emit(type, what, cause);
-}
-
-auto tea_err_type(const err_t *obj) -> err_type_t {
-  return Class<Err>::Field<const err_type_t>::get<&Err::type_>(obj);
-}
-
-auto tea_err_what(const err_t *obj) -> const char * {
-  return Class<Err>::Method<const char *>::invoke<&Err::what>(obj);
-}
-
-auto tea_err_cause(const err_t *obj) -> const err_t * {
-  return Class<Err>::Method<const err_t *>::invoke<&Err::cause>(obj);
-}
-
-auto tea_err_suppressed(const err_t *obj) -> const err_t * {
-  return unwrap_cast(*Class<Err>::Field<Err *const>::get<&Err::suppressed_>(obj));
-}
-
-auto tea_err_is(const tea_err_t *obj, tea_err_type_t type) -> bool {
-  return Class<Err>::Method<bool, err_type_t>::invoke<&Err::is>(obj, type);
-}
-
-auto tea_err_dump(const err_t *obj, tea_err_dump_recv_t recv) -> void {
-  Class<Err>::Method<void, tea_err_dump_recv_t>::invoke<&Err::dump>(obj, recv);
-}
+TEA_FUNC_LINK(tea_err_emit, Err::emit);
+TEA_FUNC_LINK(tea_err_type, field_handle::getter<&Err::type_>);
+TEA_FUNC_LINK(tea_err_what, method_handle<>::invoke<&Err::what>);
+TEA_FUNC_LINK(tea_err_cause, method_handle<>::invoke<&Err::cause>);
+TEA_FUNC_LINK(tea_err_suppressed, method_handle<>::invoke<&Err::suppressed>);
+TEA_FUNC_LINK(tea_err_is, method_handle<tea_err_type_t>::invoke<&Err::is>);
+TEA_FUNC_LINK(tea_err_dump, method_handle<tea_err_dump_recv_t>::invoke<&Err::dump>);
 
 } // extern "C"
 

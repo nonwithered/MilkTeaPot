@@ -24,31 +24,38 @@ struct tea_err_meta_t {
 
 struct tea_err_t;
 
-TEA_API tea_err_t * TEA_CALL
-tea_err_emit(tea_err_type_t, const char [], tea_err_t *);
-
-TEA_API tea_err_type_t TEA_CALL
-tea_err_type(const tea_err_t *);
-
-TEA_API const char * TEA_CALL
-tea_err_what(const tea_err_t *);
-
-TEA_API const tea_err_t * TEA_CALL
-tea_err_cause(const tea_err_t *);
-
-TEA_API const tea_err_t * TEA_CALL
-tea_err_suppressed(const tea_err_t *);
-
-TEA_API bool TEA_CALL
-tea_err_is(const tea_err_t *, tea_err_type_t);
-
 struct tea_err_dump_recv_t {
   struct tea_err_dump_recv_capture_t *capture;
   void (TEA_CALL *invoke)(struct tea_err_dump_recv_capture_t *, const char [], size_t);
 };
 
-TEA_API void TEA_CALL
-tea_err_dump(const tea_err_t *, tea_err_dump_recv_t);
+extern
+TEA_API tea_err_t * (TEA_CALL *
+tea_err_emit)(tea_err_type_t, const char [], tea_err_t *);
+
+extern
+TEA_API tea_err_type_t (TEA_CALL *
+tea_err_type)(const tea_err_t *);
+
+extern
+TEA_API const char * (TEA_CALL *
+tea_err_what)(const tea_err_t *);
+
+extern
+TEA_API const tea_err_t * (TEA_CALL *
+tea_err_cause)(const tea_err_t *);
+
+extern
+TEA_API const tea_err_t * (TEA_CALL *
+tea_err_suppressed)(const tea_err_t *);
+
+extern
+TEA_API bool (TEA_CALL *
+tea_err_is)(const tea_err_t *, tea_err_type_t);
+
+extern
+TEA_API void (TEA_CALL *
+tea_err_dump)(const tea_err_t *, tea_err_dump_recv_t);
 
 #ifdef __cplusplus
 } // extern "C"

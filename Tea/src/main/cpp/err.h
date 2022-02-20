@@ -44,6 +44,9 @@ struct Err final {
   auto cause() const -> const err_t * {
     return unwrap_cast(*cause_);
   }
+  auto suppressed() const -> const err_t * {
+    return unwrap_cast(*suppressed_);
+  }
   auto is(err_type_t type) const -> bool {
     if (type == nullptr) {
       return true;
@@ -84,10 +87,10 @@ struct Err final {
  private:
   auto str() const -> std::string {
     std::stringstream ss;
-    dump(ss, 0);
+    dump_to(ss, 0);
     return ss.str();
   }
-  void dump(std::stringstream &ss, size_t n) const {
+  void dump_to(std::stringstream &ss, size_t n) const {
     ++n;
     ss << type_().name_;
     if (!what_.empty()) {
@@ -97,12 +100,12 @@ struct Err final {
     if (cause_ != nullptr) {
       space(ss, n);
       ss << "Caused by: ";
-      cause_->dump(ss, n);
+      cause_->dump_to(ss, n);
     }
     for (Err *it = suppressed_; it != nullptr; it = it->suppressed_) {
       space(ss, n);
       ss << "Suppressed: ";
-      it->dump(ss, n);
+      it->dump_to(ss, n);
     }
   }
   static
