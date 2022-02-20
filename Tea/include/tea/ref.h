@@ -29,7 +29,7 @@ struct Class {
   static
   auto TEA_CALL destroy(unwrap_type obj) -> void {
     auto &ref = wrap_cast(std::forward<unwrap_type>(obj));
-    drop(std::move(ref));
+    drop(&ref);
   }
   template<typename value_type>
   struct Field {

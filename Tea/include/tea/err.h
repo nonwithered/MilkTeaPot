@@ -23,6 +23,16 @@ struct tea_err_meta_t {
   const char *name_;
 };
 
+#define TEA_ERR_ENUM_IMPL(NAME, SUPER) \
+TEA_API struct tea_err_meta_t TEA_CALL \
+NAME() { \
+  static const char STR[] = #NAME; \
+  return { SUPER, STR }; \
+}
+
+#define TEA_ERR_ENUM_DECL(NAME) \
+TEA_API struct tea_err_meta_t TEA_CALL NAME();
+
 struct tea_err_t;
 
 struct tea_err_dump_recv_t {
@@ -58,6 +68,19 @@ extern
 TEA_API void (TEA_CALL *
 tea_err_dump)(const tea_err_t *, tea_err_dump_recv_t);
 
+TEA_ERR_ENUM_DECL(tea_err_type_bad_logic) // <- nullptr
+TEA_ERR_ENUM_DECL(tea_err_type_invalid_param) // <- tea_err_type_bad_logic
+TEA_ERR_ENUM_DECL(tea_err_type_null_obj) // <- tea_err_type_invalid_param
+TEA_ERR_ENUM_DECL(tea_err_type_out_of_range) // <- tea_err_type_invalid_param
+TEA_ERR_ENUM_DECL(tea_err_type_cast_failure) // <- tea_err_type_invalid_param
+TEA_ERR_ENUM_DECL(tea_err_type_invalid_state) // <- tea_err_type_bad_logic
+TEA_ERR_ENUM_DECL(tea_err_type_assertion) // <- tea_err_type_invalid_state
+TEA_ERR_ENUM_DECL(tea_err_type_runtime_warn) // <- nullptr
+TEA_ERR_ENUM_DECL(tea_err_type_unsupported) // <- tea_err_type_runtime_warn
+TEA_ERR_ENUM_DECL(tea_err_type_io_failure) // <- tea_err_type_runtime_warn
+TEA_ERR_ENUM_DECL(tea_err_type_unexpected_eof) // <- tea_err_type_io_failure
+TEA_ERR_ENUM_DECL(tea_err_type_undefined_format) // <- tea_err_type_io_failure
+
 #ifdef __cplusplus
 } // extern "C"
 #endif // ifdef __cplusplus
@@ -65,9 +88,24 @@ tea_err_dump)(const tea_err_t *, tea_err_dump_recv_t);
 #ifdef __cplusplus
 
 namespace tea {
-  using err = tea_err_t;
-  using err_meta = tea_err_meta_t;
-  using err_type = tea_err_type_t;
+using err = tea_err_t;
+using err_meta = tea_err_meta_t;
+using err_type = tea_err_type_t;
+namespace err_enum {
+inline constexpr auto bad_logic = tea_err_type_bad_logic;
+inline constexpr auto invalid_param = tea_err_type_invalid_param;
+inline constexpr auto null_obj = tea_err_type_null_obj;
+inline constexpr auto out_of_range = tea_err_type_out_of_range;
+inline constexpr auto cast_failure = tea_err_type_cast_failure;
+inline constexpr auto invalid_state = tea_err_type_invalid_state;
+inline constexpr auto assertion = tea_err_type_assertion;
+inline constexpr auto runtime_warn = tea_err_type_runtime_warn;
+inline constexpr auto unsupported = tea_err_type_unsupported;
+inline constexpr auto io_failure = tea_err_type_io_failure;
+inline constexpr auto unexpected_eof = tea_err_type_unexpected_eof;
+inline constexpr auto undefined_format = tea_err_type_undefined_format;
+} // namespace err_enum
+
 } // namespace tea
 
 template<>

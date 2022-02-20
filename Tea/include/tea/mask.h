@@ -11,8 +11,7 @@
 namespace tea {
 template<typename T,
          typename class_type = T,
-         typename = std::enable_if_t<std::is_class_v<class_type>>,
-         typename = std::enable_if_t<!std::is_destructible_v<class_type>>>
+         typename = std::enable_if_t<std::is_class_v<class_type>>>
 struct Drop {
 //  auto drop() && -> void;
 };

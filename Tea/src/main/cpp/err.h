@@ -57,7 +57,7 @@ struct Err final {
     recv.invoke(recv.capture, s.data(), s.size());
   }
   static
-  auto emit(err_type type, const char what[], err *cause) -> err * {
+  auto TEA_CALL emit(err_type type, const char what[], err *cause) -> err * {
     auto *e = cell();
     if (type != nullptr) {
       cell() = new Err {
@@ -85,7 +85,7 @@ struct Err final {
     dump_to(ss, 0, true);
     return ss.str();
   }
-  void dump_to(std::stringstream &ss, size_t n, bool recusive) const {
+  auto dump_to(std::stringstream &ss, size_t n, bool recusive) const -> void {
     ss << type_().name_;
     if (!what_.empty()) {
       ss << ": " << what_;
@@ -111,7 +111,8 @@ struct Err final {
       ss << "  ";
     }
   }
-  static Err *&cell();
+  static
+  auto cell() -> Err *&;
 };
 
 } // namespace tea
