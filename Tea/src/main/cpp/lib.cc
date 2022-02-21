@@ -1,12 +1,12 @@
 #include "err.h"
 #include "log.h"
 
-auto tea::Err::cell() -> Err *& {
+auto tea::internal::errors::Err::cell() -> Err *& {
   thread_local Err *e = nullptr;
   return e;
 }
 
-auto tea::logger_cell() -> logger & {
+auto tea::internal::log::cell() -> logger & {
   static logger obj{};
   static tea::defer sweep = []() {
     auto func = obj.close;
@@ -18,22 +18,41 @@ auto tea::logger_cell() -> logger & {
   return obj;
 }
 
+namespace {
+
 using namespace tea;
-using namespace tea::meta;
+using namespace meta;
+using namespace internal;
+
+using Err = errors::Err;
+
+auto err_emit = function_handle<tea_err_type_t, const char *, tea_err_t *>::invoke<&Err::emit>;
+auto err_type_of = field_handle::getter<&Err::type_>;
+auto err_what = method_handle<>::invoke<&Err::what>;
+auto err_cause = method_handle<>::invoke<&Err::cause>;
+auto err_suppressed = method_handle<>::invoke<&Err::suppressed>;
+auto err_is = method_handle<tea_err_type_t>::invoke<&Err::is>;
+auto err_dump = method_handle<tea_err_dump_recv_t>::invoke<&Err::dump>;
+
+auto log_print = function_handle<log_level, const char *, const char *>::invoke<&log::print>;
+auto log_priority = function_handle<>::invoke<&log::priority>;
+auto logger_setup = function_handle<const log::logger *>::invoke<&log::setup>;
+
+} // namespace
 
 extern "C" {
 
-TEA_FUNC_LINK(tea_err_emit, Err::emit);
-TEA_FUNC_LINK(tea_err_type, field_handle::getter<&Err::type_>);
-TEA_FUNC_LINK(tea_err_what, method_handle<>::invoke<&Err::what>);
-TEA_FUNC_LINK(tea_err_cause, method_handle<>::invoke<&Err::cause>);
-TEA_FUNC_LINK(tea_err_suppressed, method_handle<>::invoke<&Err::suppressed>);
-TEA_FUNC_LINK(tea_err_is, method_handle<tea_err_type_t>::invoke<&Err::is>);
-TEA_FUNC_LINK(tea_err_dump, method_handle<tea_err_dump_recv_t>::invoke<&Err::dump>);
+TEA_FUNC(tea, err_emit);
+TEA_FUNC(tea, err_type_of);
+TEA_FUNC(tea, err_what);
+TEA_FUNC(tea, err_cause);
+TEA_FUNC(tea, err_suppressed);
+TEA_FUNC(tea, err_is);
+TEA_FUNC(tea, err_dump);
 
-TEA_FUNC_LINK(tea_log_print, log_print);
-TEA_FUNC_LINK(tea_log_priority, log_priority);
-TEA_FUNC_LINK(tea_logger_setup, logger_apply);
+TEA_FUNC(tea, log_print);
+TEA_FUNC(tea, log_priority);
+TEA_FUNC(tea, logger_setup);
 
 TEA_ERR_ENUM_IMPL(tea_err_type_bad_logic, nullptr)
 TEA_ERR_ENUM_IMPL(tea_err_type_invalid_param, tea_err_type_bad_logic)

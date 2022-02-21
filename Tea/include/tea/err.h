@@ -46,7 +46,7 @@ tea_err_emit)(tea_err_type_t, const char [], tea_err_t *);
 
 extern
 TEA_API tea_err_type_t (TEA_CALL *
-tea_err_type)(const tea_err_t *);
+tea_err_type_of)(const tea_err_t *);
 
 extern
 TEA_API const char * (TEA_CALL *
@@ -88,10 +88,13 @@ TEA_ERR_ENUM_DECL(tea_err_type_undefined_format) // <- tea_err_type_io_failure
 #ifdef __cplusplus
 
 namespace tea {
+
 using err = tea_err_t;
 using err_meta = tea_err_meta_t;
 using err_type = tea_err_type_t;
+
 namespace err_enum {
+
 inline constexpr auto bad_logic = tea_err_type_bad_logic;
 inline constexpr auto invalid_param = tea_err_type_invalid_param;
 inline constexpr auto null_obj = tea_err_type_null_obj;
@@ -104,8 +107,8 @@ inline constexpr auto unsupported = tea_err_type_unsupported;
 inline constexpr auto io_failure = tea_err_type_io_failure;
 inline constexpr auto unexpected_eof = tea_err_type_unexpected_eof;
 inline constexpr auto undefined_format = tea_err_type_undefined_format;
-} // namespace err_enum
 
+} // namespace err_enum
 } // namespace tea
 
 template<>
@@ -121,7 +124,7 @@ struct tea_err_t : tea::mask_type<tea::err> {
     assert(tea_err_emit(nullptr, nullptr, get()) == nullptr);
   }
   auto type() const -> tea::err_type {
-    return tea_err_type(get());
+    return tea_err_type_of(get());
   }
   auto what() const -> const char * {
     return tea_err_what(get());

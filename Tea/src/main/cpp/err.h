@@ -9,15 +9,29 @@
 
 namespace tea {
 
+namespace internal {
+namespace errors {
+
 struct Err;
 
+} // namespace errors
+} // namespace internal
+
+namespace meta {
+
 template<>
-struct meta::cast_pair<Err> {
+struct cast_pair<internal::errors::Err> {
   using type = err;
 };
 
+} // namespace meta
+
+namespace internal {
+namespace errors {
+
 using namespace meta;
 
+struct Err;
 struct Err final {
   const err_type type_;
   const std::string what_;
@@ -52,7 +66,7 @@ struct Err final {
     recv.invoke(recv.capture, s.data(), s.size());
   }
   static
-  auto TEA_CALL emit(err_type type, const char what[], err *cause) -> err * {
+  auto emit(err_type type, const char what[], err *cause) -> err * {
     auto *e = cell();
     if (type != nullptr) {
       cell() = new Err {
@@ -110,6 +124,8 @@ struct Err final {
   auto cell() -> Err *&;
 };
 
+} // namespace errors
+} // namespace internal
 } // namespace tea
 
 #endif // ifndef TEA_ERR_H_

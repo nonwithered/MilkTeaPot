@@ -4,13 +4,16 @@
 #include <tea.h>
 
 namespace tea {
+namespace internal {
+namespace log {
 
 using logger = tea_logger_t;
+using level = log_level;
 
-auto logger_cell() -> logger &;
+auto cell() -> logger &;
 
-auto TEA_CALL log_print(log_level priority, const char tag[], const char msg[]) -> void {
-  auto &obj = logger_cell();
+auto print(level priority, const char tag[], const char msg[]) -> void {
+  auto &obj = cell();
   auto func = obj.print;
   if (func == nullptr) {
     return;
@@ -19,17 +22,17 @@ auto TEA_CALL log_print(log_level priority, const char tag[], const char msg[]) 
   func(ctx, priority, tag, msg);
 }
 
-auto TEA_CALL log_priority() -> log_level {
-  auto &obj = logger_cell();
+auto priority() -> level {
+  auto &obj = cell();
   auto func = obj.priority;
   if (func == nullptr) {
-    return log_level::A;
+    return level::A;
   }
   auto ctx = obj.ctx;
   return func(ctx);
 }
 
-auto TEA_CALL logger_apply(const logger *ptr) -> void {
+auto setup(const logger *ptr) -> void {
   if (ptr == nullptr) {
     err::raise<err_enum::null_obj>("logger_apply: obj");
     return;
@@ -42,9 +45,11 @@ auto TEA_CALL logger_apply(const logger *ptr) -> void {
     err::raise<err_enum::null_obj>("logger_apply: print");
     return;
   }
-  logger_cell() = *ptr;
+  cell() = *ptr;
 }
 
+} // namespace log
+} // namespace internal
 } // namespace tea
 
 #endif // ifndef TEA_LOG_H_

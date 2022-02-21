@@ -50,9 +50,9 @@ using log_ctx = tea_log_ctx_t;
 template<typename T,
          typename class_type = T,
          typename = std::enable_if_t<std::is_class_v<class_type>>>
-class Log {
+class with_log {
  protected:
-  Log() = default;
+  with_log() = default;
   static constexpr auto D = log_level::D;
   static constexpr auto I = log_level::I;
   static constexpr auto W = log_level::W;
@@ -76,6 +76,8 @@ class Log {
   }
 };
 
+namespace logger {
+
 template<typename T,
          typename class_type = std::remove_reference_t<T>,
          typename = std::enable_if_t<std::is_class_v<class_type>>,
@@ -88,7 +90,7 @@ template<typename T,
          typename = std::enable_if_t<std::is_member_function_pointer_v<priority_method_type>>,
          typename = std::enable_if_t<std::is_same_v<priority_method_type, log_level (class_type:: *)() const>>
          >
-auto setup_logger(T &&ref) -> void {
+auto setup(T &&ref) -> void {
   auto logger = tea_logger_t {
     .ctx = reinterpret_cast<tea::log_ctx *>(&ref),
     .print = tea::meta::method_handle<log_level, const char *, const char *>::invoke<print_method>,
@@ -98,6 +100,7 @@ auto setup_logger(T &&ref) -> void {
   tea_logger_setup(&logger);
 }
 
+} // namespace logger
 } // namespace tea
 
 #endif // ifdef __cplusplus

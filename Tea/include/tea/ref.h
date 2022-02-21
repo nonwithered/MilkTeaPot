@@ -9,8 +9,8 @@
 #include <tea/def.h>
 #include <tea/cast.h>
 
-#define TEA_FUNC_LINK(S, F) \
-TEA_API decltype(F) * S = F
+#define TEA_RENAME(P, S, F) decltype(F) P##_##S = F
+#define TEA_FUNC(P, S) TEA_RENAME(P, S, S)
 
 namespace tea {
 
@@ -159,7 +159,7 @@ template<typename ...args_type>
 struct method_handle {
   template<auto member,
            typename member_type = decltype(member),
-           typename = typename std::enable_if_t<is_args_match_v<member_type, std::tuple<args_type...>>>,
+           typename = std::enable_if_t<is_args_match_v<member_type, std::tuple<args_type...>>>,
            typename method = method_type<member_type>,
            typename return_type = typename method::return_type,
            typename class_type = typename method::class_type,
@@ -168,6 +168,32 @@ struct method_handle {
   auto TEA_CALL invoke(target_type *obj, args_type ...args) -> return_type {
     return method::template invoke<member>
       (obj, std::forward<args_type>(args)...);
+  }
+};
+
+template<typename sign_type>
+struct function_type;
+
+template<typename return_type_t, typename ...args_type>
+struct function_type<return_type_t(args_type...)> {
+  using return_type = return_type_t;
+  template<return_type(* func)(args_type...)>
+  static
+  auto TEA_CALL invoke(args_type ...args) -> return_type {
+    return func(std::forward<args_type>(args)...);
+  }
+};
+
+template<typename ...args_type>
+struct function_handle {
+  template<auto func,
+           typename func_type = std::remove_pointer_t<decltype(func)>,
+           typename function = function_type<func_type>,
+           typename return_type = typename function::return_type,
+           typename = std::enable_if_t<std::is_same_v<func_type, return_type(args_type...)>>>
+  static
+  auto TEA_CALL invoke(args_type ...args) -> return_type {
+    return func(std::forward<args_type>(args)...);
   }
 };
 
