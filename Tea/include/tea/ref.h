@@ -18,47 +18,46 @@ namespace meta {
 
 template<typename class_type>
 struct Class {
-  using unwrap_type = unwrap_pair_t<class_type> *;
-  using const_unwrap_type = const unwrap_pair_t<class_type> *;
+  using target_type = cast_pair_t<class_type>;
   template<typename ...args_type>
   static
-  auto TEA_CALL create(args_type ...args) -> unwrap_type {
+  auto TEA_CALL create(args_type ...args) -> target_type * {
     auto &ref = *class_type::init(std::forward<args_type>(args)...);
-    return unwrap_cast(ref);
+    return unwrap_cast<class_type>(ref);
   }
   static
-  auto TEA_CALL destroy(unwrap_type obj) -> void {
-    auto &ref = wrap_cast(std::forward<unwrap_type>(obj));
+  auto TEA_CALL destroy(target_type *obj) -> void {
+    auto &ref = wrap_cast<class_type>(obj);
     drop(&ref);
   }
   template<typename value_type>
   struct Field {
-    using value_type_unwrap = std::remove_cv_t<value_type>;
+    using target_value_type = std::remove_cv_t<value_type>;
     template<value_type class_type:: *member>
     static
-    auto TEA_CALL getter(const_unwrap_type obj) -> value_type_unwrap {
-      const auto &ref = wrap_cast(std::forward<const_unwrap_type>(obj));
+    auto TEA_CALL getter(const target_type *obj) -> target_value_type {
+      const auto &ref = wrap_cast<const class_type>(obj);
       return ref.*member;
     }
     template<value_type class_type:: *member>
     static
-    auto TEA_CALL setter(unwrap_type obj, value_type_unwrap value) -> void {
-      auto &ref = wrap_cast(std::forward<unwrap_type>(obj));
-      ref.*member = std::forward(value);
+    auto TEA_CALL setter(target_type *obj, target_value_type value) -> void {
+      auto &ref = wrap_cast<class_type>(obj);
+      ref.*member = value;
     }
   };
   template<typename result_type, typename ...args_type>
   struct Method {
     template<result_type (class_type:: *member)(args_type...) const>
     static
-    auto TEA_CALL invoke(const_unwrap_type obj, args_type ...args) -> result_type {
-      const auto &ref = wrap_cast(std::forward<const_unwrap_type>(obj));
+    auto TEA_CALL invoke(const target_type *obj, args_type ...args) -> result_type {
+      const auto &ref = wrap_cast<const class_type>(obj);
       return (ref.*member)(std::forward<args_type>(args)...);
     }
     template<result_type (class_type:: *member)(args_type...)>
     static
-    auto TEA_CALL invoke(unwrap_type obj, args_type ...args) -> result_type {
-      auto &ref = wrap_cast(std::forward<unwrap_type>(obj));
+    auto TEA_CALL invoke(target_type *obj, args_type ...args) -> result_type {
+      auto &ref = wrap_cast<class_type>(obj);
       return (ref.*member)(std::forward<args_type>(args)...);
     }
   };
@@ -70,22 +69,19 @@ struct field_type;
 template<typename class_type_t, typename value_type_t>
 struct field_type<value_type_t class_type_t:: *> {
   using class_type = class_type_t;
+  using target_type = cast_pair_t<class_type>;
   using value_type = value_type_t;
   using member_type = value_type class_type:: *;
-  using unwrap_type = unwrap_pair_t<class_type &>;
-  using const_unwrap_type = unwrap_pair_t<const class_type &>;
-  using value_type_unwrap = std::remove_cv_t<value_type>;
+  using target_value_type = std::remove_cv_t<value_type>;
   template<member_type member>
   static
-  auto TEA_CALL getter(const_unwrap_type obj) -> value_type_unwrap {
-    return Class<class_type>::template Field<value_type>::template getter<member>
-      (std::forward<const_unwrap_type>(obj));
+  auto TEA_CALL getter(const target_type *obj) -> target_value_type {
+    return Class<class_type>::template Field<value_type>::template getter<member>(obj);
   }
   template<member_type member>
   static
-  auto TEA_CALL setter(unwrap_type obj, value_type_unwrap value) -> void {
-    return Class<class_type>::template Field<value_type>::template setter<member>
-      (std::forward<unwrap_type>(obj), std::forward<value_type_unwrap>(value));
+  auto TEA_CALL setter(target_type *obj, target_value_type value) -> void {
+    return Class<class_type>::template Field<value_type>::template setter<member>(obj, value);
   }
 };
 
@@ -93,22 +89,20 @@ struct field_handle {
   template<auto member,
            typename member_type = decltype(member),
            typename field = field_type<member_type>,
-           typename value_type = typename field::value_type_unwrap,
-           typename const_unwrap_type = typename field::const_unwrap_type>
+           typename value_type = typename field::target_value_type,
+           typename target_type = typename field::target_type>
   static
-  auto TEA_CALL getter(const_unwrap_type obj) -> value_type {
-    return field::template getter<member>
-      (std::forward<const_unwrap_type>(obj));
+  auto TEA_CALL getter(const target_type *obj) -> value_type {
+    return field::template getter<member>(obj);
   }
   template<auto member,
            typename member_type = decltype(member),
            typename field = field_type<member_type>,
-           typename value_type = typename field::value_type_unwrap,
-           typename unwrap_type = typename field::unwrap_type>
+           typename value_type = typename field::target_value_type,
+           typename target_type = typename field::target_type>
   static
-  auto TEA_CALL setter(unwrap_type obj, value_type value) -> void {
-    return field::template setter<member>
-      (std::forward<unwrap_type>(obj), std::forward<value_type>(value));
+  auto TEA_CALL setter(target_type *obj, value_type value) -> void {
+    return field::template setter<member>(obj, value);
   }
 };
 
@@ -120,13 +114,12 @@ struct method_type<return_type_t (class_type_t:: *)(args_type_t...)> {
   using class_type = class_type_t;
   using return_type = return_type_t;
   using member_type = return_type (class_type:: *)(args_type_t...);
-  using ref_type = class_type &;
-  using obj_type = unwrap_pair_t<ref_type>;
+  using target_type = cast_pair_t<class_type>;
   template<member_type member>
   static
-  auto TEA_CALL invoke(obj_type obj, args_type_t ...args) -> return_type {
+  auto TEA_CALL invoke(target_type *obj, args_type_t ...args) -> return_type {
     return Class<class_type>::template Method<return_type, args_type_t...>::template invoke<member>
-      (std::forward<obj_type>(obj), std::forward<args_type_t>(args)...);
+    (obj, std::forward<args_type_t>(args)...);
   }
 };
 
@@ -135,13 +128,12 @@ struct method_type<return_type_t (class_type_t:: *)(args_type_t...) const> {
   using class_type = class_type_t;
   using return_type = return_type_t;
   using member_type = return_type (class_type:: *)(args_type_t...) const;
-  using ref_type = const class_type &;
-  using obj_type = unwrap_pair_t<ref_type>;
+  using target_type = const cast_pair_t<class_type>;
   template<member_type member>
   static
-  auto TEA_CALL invoke(obj_type obj, args_type_t ...args) -> return_type {
+  auto TEA_CALL invoke(target_type *obj, args_type_t ...args) -> return_type {
     return Class<class_type>::template Method<return_type, args_type_t...>::template invoke<member>
-      (std::forward<obj_type>(obj), std::forward<args_type_t>(args)...);
+      (obj, std::forward<args_type_t>(args)...);
   }
 };
 
@@ -170,13 +162,12 @@ struct method_handle {
            typename = typename std::enable_if_t<is_args_match_v<member_type, std::tuple<args_type...>>>,
            typename method = method_type<member_type>,
            typename return_type = typename method::return_type,
-           typename ref_type = typename method::ref_type,
-           typename class_type = std::remove_reference_t<ref_type>,
-           typename obj_type = typename method::obj_type>
+           typename class_type = typename method::class_type,
+           typename target_type = typename method::target_type>
   static
-  auto TEA_CALL invoke(obj_type obj, args_type ...args) -> return_type {
+  auto TEA_CALL invoke(target_type *obj, args_type ...args) -> return_type {
     return method::template invoke<member>
-      (std::forward<obj_type>(obj), std::forward<args_type>(args)...);
+      (obj, std::forward<args_type>(args)...);
   }
 };
 

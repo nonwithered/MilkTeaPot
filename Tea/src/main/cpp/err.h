@@ -12,13 +12,8 @@ namespace tea {
 struct Err;
 
 template<>
-struct meta::unwrap_pair<Err> {
+struct meta::cast_pair<Err> {
   using type = err;
-};
-
-template<>
-struct meta::wrap_pair<err> {
-  using type = Err;
 };
 
 using namespace meta;
@@ -63,13 +58,13 @@ struct Err final {
       cell() = new Err {
           .type_ = type,
           .what_ = what == nullptr ? "" : what,
-          .cause_ = &wrap_cast(cause),
+          .cause_ = &wrap_cast<Err>(cause),
           .suppressed_ = e,
       };
       return nullptr;
     }
     if (cause != nullptr) {
-      delete &wrap_cast(cause);
+      delete &wrap_cast<Err>(cause);
       return nullptr;
     }
     if (e == nullptr) {

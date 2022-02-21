@@ -42,12 +42,7 @@ struct my_logger : tea::Drop<my_logger>, tea::remove_copy {
 };
 
 template<>
-struct tea::meta::wrap_pair<tea::log_ctx> {
-  using type = my_logger;
-};
-
-template<>
-struct tea::meta::unwrap_pair<my_logger> {
+struct tea::meta::cast_pair<my_logger> {
   using type = tea::log_ctx;
 };
 
@@ -93,5 +88,7 @@ int main(int argc, char *argv[]) {
   tea::setup_logger(*new my_logger);
   f();
   my_log_test a;
+  tea::setup_logger(*(my_logger *) nullptr);
+  f();
   std::cout << "main" << std::endl;
 }

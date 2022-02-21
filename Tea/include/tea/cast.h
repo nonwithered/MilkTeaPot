@@ -4,78 +4,78 @@
 #ifdef __cplusplus
 
 #include <type_traits>
-
-#include <tea/life.h>
+#include <utility>
 
 namespace tea {
 
 namespace meta {
 
 template<typename T>
-struct unwrap_pair {
+struct cast_pair;
+
+template<typename T>
+using cast_pair_t = typename cast_pair<T>::type;
+
+template<typename T>
+struct cast_pair<const T> {
+  using type = const cast_pair_t<T>;
 };
 
-template<typename T>
-using unwrap_pair_t = typename unwrap_pair<T>::type;
-
-template<typename T>
-struct unwrap_pair<T &> {
-  using type = unwrap_pair_t<T> *;
+template<typename T, typename Y>
+struct can_unwrap_to {
+  static constexpr bool value = false;
 };
 
-template<typename T>
-struct unwrap_pair<const T &> {
-  using type = const unwrap_pair_t<T> *;
-};
+template<typename T, typename Y>
+inline constexpr bool can_unwrap_to_v = can_unwrap_to<T, Y>::value;
 
 template<typename T>
-struct wrap_pair {
+struct can_unwrap_to<T &, cast_pair_t<T> *> {
+  static constexpr bool value = true;
 };
 
-template<typename T>
-using wrap_pair_t = typename wrap_pair<T>::type;
-
-template<typename T>
-struct wrap_pair<T *> {
-  using type = wrap_pair_t<T> &;
+template<typename T, typename Y>
+struct can_wrap_from {
+  static constexpr bool value = false;
 };
 
+template<typename T, typename Y>
+inline constexpr bool can_wrap_from_v = can_wrap_from<T, Y>::value;
+
 template<typename T>
-struct wrap_pair<const T *> {
-  using type = const wrap_pair_t<T> &;
+struct can_wrap_from<T &, cast_pair_t<T> *> {
+  static constexpr bool value = true;
 };
+
+template<typename T, typename Y,
+         typename = std::enable_if_t<can_unwrap_to_v<T &, Y *>>>
+auto unwrap_to(T &it) -> Y * {
+  return reinterpret_cast<Y *>(&it);
+}
+template<typename T, typename Y,
+         typename = std::enable_if_t<can_wrap_from_v<T &, Y *>>>
+auto wrap_from(Y *it) -> T & {
+  return *reinterpret_cast<T *>(it);
+}
 
 template<typename T,
-         typename lvalue_reference_type = T,
-         typename = std::enable_if_t<std::is_lvalue_reference_v<lvalue_reference_type>>,
-         typename class_type = std::remove_reference_t<lvalue_reference_type>,
+         typename class_type = std::remove_reference_t<T>,
          typename = std::enable_if_t<std::is_class_v<class_type>>,
-         typename = std::enable_if_t<std::is_destructible_v<class_type>>,
-         typename unwrap_type = unwrap_pair_t<lvalue_reference_type>,
-         typename pointer_type = unwrap_type,
-         typename = std::enable_if_t<std::is_pointer_v<pointer_type>>,
-         typename struct_type = std::remove_pointer_t<pointer_type>,
-         typename = std::enable_if_t<std::is_class_v<struct_type>>,
-         typename = std::enable_if_t<!std::is_destructible_v<struct_type>>>
-auto unwrap_cast(T &&it) -> unwrap_type {
-  return reinterpret_cast<struct_type *>(&it);
-};
+         typename = std::enable_if_t<std::is_lvalue_reference_v<T>>,
+         typename target_type = cast_pair_t<class_type>>
+auto unwrap_cast(T &&it) -> target_type * {
+  return unwrap_to<class_type, target_type>(std::forward<T>(it));
+}
 
-template<typename T,
+template<typename Y, typename T,
+         typename class_type = Y,
+         typename = std::enable_if_t<std::is_class_v<class_type>>,
          typename pointer_type = std::remove_reference_t<T>,
          typename = std::enable_if_t<std::is_pointer_v<pointer_type>>,
-         typename struct_type = std::remove_pointer_t<pointer_type>,
-         typename = std::enable_if_t<std::is_class_v<struct_type>>,
-         typename = std::enable_if_t<!std::is_destructible_v<struct_type>>,
-         typename wrap_type = wrap_pair_t<pointer_type>,
-         typename lvalue_reference_type = wrap_type,
-         typename = std::enable_if_t<std::is_lvalue_reference_v<lvalue_reference_type>>,
-         typename class_type = std::remove_reference_t<lvalue_reference_type>,
-         typename = std::enable_if_t<std::is_class_v<class_type>>,
-         typename = std::enable_if_t<std::is_destructible_v<class_type>>>
-auto wrap_cast(T &&it) -> wrap_type {
-  return *reinterpret_cast<class_type *>(it);
-};
+         typename target_type = std::remove_pointer_t<pointer_type>>
+auto wrap_cast(T &&it) -> class_type & {
+  return wrap_from<class_type, target_type>(std::forward<T>(it));
+}
 
 } // namespace meta
 
