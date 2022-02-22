@@ -9,7 +9,7 @@
 #include <tea/def.h>
 #include <tea/cast.h>
 
-#define TEA_RENAME(P, S, F) decltype(F) P##_##S = F
+#define TEA_RENAME(P, S, F) TEA_API decltype(F) P##_##S = F
 #define TEA_FUNC(P, S) TEA_RENAME(P, S, S)
 
 namespace tea {

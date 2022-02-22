@@ -35,7 +35,7 @@ struct my_logger : tea::Drop<my_logger>, tea::remove_copy {
     std::cerr << "my_logger Print" << std::endl;
     fprintf(stderr, "%d %s %s\n", level, tag, msg);
   }
-  auto Priority() const -> tea::log_level {
+  auto Priority() -> tea::log_level {
     std::cerr << "my_logger Print" << std::endl;
     return tea::log_level::I;
   }
@@ -46,16 +46,13 @@ struct tea::meta::cast_pair<my_logger> {
   using type = tea::log_ctx;
 };
 
-struct my_log_test : tea::with_log<my_log_test> {
-  static
-  auto TAG() -> const char * {
-    return "my_log_test";
-  }
+struct my_log_test : tea::with_log<my_log_test, 10> {
+  static constexpr const char TAG[] = "my_log_test";
   my_log_test() {
     log<D>("D");
     log<I>("I");
     log<W>("W");
-    log<E>("E");
+    log<E>("E %s %d", "asd", 3456);
   }
 };
 
