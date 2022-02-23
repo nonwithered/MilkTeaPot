@@ -11,7 +11,9 @@ namespace tea {
 namespace meta {
 
 template<typename T>
-struct cast_pair;
+struct cast_pair {
+  using type = void;
+};
 
 template<typename T>
 using cast_pair_t = typename cast_pair<T>::type;

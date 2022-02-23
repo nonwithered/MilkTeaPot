@@ -113,7 +113,7 @@ inline constexpr auto undefined_format = tea_err_type_undefined_format;
 
 template<>
 struct tea::meta::func_sign<tea_err_dump_recv_t> {
-  using type = void(const char [], size_t);
+  using type = void(const char *, size_t);
 };
 
 struct tea_err_t : tea::mask_type<tea::err> {
@@ -139,7 +139,7 @@ struct tea_err_t : tea::mask_type<tea::err> {
     return tea_err_is(get(), type);
   }
   auto dump(std::function<void(const char [], size_t)> func) const -> void {
-    return tea_err_dump(get(), tea::func_cast<tea_err_dump_recv_t>(func));
+    return tea_err_dump(get(), tea::meta::function_cast<tea_err_dump_recv_t>(func));
   }
   auto str() const -> std::string {
     std::string s;

@@ -17,14 +17,10 @@ struct Err;
 } // namespace errors
 } // namespace internal
 
-namespace meta {
-
 template<>
-struct cast_pair<internal::errors::Err> {
+struct meta::cast_pair<internal::errors::Err> {
   using type = err;
 };
-
-} // namespace meta
 
 namespace internal {
 namespace errors {

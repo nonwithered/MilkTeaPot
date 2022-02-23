@@ -69,16 +69,17 @@ struct field_type;
 template<typename class_type_t, typename value_type_t>
 struct field_type<value_type_t class_type_t:: *> {
   using class_type = class_type_t;
-  using target_type = cast_pair_t<class_type>;
   using value_type = value_type_t;
   using member_type = value_type class_type:: *;
   using target_value_type = std::remove_cv_t<value_type>;
-  template<member_type member>
+  template<member_type member,
+           typename target_type = cast_pair_t<class_type>>
   static
   auto TEA_CALL getter(const target_type *obj) -> target_value_type {
     return Class<class_type>::template Field<value_type>::template getter<member>(obj);
   }
-  template<member_type member>
+  template<member_type member,
+           typename target_type = cast_pair_t<class_type>>
   static
   auto TEA_CALL setter(target_type *obj, target_value_type value) -> void {
     return Class<class_type>::template Field<value_type>::template setter<member>(obj, value);
@@ -90,7 +91,8 @@ struct field_handle {
            typename member_type = decltype(member),
            typename field = field_type<member_type>,
            typename value_type = typename field::target_value_type,
-           typename target_type = typename field::target_type>
+           typename class_type = typename field::class_type,
+           typename target_type = cast_pair_t<class_type>>
   static
   auto TEA_CALL getter(const target_type *obj) -> value_type {
     return field::template getter<member>(obj);
@@ -99,7 +101,8 @@ struct field_handle {
            typename member_type = decltype(member),
            typename field = field_type<member_type>,
            typename value_type = typename field::target_value_type,
-           typename target_type = typename field::target_type>
+           typename class_type = typename field::class_type,
+           typename target_type = cast_pair_t<class_type>>
   static
   auto TEA_CALL setter(target_type *obj, value_type value) -> void {
     return field::template setter<member>(obj, value);
@@ -112,10 +115,11 @@ struct method_type;
 template<typename class_type_t, typename return_type_t, typename ...args_type_t>
 struct method_type<return_type_t (class_type_t:: *)(args_type_t...)> {
   using class_type = class_type_t;
+  using actual_class_type = class_type;
   using return_type = return_type_t;
   using member_type = return_type (class_type:: *)(args_type_t...);
-  using target_type = cast_pair_t<class_type>;
-  template<member_type member>
+  template<member_type member,
+           typename target_type = cast_pair_t<class_type>>
   static
   auto TEA_CALL invoke(target_type *obj, args_type_t ...args) -> return_type {
     return Class<class_type>::template Method<return_type, args_type_t...>::template invoke<member>
@@ -126,12 +130,13 @@ struct method_type<return_type_t (class_type_t:: *)(args_type_t...)> {
 template<typename class_type_t, typename return_type_t, typename ...args_type_t>
 struct method_type<return_type_t (class_type_t:: *)(args_type_t...) const> {
   using class_type = class_type_t;
+  using actual_class_type = const class_type;
   using return_type = return_type_t;
   using member_type = return_type (class_type:: *)(args_type_t...) const;
-  using target_type = const cast_pair_t<class_type>;
-  template<member_type member>
+  template<member_type member,
+           typename target_type = cast_pair_t<class_type>>
   static
-  auto TEA_CALL invoke(target_type *obj, args_type_t ...args) -> return_type {
+  auto TEA_CALL invoke(const target_type *obj, args_type_t ...args) -> return_type {
     return Class<class_type>::template Method<return_type, args_type_t...>::template invoke<member>
       (obj, std::forward<args_type_t>(args)...);
   }
@@ -162,8 +167,8 @@ struct method_handle {
            typename = std::enable_if_t<is_args_match_v<member_type, std::tuple<args_type...>>>,
            typename method = method_type<member_type>,
            typename return_type = typename method::return_type,
-           typename class_type = typename method::class_type,
-           typename target_type = typename method::target_type>
+           typename actual_class_type = typename method::actual_class_type,
+           typename target_type = cast_pair_t<actual_class_type>>
   static
   auto TEA_CALL invoke(target_type *obj, args_type ...args) -> return_type {
     return method::template invoke<member>
