@@ -28,7 +28,7 @@ struct Class {
   static
   auto TEA_CALL destroy(target_type *obj) -> void {
     auto &ref = wrap_cast<class_type>(obj);
-    drop(&ref);
+    delete &ref;
   }
   template<typename value_type>
   struct Field {

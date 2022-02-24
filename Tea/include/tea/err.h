@@ -117,7 +117,8 @@ struct tea::meta::func_sign<tea_err_dump_recv_t> {
 };
 
 struct tea_err_t : tea::mask_type<tea::err> {
-  static auto init() -> tea::err * {
+  static
+  auto init() -> tea::err * {
     return tea_err_emit(nullptr, nullptr, nullptr);
   }
   auto drop() && -> void {
@@ -160,11 +161,13 @@ struct tea_err_t : tea::mask_type<tea::err> {
   }
   template<tea::err_type type,
            typename = std::enable_if_t<type != nullptr>>
-  static auto raise(const char what[] = nullptr, tea::err *e = nullptr) -> void {
+  static
+  auto raise(const char what[] = nullptr, tea::err *e = nullptr) -> void {
     assert(tea_err_emit(type, what, e) == nullptr);
   }
   template<tea::err_type type>
-  static auto raise(std::function<std::string()> func, tea::err *e = nullptr) -> void {
+  static
+  auto raise(std::function<std::string()> func, tea::err *e = nullptr) -> void {
     auto what = func();
     raise<type>(what.data(), e);
   }
