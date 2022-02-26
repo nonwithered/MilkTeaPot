@@ -7,29 +7,15 @@
 
 namespace MilkPowder {
 
-class TrackImpl final {
-  static constexpr char TAG[] = "MilkPowder::TrackImpl";
- public:
-  using mapping = Mapping::Track;
-  static TrackImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback);
-  std::vector<uint8_t> Dump() const;
-  TrackImpl(std::vector<std::unique_ptr<MessageImpl>> items) : items_(std::move(items)) {
-    MilkTea_logI("ctor size=%" PRIu32, static_cast<uint32_t>(items_.size()));
-  }
-  TrackImpl(const TrackImpl &another) : items_(Clone(another.items_)) {
-    MilkTea_logI("copy size=%" PRIu32, static_cast<uint32_t>(items_.size()));
-  }
-  const std::vector<std::unique_ptr<MessageImpl>> &items() const { return items_; }
- private:
-  const std::vector<std::unique_ptr<MessageImpl>> items_;
-  static std::vector<std::unique_ptr<MessageImpl>> Clone(const std::vector<std::unique_ptr<MessageImpl>> &another) {
-    std::vector<std::unique_ptr<MessageImpl>> items;
-    for (const auto &it : another) {
-      items.emplace_back(&it->Clone());
-    }
-    return items;
-  }
+namespace internal {
+
+struct Track {
+  Track(std::vector<std::unique_ptr<Message>> items)
+  : items_(std::move(items)) {}
+  const std::vector<std::unique_ptr<Message>> items_;
 };
+
+} // namespace internal
 
 } // namespace MilkPowder
 

@@ -37,7 +37,7 @@ template<typename T,
          typename drop_method_type = decltype(drop_method),
          typename = std::enable_if_t<std::is_member_function_pointer_v<drop_method_type>>,
          typename = std::enable_if_t<std::is_same_v<drop_method_type, void (class_type:: *)() &&>>>
-auto drop(T &&ptr) -> void {
+auto drop(T ptr) -> void {
   if (ptr == nullptr) {
     return;
   }

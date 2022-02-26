@@ -73,6 +73,15 @@ class with_log {
     std::snprintf(msg.data(), N, fmt, args...);
     tea_log_print(priority, TAG(), msg.data());
   }
+  template<log_level priority>
+  static
+  auto log(std::function<std::string()> func) -> void {
+    if (priority < tea_log_priority()) {
+      return;
+    }
+    auto msg = func();
+    tea_log_print(priority, TAG(), msg.data());
+  }
 };
 
 namespace logger {

@@ -8,37 +8,37 @@
 
 #include <tea/def.h>
 
+#include <milkpowder/message.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif // ifdef __cplusplus
 
-struct milk_powder_message_t;
-
-struct milk_powder_meta_t;
+struct MilkPowder_Meta_t;
 
 extern
-TEA_API struct milk_powder_meta_t * (TEA_CALL *
-milk_powder_meta_create)(uint32_t delta, uint8_t type, uint8_t args[], uint32_t len);
+TEA_API struct MilkPowder_Meta_t * (TEA_CALL *
+MilkPowder_Meta_Create)(uint32_t delta, uint8_t type, const uint8_t args[], uint32_t len);
 
 extern
 TEA_API void (TEA_CALL *
-milk_powder_meta_destroy)(struct milk_powder_meta_t *);
+MilkPowder_Meta_Destroy)(struct MilkPowder_Meta_t *);
 
 extern
 TEA_API uint8_t (TEA_CALL *
-milk_powder_meta_type)(const struct milk_powder_meta_t *);
+MilkPowder_Meta_GetType)(const struct MilkPowder_Meta_t *);
 
 extern
 TEA_API uint32_t (TEA_CALL *
-milk_powder_meta_args)(const struct milk_powder_meta_t *, const uint8_t **);
+MilkPowder_Meta_GetArgs)(const struct MilkPowder_Meta_t *, const uint8_t **);
 
 extern
-TEA_API struct milk_powder_meta_t * (TEA_CALL *
-milk_powder_meta_from_message)(struct milk_powder_message_t *);
+TEA_API struct MilkPowder_Meta_t * (TEA_CALL *
+MilkPowder_Meta_FromMessage)(struct MilkPowder_Message_t *);
 
 extern
-TEA_API const struct milk_powder_message_t * (TEA_CALL *
-milk_powder_meta_to_message)(const struct milk_powder_meta_t *);
+TEA_API const struct MilkPowder_Message_t * (TEA_CALL *
+MilkPowder_Meta_ToMessage)(const struct MilkPowder_Meta_t *);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -46,38 +46,47 @@ milk_powder_meta_to_message)(const struct milk_powder_meta_t *);
 
 #ifdef __cplusplus
 
-namespace milk_powder {
+namespace MilkPowder {
 
-using meta = milk_powder_meta_t;
-using message = milk_powder_message_t;
+using Meta = MilkPowder_Meta_t;
 
-} // namespace milk_powder
+} // namespace MilkPowder
 
-struct milk_powder_meta_t : tea::mask_type<milk_powder::meta> {
+struct MilkPowder_Meta_t : tea::mask_type<MilkPowder::Meta> {
   static
-  auto init(uint32_t delta, uint8_t type, uint8_t args[], uint32_t len) -> milk_powder::meta * {
-    return milk_powder_meta_create(delta, type, args, len);
+  auto init(uint32_t delta, uint8_t type, tea::slice<const uint8_t> args) -> MilkPowder::Meta * {
+    return MilkPowder_Meta_Create(delta, type, args.data(), args.size());
   }
   auto drop() && -> void {
-    milk_powder_meta_destroy(get());
+    MilkPowder_Meta_Destroy(get());
   }
   auto type() const -> uint8_t {
-    return milk_powder_meta_type(get());
+    return MilkPowder_Meta_GetType(get());
   }
   auto args() const -> tea::slice<const uint8_t> {
     const uint8_t *ptr = nullptr;
-    auto len = milk_powder_meta_args(get(), &ptr);
+    auto len = MilkPowder_Meta_GetArgs(get(), &ptr);
     return tea::slice<const uint8_t>(ptr, len);
   }
   static
-  auto from_message(milk_powder::message *&&it) -> milk_powder::meta * {
+  auto from_message(MilkPowder::Message *&&it) -> MilkPowder::Meta * {
     tea::defer d = [&it]() {
       it = nullptr;
     };
-    return milk_powder_meta_from_message(it);
+    return MilkPowder_Meta_FromMessage(it);
   }
-  auto to_message() const-> const milk_powder::message * {
-    return milk_powder_meta_to_message(get());
+  auto to_message() const-> const MilkPowder::Message * {
+    return MilkPowder_Meta_ToMessage(get());
+  }
+  auto delta() const -> uint32_t {
+    return to_message()->delta();
+  }
+  auto delta(uint32_t d) -> void {
+    auto *message = MilkPowder::Message::from_meta(get());
+    if (message == nullptr) {
+      return;
+    }
+    message->delta(d);
   }
 };
 

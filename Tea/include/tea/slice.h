@@ -49,6 +49,12 @@ class slice {
   auto operator[](std::size_t index) const -> const_reference {
     return *(begin() + index);
   }
+  auto data() -> pointer {
+    return begin();
+  }
+  auto data() const -> const_pointer {
+    return begin();
+  }
  private:
   const iterator begin_;
   const iterator end_;
@@ -86,6 +92,9 @@ class slice<const T> {
   }
   auto operator[](std::size_t index) const -> const_reference {
     return *(begin() + index);
+  }
+  auto data() const -> const_pointer {
+    return begin();
   }
  private:
   const const_iterator begin_;

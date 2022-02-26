@@ -4,5 +4,6 @@
 #include <tea/ref.h>
 #include <tea/err.h>
 #include <tea/log.h>
+#include <tea/file.h>
 
 #endif // ifndef LIB_TEA_H_

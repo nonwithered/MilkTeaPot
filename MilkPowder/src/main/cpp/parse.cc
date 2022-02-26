@@ -1,6 +1,9 @@
-#include <milktea.h>
-
+﻿#include <sstream>
+#include <array>
 #include <cstring>
+
+#include <tea.h>
+#include <milktea.h>
 
 #include "midi.h"
 #include "track.h"
@@ -8,38 +11,68 @@
 #include "meta.h"
 #include "sysex.h"
 
-namespace {
+namespace MilkPowder {
 
-constexpr char TAG[] = "MilkPowder::Parse";
+namespace internal {
 
-uint8_t ParseU8(std::function<std::tuple<uint8_t, bool>()> callback) {
-  auto ret = callback();
-  if (!std::get<1>(ret)) {
-    MilkTea_throw(IOError, "unexpected EOF");
+using reader_type = std::function<size_t(uint8_t [], size_t)>;
+
+using namespace MilkPowder::internal;
+
+inline
+auto ParseU8(reader_type &reader) -> uint8_t {
+  uint8_t b = 0;
+  if (size_t n = reader(&b, 1); n < 1) {
+    tea::err::raise<tea::err_enum::unexpected_eof>("parse u8");
+    return 0;
   }
-  return std::get<0>(ret);
+  return b;
 }
 
-uint16_t ParseU16(std::function<std::tuple<uint8_t, bool>()> callback) {
-  uint16_t h = ParseU8(callback);
-  uint16_t l = ParseU8(callback);
-  return static_cast<uint16_t>((h << 010) | l);
+inline
+auto ParseU16(reader_type &reader) -> uint16_t {
+  std::array<uint8_t, 2> arr{};
+  if (size_t n = reader(arr.data(), 2); n < 2) {
+    tea::err::raise<tea::err_enum::unexpected_eof>("parse u16");
+    return 0;
+  }
+  return static_cast<uint16_t>((arr[0] << 010) | arr[1]);
 }
 
-uint32_t ParseU32(std::function<std::tuple<uint8_t, bool>()> callback) {
-  uint32_t h = ParseU16(callback);
-  uint32_t l = ParseU16(callback);
-  return static_cast<uint32_t>((h << 020) | l);
+inline
+auto ParseU32(reader_type &reader) -> uint32_t {
+  std::array<uint8_t, 4> arr{};
+  if (size_t n = reader(arr.data(), 4); n < 4) {
+    tea::err::raise<tea::err_enum::unexpected_eof>("parse u32");
+    return 0;
+  }
+  return static_cast<uint32_t>((arr[0] << 030) | arr[1] << 020 | arr[2] << 010 | arr[3]);
 }
 
-uint32_t ParseUsize(std::function<std::tuple<uint8_t, bool>()> callback) {
-  uint8_t arr[4], last = 0xff;
+inline
+auto ParseUsize(reader_type &reader) -> uint32_t {
+  std::array<uint8_t, 4> arr{};
+  uint8_t last = 0xff;
   size_t len = 0;
   while (len < 4 && last >= 0x80) {
-    arr[len++] = last = ParseU8(callback);
+    arr[len++] = last = ParseU8(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::unexpected_eof>("parse usize", e);
+      return 0;
+    }
   }
   if (len == 4 && last >= 0x80) {
-    MilkTea_throwf(InvalidParam, "ParseUsize -- len [ %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 " ]", arr[0], arr[1], arr[2], arr[3]);
+    tea::err::raise<tea::err_enum::undefined_format>([&arr]() -> std::string {
+      std::stringstream ss;
+      ss << "parse usize but it is too large: " << MilkTea::ToString::From(", ", "[", "]")(
+        MilkTea::ToStringHex::FromU8(arr[0]),
+        MilkTea::ToStringHex::FromU8(arr[1]),
+        MilkTea::ToStringHex::FromU8(arr[2]),
+        MilkTea::ToStringHex::FromU8(arr[3])
+      );
+      return ss.str();
+    });
+    return 0;
   }
   uint32_t ret = arr[0] & 0x7f;
   for (size_t i = 1; i != len; ++i) {
@@ -49,164 +82,330 @@ uint32_t ParseUsize(std::function<std::tuple<uint8_t, bool>()> callback) {
   return ret;
 }
 
-std::vector<uint8_t> ParseVecN(std::function<std::tuple<uint8_t, bool>()> callback, size_t n) {
-  std::vector<uint8_t> vec;
-  for (size_t i = 0; i != n; ++i) {
-    vec.emplace_back(ParseU8(callback));
+inline
+auto ParseVecN(reader_type &reader, size_t len) -> std::vector<uint8_t> {
+  std::vector<uint8_t> vec(len);
+  if (size_t n = reader(vec.data(), len); n < len) {
+    tea::err::raise<tea::err_enum::unexpected_eof>([len, n]() -> std::string {
+      std::stringstream ss;
+      ss << "parse bytes, expected length is " << len << " but only get " << n << " bytes";
+      return ss.str();
+    });
+    return {};
   }
   return vec;
 }
 
-std::vector<uint8_t> ParseArgs(std::function<std::tuple<uint8_t, bool>()> callback) {
-  uint32_t capacity = ParseUsize(callback);
-  return ParseVecN(callback, static_cast<size_t>(capacity));
+inline
+auto ParseArgs(reader_type &reader) -> std::vector<uint8_t> {
+  uint32_t capacity = ParseUsize(reader);
+  return ParseVecN(reader, static_cast<size_t>(capacity));
 }
 
-MilkPowder::EventImpl &ParseEvent(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
+inline
+auto ParseEvent(reader_type &reader, uint32_t delta, uint8_t type) -> Event * {
   if (type < 0x80 || type >= 0xf0) {
-    type = ParseU8(callback);
+    type = ParseU8(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse event type", e);
+      return nullptr;
+    }
     if (type < 0x80 || type >= 0xf0) {
-      MilkTea_throwf(InvalidParam, "ParseEvent -- type %02" PRIx8, type);
+      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
+        std::stringstream ss;
+        ss << "parse event but type is invalid: " << MilkTea::ToStringHex::FromU8(type);
+        return ss.str();
+      });
+      return nullptr;
     }
   }
-  std::tuple<uint8_t, uint8_t> args = std::make_tuple(ParseU8(callback), 0);
+  std::array<uint8_t, 2> args{};
+  args[0] = ParseU8(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse event arg0", e);
+    return nullptr;
+  }
   if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
-    std::get<1>(args) = ParseU8(callback);
+    args[1] = ParseU8(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse event arg1", e);
+      return nullptr;
+    }
   }
-  return *new MilkPowder::EventImpl(delta, type, args);
+  return new Event(delta, type, args);
 }
 
-MilkPowder::MetaImpl &ParseMeta(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
+inline
+auto ParseMeta(reader_type &reader, uint32_t delta, uint8_t type) -> Meta * {
   if (type != 0xff) {
-    type = ParseU8(callback);
+    type = ParseU8(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse meta type", e);
+      return nullptr;
+    }
     if (type != 0xff) {
-      MilkTea_throwf(InvalidParam, "ParseMeta -- 0xff %02" PRIx8, type);
+      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
+        std::stringstream ss;
+        ss << "parse meta but type is not equals 0xff: " << MilkTea::ToStringHex::FromU8(type);
+        return ss.str();
+      });
+      return nullptr;
     }
   }
-  type = ParseU8(callback);
-  if (type >= 0x80) {
-      MilkTea_throwf(InvalidParam, "ParseMeta -- type %02" PRIx8, type);
+  type = ParseU8(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse meta", e);
+    return nullptr;
   }
-  std::vector<uint8_t> args = ParseArgs(callback);
-  return *new MilkPowder::MetaImpl(delta, type, std::move(args));
+  if (type >= 0x80) {
+      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
+        std::stringstream ss;
+        ss << "parse meta but type is invalid: " << MilkTea::ToStringHex::FromU8(type);
+        return ss.str();
+      });
+      return nullptr;
+  }
+  auto args = ParseArgs(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse meta args", e);
+    return nullptr;
+  }
+  return new Meta(delta, type, std::move(args));
 }
 
-MilkPowder::SysexImpl &ParseSysex(std::function<std::tuple<uint8_t, bool>()> callback, uint32_t delta, uint8_t type) {
+inline
+auto ParseSysex(reader_type &reader, uint32_t delta, uint8_t type) -> Sysex * {
   if (type != 0xf0) {
-    type = ParseU8(callback);
+    type = ParseU8(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse sysex type", e);
+      return nullptr;
+    }
     if (type != 0xf0) {
-      MilkTea_throwf(InvalidParam, "ParseSysex -- 0xf0 %02" PRIx8, type);
+      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
+        std::stringstream ss;
+        ss << "parse sysex but type is not equals 0xf0: " << MilkTea::ToStringHex::FromU8(type);
+        return ss.str();
+      });
+      return nullptr;
     }
   }
-  std::vector<uint8_t> args = ParseArgs(callback);
-  uint8_t last = args.back();
-  std::vector<MilkPowder::SysexImpl::Item> items;
+  auto args = ParseArgs(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse sysex args", e);
+    return nullptr;
+  }
+  if (args.empty()) {
+    tea::err::raise<tea::err_enum::undefined_format>("parse sysex but args is empty");
+    return nullptr;
+  }
+  auto last = args.back();
+  std::vector<Sysex::item_type> items;
   items.emplace_back(delta, std::move(args));
   while (last != 0xf7) {
-    delta = ParseUsize(callback);
-    type = ParseU8(callback);
-    if (type != 0xf7) {
-      MilkTea_throwf(InvalidParam, "ParseSysex -- 0xf7 %02" PRIx8, type);
+    delta = ParseUsize(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse sysex delta", e);
+      return nullptr;
     }
-    args = ParseArgs(callback);
+    type = ParseU8(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse sysex types", e);
+      return nullptr;
+    }
+    if (type != 0xf7) {
+      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
+        std::stringstream ss;
+        ss << "parse sysex but type is not equals 0xf7: " << MilkTea::ToStringHex::FromU8(type);
+        return ss.str();
+      });
+      return nullptr;
+    }
+    args = ParseArgs(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse sysex args in loop", e);
+      return nullptr;
+    }
+    if (args.empty()) {
+      tea::err::raise<tea::err_enum::undefined_format>("parse sysex in loop but args is empty");
+      return nullptr;
+    }
     last = args.back();
     items.emplace_back(delta, std::move(args));
   }
-  return *new MilkPowder::SysexImpl(std::move(items));
+  return new Sysex(std::move(items));
 }
 
-} // namespace
-
-namespace MilkPowder {
-
-MidiImpl &MidiImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  std::vector<uint8_t> head = ParseVecN(callback, 4);
-  if (memcmp(head.data(), "MThd", 4) != 0) {
-    head.push_back(0);
-    MilkTea_throwf(Unsupported, "MThd: %s", reinterpret_cast<char *>(head.data()));
+inline
+auto ParseMessage(reader_type &reader, uint8_t last) -> Message * {
+  auto delta = ParseUsize(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse message delta", e);
+    return nullptr;
   }
-  uint32_t len = ParseU32(callback);
-  if (static_cast<uint32_t>(6) != len) {
-    MilkTea_throwf(Unsupported, "Parse -- 0x00000006 %" PRIu32, len);
+  auto type = ParseU8(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse message type", e);
+    return nullptr;
   }
-  uint16_t format = ParseU16(callback);
-  uint16_t ntrks = ParseU16(callback);
-  uint16_t division = ParseU16(callback);
-  std::vector<std::unique_ptr<TrackImpl>> items;
-  for (uint16_t i = 0; i != ntrks; ++i) {
-    items.emplace_back(&TrackImpl::Parse(callback));
-  }
-  return *new MidiImpl(format, division, std::move(items));
-}
-  
-TrackImpl &TrackImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  std::vector<uint8_t> head = ParseVecN(callback, 4);
-  if (memcmp(head.data(), "MTrk", 4) != 0) {
-    head.push_back(0);
-    MilkTea_throwf(Unsupported, "MTrk: %s", reinterpret_cast<char *>(head.data()));
-  }
-  const uint32_t capacity = ParseU32(callback);
-  uint32_t len = capacity;
-  std::function<std::tuple<uint8_t, bool>()> func = [callback, capacity, &len]() -> std::tuple<uint8_t, bool> {
-    if (len-- == 0) {
-      MilkTea_logW("Parse --  capacity eof %" PRIu32, capacity);
-      return std::make_tuple(0, false);
-    }
-    return callback();
-  };
-  std::vector<std::unique_ptr<MessageImpl>> items;
-  uint8_t last = 0;
-  while (len != 0) {
-    MessageImpl &it = MessageImpl::Parse(func, last);
-    bool end = it.IsMeta() && dynamic_cast<MetaImpl &>(it).type() == 0x2f;
-    last = it.type();
-    items.emplace_back(&it);
-    if (end) {
-      while (len != 0) {
-        ParseU8(func);
-      }
-    }
-  }
-  return *new TrackImpl(std::move(items));
-}
-
-MessageImpl &MessageImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last) {
-  uint32_t delta = ParseUsize(callback);
-  uint8_t type = ParseU8(callback);
   if (type >= 0x80 && type < 0xf0) {
-    return ParseEvent(callback, delta, type);
-  } else if (type == 0xff) {
-    return ParseMeta(callback, delta, 0xff);
-  } else if (type == 0xf0) {
-    return ParseSysex(callback, delta, 0xf0);
-  } else if (type < 0x80) {
+    return ParseEvent(reader, delta, type);
+  }
+  if (type == 0xff) {
+    return ParseMeta(reader, delta, 0xff);
+  }
+  if (type == 0xf0) {
+    return ParseSysex(reader, delta, 0xf0);
+  }
+  if (type < 0x80) {
     if (last < 0x80 || last >= 0xf0) {
-      MilkTea_throwf(InvalidParam, "Parse -- last event %02" PRIx8, last);
+      tea::err::raise<tea::err_enum::undefined_format>([last]() -> std::string {
+        std::stringstream ss;
+        ss << "parse message event but last is " << MilkTea::ToStringHex::FromU8(last);
+        return ss.str();
+      });
+      return nullptr;
     }
-    std::tuple<uint8_t, uint8_t> args = std::make_tuple(type, 0);
+    std::array<uint8_t, 2> args{};
+    args[0] = type;
     type = last;
     if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
-      std::get<1>(args) = ParseU8(callback);
+      args[1] = ParseU8(reader);
+      if (auto e = tea::err::init(); e != nullptr) {
+        tea::err::raise<tea::err_enum::io_failure>("parse message event args", e);
+        return nullptr;
+      }
     }
-    return *new EventImpl(delta, type, args);
-  } else {
-    MilkTea_throwf(InvalidParam, "Parse -- type %02" PRIx8, last);
+    return new Event(delta, type, args);
   }
+  tea::err::raise<tea::err_enum::undefined_format>([last]() -> std::string {
+    std::stringstream ss;
+    ss << "parse message but last type is invalid: " << MilkTea::ToStringHex::FromU8(last);
+    return ss.str();
+  });
+  return nullptr;
 }
-  
-EventImpl &EventImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback, uint8_t last) {
-  uint32_t delta = ParseUsize(callback);
-  return ParseEvent(callback, delta, last);
+
+inline
+auto ParseTrack(reader_type &reader) -> Track * {
+  {
+    auto head = ParseVecN(reader, 4);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse track head", e);
+      return nullptr;
+    }
+    if (std::memcmp(head.data(), "MTrk", 4) != 0) {
+      tea::err::raise<tea::err_enum::undefined_format>([&head]() -> std::string {
+        std::stringstream ss;
+        ss << "parse track but head is " << MilkTea::ToString::FromBytes(head.data(), 4);
+        return ss.str();
+      });
+      return nullptr;
+    }
+  }
+  auto capacity = ParseU32(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse track capacity", e);
+    return nullptr;
+  }
+  auto len = capacity;
+  reader_type func = [reader, capacity, &len](uint8_t bytes[], size_t n) -> size_t {
+    if (len < n) {
+      tea::err::raise<tea::err_enum::unexpected_eof>([capacity]() -> std::string {
+        std::stringstream ss;
+        ss << "parse track but capacity is not enough: " << capacity;
+        return ss.str();
+      });
+      return 0;
+    }
+    len -= n;
+    return reader(bytes, n);
+  };
+  std::vector<std::unique_ptr<Message>> items;
+  uint8_t last = 0;
+  while (len != 0) {
+    auto it = ParseMessage(func, last);
+    if (it == nullptr) {
+      auto e = tea::err::init();
+      tea::err::raise<tea::err_enum::io_failure>("parse track messages", e);
+      return nullptr;
+    }
+    last = it->type_;
+    bool end = last == 0xff && dynamic_cast<Meta &>(*it).type_ == 0x2f;
+    items.emplace_back(it);
+    if (end) {
+      auto n = func(nullptr, len);
+      if (n < len) {
+        auto e = tea::err::init();
+        tea::err::raise<tea::err_enum::io_failure>("parse track when clear buffer", e);
+        return nullptr;
+      }
+      break;
+    }
+  }
+  return new Track(std::move(items));
 }
-  
-MetaImpl &MetaImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  uint32_t delta = ParseUsize(callback);
-  return ParseMeta(callback, delta, 0);
+
+inline
+auto ParseMidi(reader_type &reader) -> Midi * {
+  {
+    auto head = ParseVecN(reader, 4);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse midi head", e);
+      return nullptr;
+    }
+    if (std::memcmp(head.data(), "MThd", 4) != 0) {
+      tea::err::raise<tea::err_enum::undefined_format>([&head]() -> std::string {
+        std::stringstream ss;
+        ss << "parse midi but head is " << MilkTea::ToString::FromBytes(head.data(), 4);
+        return ss.str();
+      });
+      return nullptr;
+    }
+  }
+  {
+    auto len = ParseU32(reader);
+    if (auto e = tea::err::init(); e != nullptr) {
+      tea::err::raise<tea::err_enum::io_failure>("parse midi head length", e);
+      return nullptr;
+    }
+    if (6 != len) {
+      tea::err::raise<tea::err_enum::undefined_format>([len]() -> std::string {
+        std::stringstream ss;
+        ss << "parse midi but length of head is " << len;
+        return ss.str();
+      });
+      return nullptr;
+    }
+  }
+  auto format = ParseU16(reader);
+  auto count = ParseU16(reader);
+  auto division = ParseU16(reader);
+  if (auto e = tea::err::init(); e != nullptr) {
+    tea::err::raise<tea::err_enum::io_failure>("parse midi head info", e);
+    return nullptr;
+  }
+  std::vector<std::unique_ptr<Track>> items;
+  for (uint16_t i = 0; i != count; ++i) {
+    auto track = ParseTrack(reader);
+    if (track == nullptr) {
+      auto e = tea::err::init();
+      tea::err::raise<tea::err_enum::io_failure>([i, format, count, division]() -> std::string {
+        std::stringstream ss;
+        ss << "parse midi track: index of track is " << i << " and head of midi is " << MilkTea::ToString::From(", ", "[", "]")(
+          MilkTea::ToStringHex::FromU16(format),
+          MilkTea::ToStringHex::FromU16(count),
+          MilkTea::ToStringHex::FromU16(division)
+        );
+        return ss.str();
+      }, e);
+      return nullptr;
+    }
+    items.emplace_back(track);
+  }
+  return new Midi(format, division, std::move(items));
 }
-  
-SysexImpl &SysexImpl::Parse(std::function<std::tuple<uint8_t, bool>()> callback) {
-  uint32_t delta = ParseUsize(callback);
-  return ParseSysex(callback, delta, 0);
-}
+
+} // namespace internal
 
 } // namespace MilkPowder

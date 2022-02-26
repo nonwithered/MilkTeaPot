@@ -5,29 +5,24 @@
 
 namespace MilkPowder {
 
-class MetaImpl final : public MessageImpl {
-  static constexpr char TAG[] = "MilkPowder::MetaImpl";
- public:
-  using mapping = Mapping::Meta;
-  static bool message_is(const MessageImpl &it) {
-    return it.IsMeta();
-  }
-  static MetaImpl &Parse(std::function<std::tuple<uint8_t, bool>()> callback);
-  std::vector<uint8_t> Dump() const final;
-  MessageImpl &Clone() const final {
-    return *new MetaImpl(*this);
-  }
-  MetaImpl(uint32_t delta, uint8_t type, std::vector<uint8_t> args) : MessageImpl(delta, 0xff), type_(type), args_(std::move(args)) {
-    if (type >= 0x80) {
-      MilkTea_throwf(InvalidParam, "ctor -- type: %02" PRIx8, type);
-    }
-  }
-  uint8_t type() const { return type_; }
-  const std::vector<uint8_t> &args() const { return args_; }
- private:
+namespace internal {
+
+struct Meta : Message {
   const uint8_t type_;
   const std::vector<uint8_t> args_;
+  Meta(uint32_t delta, uint8_t type, std::vector<uint8_t> args)
+  : Message(delta, 0xff),
+    type_(type),
+    args_(std::move(args)) {}
+  auto args(const uint8_t **p) -> uint32_t {
+    if (p != nullptr) {
+      *p = args_.data();
+    }
+    return args_.size();
+  }
 };
+
+} // namespace internal
 
 } // namespace MilkPowder
 
