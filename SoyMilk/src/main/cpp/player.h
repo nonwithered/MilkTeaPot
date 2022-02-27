@@ -104,7 +104,7 @@ class PlayerImpl final : public std::enable_shared_from_this<PlayerImpl> {
     Post([](auto &obj) {
       obj.Post([command = obj.Perform().Pause()](auto &obj) {
         auto pos = command(obj.Perform());
-        obj.ChangeStateAsync(State::PAUSED, State::PAUSED);
+        obj.ChangeStateAsync(State::PAUSED, State::SUSPEND);
         obj.Renderer().OnPause(pos);
       });
     });
