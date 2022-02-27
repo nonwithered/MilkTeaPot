@@ -22,8 +22,11 @@ struct Class {
   template<typename ...args_type>
   static
   auto TEA_CALL create(args_type ...args) -> target_type * {
-    auto &ref = *class_type::init(std::forward<args_type>(args)...);
-    return unwrap_cast<class_type>(ref);
+    auto *ref = class_type::init(std::forward<args_type>(args)...);
+    if (ref == nullptr) {
+      return nullptr;
+    }
+    return unwrap_cast(*ref);
   }
   static
   auto TEA_CALL destroy(target_type *obj) -> void {

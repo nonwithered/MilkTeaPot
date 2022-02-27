@@ -33,11 +33,11 @@ struct Meta : Message {
   }
   static
   auto ToMeta(const MilkPowder::Message *it) -> const MilkPowder::Meta * {
-    return unwrap_cast(reinterpret_cast<const Meta &>(wrap_cast<const Message>(it)));
+    return unwrap_cast(static_cast<const Meta &>(wrap_cast<const Message>(it)));
   }
   static
   auto FromMessage(MilkPowder::Message *it) -> MilkPowder::Meta * {
-    return unwrap_cast(reinterpret_cast<Meta &>(wrap_cast<Message>(it)));
+    return unwrap_cast(static_cast<Meta &>(wrap_cast<Message>(it)));
   }
   auto ToMessage() const -> const MilkPowder::Message * {
     return unwrap_cast(static_cast<const Message &>(*this));

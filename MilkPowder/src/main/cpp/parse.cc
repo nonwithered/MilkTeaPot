@@ -297,7 +297,7 @@ auto ParseTrack(reader_type &reader) -> Track * {
       return nullptr;
     }
     last = it->type_;
-    bool end = last == 0xff && dynamic_cast<Meta &>(*it).type_ == 0x2f;
+    bool end = last == 0xff && static_cast<Meta &>(*it).type_ == 0x2f;
     items.emplace_back(it);
     if (end) {
       auto n = func(nullptr, len);

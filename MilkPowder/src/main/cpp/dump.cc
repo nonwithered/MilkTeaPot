@@ -103,15 +103,15 @@ auto DumpTrack(const Track &obj, std::vector<uint8_t> &vec) -> void {
   DumpU8(0, vec);
   DumpU8(0, vec);
   for (const auto &it : obj.items_) {
-    if (auto event = dynamic_cast<const Event *>(it.get()); event != nullptr) {
+    if (auto event = static_cast<const Event *>(it.get()); event != nullptr) {
       DumpEvent(*event, vec);
       continue;
     }
-    if (auto meta = dynamic_cast<const Meta *>(it.get()); meta != nullptr) {
+    if (auto meta = static_cast<const Meta *>(it.get()); meta != nullptr) {
       DumpMeta(*meta, vec);
       continue;
     }
-    if (auto sysex = dynamic_cast<const Sysex *>(it.get()); sysex != nullptr) {
+    if (auto sysex = static_cast<const Sysex *>(it.get()); sysex != nullptr) {
       DumpSysex(*sysex, vec);
       continue;
     }

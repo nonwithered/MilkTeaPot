@@ -2,8 +2,6 @@ project(soymilk)
 
 set(src_files
     "lib.cc"
-    "frame.cc"
-    "renderer.cc"
 )
 
 set(src_dir

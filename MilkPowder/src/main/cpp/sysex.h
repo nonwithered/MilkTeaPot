@@ -35,11 +35,11 @@ struct Sysex : Message {
   }
   static
   auto ToSysex(const MilkPowder::Message *it) -> const MilkPowder::Sysex * {
-    return unwrap_cast(reinterpret_cast<const Sysex &>(wrap_cast<const Message>(it)));
+    return unwrap_cast(static_cast<const Sysex &>(wrap_cast<const Message>(it)));
   }
   static
   auto FromMessage(MilkPowder::Message *it) -> MilkPowder::Sysex * {
-    return unwrap_cast(reinterpret_cast<Sysex &>(wrap_cast<Message>(it)));
+    return unwrap_cast(static_cast<Sysex &>(wrap_cast<Message>(it)));
   }
   auto ToMessage() const -> const MilkPowder::Message * {
     return unwrap_cast(static_cast<const Message &>(*this));
