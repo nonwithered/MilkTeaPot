@@ -5,7 +5,7 @@
 #include <functional>
 #include <string>
 #include <type_traits>
-#include <array>
+#include <string>
 #include <cstdio>
 #include <tea/ref.h>
 #endif // ifdef __cplusplus
@@ -69,8 +69,8 @@ class with_log {
     if (priority < tea_log_priority()) {
       return;
     }
-    std::array<char, N> msg;
-    std::snprintf(msg.data(), N, fmt, args...);
+    std::string msg(N, '\0');
+    std::snprintf(msg.data(), N, fmt, std::forward<args_type>(args)...);
     tea_log_print(priority, TAG(), msg.data());
   }
   template<log_level priority>

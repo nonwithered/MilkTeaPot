@@ -1,14 +1,13 @@
-#ifndef LIB_MILKTEA_WRAPPER_TOSTRING_H_
-#define LIB_MILKTEA_WRAPPER_TOSTRING_H_
+#ifndef LIB_MILKTEA_TOSTRING_H_
+#define LIB_MILKTEA_TOSTRING_H_
 
+#include <cstdio>
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <cstdint>
 #include <cinttypes>
 #include <initializer_list>
-
-#include <milktea/common.h>
 
 namespace MilkTea {
 
@@ -56,9 +55,14 @@ class From final {
   const std::string prefix_;
   const std::string suffix_;
   std::stringstream ss_;
-  MilkTea_NonCopy(From)
-  MilkTea_NonMove(From)
 };
+
+template<std::size_t N = 256, typename ...args_type>
+auto FromFormat(const char fmt[], args_type ...args) -> std::string {
+  std::string str(N, '\0');
+  std::snprintf(str.data(), N, fmt, std::forward<args_type>(args)...);
+  return str;
+}
 
 inline
 std::string FromU8(uint8_t n) {
@@ -196,4 +200,4 @@ std::string FromBytes(const uint8_t bytes[], size_t length) {
 
 } // namespace MilkTea
 
-#endif // ifndef LIB_MILKTEA_WRAPPER_TOSTRING_H_
+#endif // ifndef LIB_MILKTEA_TOSTRING_H_

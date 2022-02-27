@@ -15,6 +15,9 @@ namespace MilkPowder {
 
 namespace internal {
 
+using namespace tea;
+using namespace MilkTea::ToString;
+
 using reader_type = std::function<size_t(uint8_t [], size_t)>;
 
 using namespace MilkPowder::internal;
@@ -23,7 +26,7 @@ inline
 auto ParseU8(reader_type &reader) -> uint8_t {
   uint8_t b = 0;
   if (size_t n = reader(&b, 1); n < 1) {
-    tea::err::raise<tea::err_enum::unexpected_eof>("parse u8");
+    err::raise<err_enum::unexpected_eof>("parse u8");
     return 0;
   }
   return b;
@@ -33,7 +36,7 @@ inline
 auto ParseU16(reader_type &reader) -> uint16_t {
   std::array<uint8_t, 2> arr{};
   if (size_t n = reader(arr.data(), 2); n < 2) {
-    tea::err::raise<tea::err_enum::unexpected_eof>("parse u16");
+    err::raise<err_enum::unexpected_eof>("parse u16");
     return 0;
   }
   return static_cast<uint16_t>((arr[0] << 010) | arr[1]);
@@ -43,7 +46,7 @@ inline
 auto ParseU32(reader_type &reader) -> uint32_t {
   std::array<uint8_t, 4> arr{};
   if (size_t n = reader(arr.data(), 4); n < 4) {
-    tea::err::raise<tea::err_enum::unexpected_eof>("parse u32");
+    err::raise<err_enum::unexpected_eof>("parse u32");
     return 0;
   }
   return static_cast<uint32_t>((arr[0] << 030) | arr[1] << 020 | arr[2] << 010 | arr[3]);
@@ -56,22 +59,14 @@ auto ParseUsize(reader_type &reader) -> uint32_t {
   size_t len = 0;
   while (len < 4 && last >= 0x80) {
     arr[len++] = last = ParseU8(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::unexpected_eof>("parse usize", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::unexpected_eof>("parse usize", e);
       return 0;
     }
   }
   if (len == 4 && last >= 0x80) {
-    tea::err::raise<tea::err_enum::undefined_format>([&arr]() -> std::string {
-      std::stringstream ss;
-      ss << "parse usize but it is too large: " << MilkTea::ToString::From(", ", "[", "]")(
-        MilkTea::ToStringHex::FromU8(arr[0]),
-        MilkTea::ToStringHex::FromU8(arr[1]),
-        MilkTea::ToStringHex::FromU8(arr[2]),
-        MilkTea::ToStringHex::FromU8(arr[3])
-      );
-      return ss.str();
-    });
+    err::raise<err_enum::undefined_format>(FromFormat("parse usize but it is too large: "
+    "[ %" PRIx8 ", %" PRIx8 ", %" PRIx8 ", %" PRIx8 " ]"));
     return 0;
   }
   uint32_t ret = arr[0] & 0x7f;
@@ -86,11 +81,8 @@ inline
 auto ParseVecN(reader_type &reader, size_t len) -> std::vector<uint8_t> {
   std::vector<uint8_t> vec(len);
   if (size_t n = reader(vec.data(), len); n < len) {
-    tea::err::raise<tea::err_enum::unexpected_eof>([len, n]() -> std::string {
-      std::stringstream ss;
-      ss << "parse bytes, expected length is " << len << " but only get " << n << " bytes";
-      return ss.str();
-    });
+    err::raise<err_enum::unexpected_eof>(FromFormat(
+    "parse bytes, expected length is %" PRIu32 " but only get %" PRIu32 " bytes", (uint32_t) len, (uint32_t) n));
     return {};
   }
   return vec;
@@ -106,29 +98,26 @@ inline
 auto ParseEvent(reader_type &reader, uint32_t delta, uint8_t type) -> Event * {
   if (type < 0x80 || type >= 0xf0) {
     type = ParseU8(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse event type", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse event type", e);
       return nullptr;
     }
     if (type < 0x80 || type >= 0xf0) {
-      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
-        std::stringstream ss;
-        ss << "parse event but type is invalid: " << MilkTea::ToStringHex::FromU8(type);
-        return ss.str();
-      });
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse event but type is invalid: %" PRIx8, type));
       return nullptr;
     }
   }
   std::array<uint8_t, 2> args{};
   args[0] = ParseU8(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse event arg0", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse event arg0", e);
     return nullptr;
   }
   if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
     args[1] = ParseU8(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse event arg1", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse event arg1", e);
       return nullptr;
     }
   }
@@ -139,35 +128,29 @@ inline
 auto ParseMeta(reader_type &reader, uint32_t delta, uint8_t type) -> Meta * {
   if (type != 0xff) {
     type = ParseU8(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse meta type", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse meta type", e);
       return nullptr;
     }
     if (type != 0xff) {
-      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
-        std::stringstream ss;
-        ss << "parse meta but type is not equals 0xff: " << MilkTea::ToStringHex::FromU8(type);
-        return ss.str();
-      });
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse meta but type is not equals 0xff: %" PRIx8, type));
       return nullptr;
     }
   }
   type = ParseU8(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse meta", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse meta", e);
     return nullptr;
   }
   if (type >= 0x80) {
-      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
-        std::stringstream ss;
-        ss << "parse meta but type is invalid: " << MilkTea::ToStringHex::FromU8(type);
-        return ss.str();
-      });
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse meta but type is invalid: %" PRIx8, type));
       return nullptr;
   }
   auto args = ParseArgs(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse meta args", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse meta args", e);
     return nullptr;
   }
   return new Meta(delta, type, std::move(args));
@@ -177,26 +160,23 @@ inline
 auto ParseSysex(reader_type &reader, uint32_t delta, uint8_t type) -> Sysex * {
   if (type != 0xf0) {
     type = ParseU8(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse sysex type", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse sysex type", e);
       return nullptr;
     }
     if (type != 0xf0) {
-      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
-        std::stringstream ss;
-        ss << "parse sysex but type is not equals 0xf0: " << MilkTea::ToStringHex::FromU8(type);
-        return ss.str();
-      });
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse sysex but type is not equals 0xf0: %" PRIx8, type));
       return nullptr;
     }
   }
   auto args = ParseArgs(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse sysex args", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse sysex args", e);
     return nullptr;
   }
   if (args.empty()) {
-    tea::err::raise<tea::err_enum::undefined_format>("parse sysex but args is empty");
+    err::raise<err_enum::undefined_format>("parse sysex but args is empty");
     return nullptr;
   }
   auto last = args.back();
@@ -204,30 +184,27 @@ auto ParseSysex(reader_type &reader, uint32_t delta, uint8_t type) -> Sysex * {
   items.emplace_back(delta, std::move(args));
   while (last != 0xf7) {
     delta = ParseUsize(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse sysex delta", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse sysex delta", e);
       return nullptr;
     }
     type = ParseU8(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse sysex types", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse sysex types", e);
       return nullptr;
     }
     if (type != 0xf7) {
-      tea::err::raise<tea::err_enum::undefined_format>([type]() -> std::string {
-        std::stringstream ss;
-        ss << "parse sysex but type is not equals 0xf7: " << MilkTea::ToStringHex::FromU8(type);
-        return ss.str();
-      });
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse sysex but type is not equals 0xf7: %" PRIx8, type));
       return nullptr;
     }
     args = ParseArgs(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse sysex args in loop", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse sysex args in loop", e);
       return nullptr;
     }
     if (args.empty()) {
-      tea::err::raise<tea::err_enum::undefined_format>("parse sysex in loop but args is empty");
+      err::raise<err_enum::undefined_format>("parse sysex in loop but args is empty");
       return nullptr;
     }
     last = args.back();
@@ -239,13 +216,13 @@ auto ParseSysex(reader_type &reader, uint32_t delta, uint8_t type) -> Sysex * {
 inline
 auto ParseMessage(reader_type &reader, uint8_t last) -> Message * {
   auto delta = ParseUsize(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse message delta", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse message delta", e);
     return nullptr;
   }
   auto type = ParseU8(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse message type", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse message type", e);
     return nullptr;
   }
   if (type >= 0x80 && type < 0xf0) {
@@ -259,11 +236,8 @@ auto ParseMessage(reader_type &reader, uint8_t last) -> Message * {
   }
   if (type < 0x80) {
     if (last < 0x80 || last >= 0xf0) {
-      tea::err::raise<tea::err_enum::undefined_format>([last]() -> std::string {
-        std::stringstream ss;
-        ss << "parse message event but last is " << MilkTea::ToStringHex::FromU8(last);
-        return ss.str();
-      });
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse message event but last type is invalid: %" PRIx8, last));
       return nullptr;
     }
     std::array<uint8_t, 2> args{};
@@ -271,18 +245,15 @@ auto ParseMessage(reader_type &reader, uint8_t last) -> Message * {
     type = last;
     if ((type & 0xf0) != 0xc0 && (type & 0xf0) != 0xd0) {
       args[1] = ParseU8(reader);
-      if (auto e = tea::err::init(); e != nullptr) {
-        tea::err::raise<tea::err_enum::io_failure>("parse message event args", e);
+      if (auto e = err::init(); e != nullptr) {
+        err::raise<err_enum::io_failure>("parse message event args", e);
         return nullptr;
       }
     }
     return new Event(delta, type, args);
   }
-  tea::err::raise<tea::err_enum::undefined_format>([last]() -> std::string {
-    std::stringstream ss;
-    ss << "parse message but last type is invalid: " << MilkTea::ToStringHex::FromU8(last);
-    return ss.str();
-  });
+  err::raise<err_enum::undefined_format>(FromFormat(
+  "parse message but type is invalid: %" PRIx8, type));
   return nullptr;
 }
 
@@ -290,32 +261,27 @@ inline
 auto ParseTrack(reader_type &reader) -> Track * {
   {
     auto head = ParseVecN(reader, 4);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse track head", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse track head", e);
       return nullptr;
     }
     if (std::memcmp(head.data(), "MTrk", 4) != 0) {
-      tea::err::raise<tea::err_enum::undefined_format>([&head]() -> std::string {
-        std::stringstream ss;
-        ss << "parse track but head is " << MilkTea::ToString::FromBytes(head.data(), 4);
-        return ss.str();
-      });
+      auto head_str = FromBytes(head.data(), 4);
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse track but head is invalid: %s", head_str.data()));
       return nullptr;
     }
   }
   auto capacity = ParseU32(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse track capacity", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse track capacity", e);
     return nullptr;
   }
   auto len = capacity;
   reader_type func = [reader, capacity, &len](uint8_t bytes[], size_t n) -> size_t {
     if (len < n) {
-      tea::err::raise<tea::err_enum::unexpected_eof>([capacity]() -> std::string {
-        std::stringstream ss;
-        ss << "parse track but capacity is not enough: " << capacity;
-        return ss.str();
-      });
+      err::raise<err_enum::unexpected_eof>(FromFormat(
+      "parse track but capacity is not enough: %" PRIu32, (uint32_t) capacity));
       return 0;
     }
     len -= n;
@@ -326,8 +292,8 @@ auto ParseTrack(reader_type &reader) -> Track * {
   while (len != 0) {
     auto it = ParseMessage(func, last);
     if (it == nullptr) {
-      auto e = tea::err::init();
-      tea::err::raise<tea::err_enum::io_failure>("parse track messages", e);
+      auto e = err::init();
+      err::raise<err_enum::io_failure>("parse track messages", e);
       return nullptr;
     }
     last = it->type_;
@@ -336,8 +302,8 @@ auto ParseTrack(reader_type &reader) -> Track * {
     if (end) {
       auto n = func(nullptr, len);
       if (n < len) {
-        auto e = tea::err::init();
-        tea::err::raise<tea::err_enum::io_failure>("parse track when clear buffer", e);
+        auto e = err::init();
+        err::raise<err_enum::io_failure>("parse track when clear buffer", e);
         return nullptr;
       }
       break;
@@ -350,55 +316,44 @@ inline
 auto ParseMidi(reader_type &reader) -> Midi * {
   {
     auto head = ParseVecN(reader, 4);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse midi head", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse midi head", e);
       return nullptr;
     }
     if (std::memcmp(head.data(), "MThd", 4) != 0) {
-      tea::err::raise<tea::err_enum::undefined_format>([&head]() -> std::string {
-        std::stringstream ss;
-        ss << "parse midi but head is " << MilkTea::ToString::FromBytes(head.data(), 4);
-        return ss.str();
-      });
+      auto head_str = FromBytes(head.data(), 4);
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse midi but head is invalid: %s", head_str.data()));
       return nullptr;
     }
   }
   {
     auto len = ParseU32(reader);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::io_failure>("parse midi head length", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::io_failure>("parse midi head length", e);
       return nullptr;
     }
     if (6 != len) {
-      tea::err::raise<tea::err_enum::undefined_format>([len]() -> std::string {
-        std::stringstream ss;
-        ss << "parse midi but length of head is " << len;
-        return ss.str();
-      });
+      err::raise<err_enum::undefined_format>(FromFormat(
+      "parse midi but length of head is invalid: %" PRIu32, len));
       return nullptr;
     }
   }
   auto format = ParseU16(reader);
   auto count = ParseU16(reader);
   auto division = ParseU16(reader);
-  if (auto e = tea::err::init(); e != nullptr) {
-    tea::err::raise<tea::err_enum::io_failure>("parse midi head info", e);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("parse midi head info", e);
     return nullptr;
   }
   std::vector<std::unique_ptr<Track>> items;
   for (uint16_t i = 0; i != count; ++i) {
     auto track = ParseTrack(reader);
     if (track == nullptr) {
-      auto e = tea::err::init();
-      tea::err::raise<tea::err_enum::io_failure>([i, format, count, division]() -> std::string {
-        std::stringstream ss;
-        ss << "parse midi track: index of track is " << i << " and head of midi is " << MilkTea::ToString::From(", ", "[", "]")(
-          MilkTea::ToStringHex::FromU16(format),
-          MilkTea::ToStringHex::FromU16(count),
-          MilkTea::ToStringHex::FromU16(division)
-        );
-        return ss.str();
-      }, e);
+      auto e = err::init();
+      err::raise<err_enum::io_failure>(FromFormat(
+      "parse midi track: index of track is %" PRIu16 " and head of midi is "
+      "[ %" PRIx8 ", %" PRIx8 ", %" PRIx8 " ]", i, format, count, division), e);
       return nullptr;
     }
     items.emplace_back(track);

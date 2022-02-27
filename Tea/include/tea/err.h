@@ -167,8 +167,7 @@ struct tea_err_t : tea::mask_type<tea::err> {
   }
   template<tea::err_type type>
   static
-  auto raise(std::function<std::string()> func, tea::err *e = nullptr) -> void {
-    auto what = func();
+  auto raise(std::string what, tea::err *e = nullptr) -> void {
     raise<type>(what.data(), e);
   }
 };

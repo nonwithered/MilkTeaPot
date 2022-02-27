@@ -1,24 +1,21 @@
-#ifndef LIB_MILKTEA_COMMAND_CURSOR_H_
-#define LIB_MILKTEA_COMMAND_CURSOR_H_
+#ifndef LIB_MILKTEA_CURSOR_H_
+#define LIB_MILKTEA_CURSOR_H_
 
-#include <milktea.h>
-
-namespace MilkTea_Command {
+namespace MilkTea {
 
 template<typename container_type>
 class Cursor final {
-  static constexpr char TAG[] = "MilkTea_Command::Cursor";
   using value_type = typename container_type::value_type;
   using iterator = typename container_type::iterator;
 public:
   Cursor(container_type &container, iterator &cursor)
   : container_(container),
     cursor_(cursor) {}
-  const value_type &operator*() const {
+  auto operator*() const -> const value_type * {
     if (!operator bool()) {
-      MilkTea_throw(LogicError, "try to get but no more");
+      return nullptr;
     }
-    return *cursor_;
+    return cursor_;
   }
   bool operator++() {
     if (!operator bool()) {
@@ -35,6 +32,6 @@ private:
   iterator &cursor_;
 };
 
-} // namespace MilkTea_command
+} // namespace MilkTea
 
-#endif // ifndef LIB_MILKTEA_COMMAND_CURSOR_H_
+#endif // ifndef LIB_MILKTEA_CURSOR_H_

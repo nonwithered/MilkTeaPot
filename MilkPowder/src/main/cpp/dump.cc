@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include <tea.h>
+#include <milktea.h>
 
 #include "midi.h"
 #include "track.h"
@@ -11,6 +12,9 @@
 namespace MilkPowder {
 
 namespace internal {
+
+using namespace tea;
+using namespace MilkTea::ToString;
 
 inline
 auto DumpU8(uint8_t n, std::vector<uint8_t> &vec) -> void {
@@ -111,11 +115,7 @@ auto DumpTrack(const Track &obj, std::vector<uint8_t> &vec) -> void {
       DumpSysex(*sysex, vec);
       continue;
     }
-    tea::err::raise<tea::err_enum::cast_failure>([type = it->type_]() -> std::string {
-      std::stringstream ss;
-      ss << "dump track but unknown type of message: " << type;
-      return ss.str();
-    });
+    err::raise<err_enum::cast_failure>(FromFormat("dump track but unknown type of message: %" PRIx8, it->type_));
     return;
   }
   std::vector<uint8_t> len;
@@ -140,8 +140,8 @@ auto DumpMidi(const Midi &obj, std::vector<uint8_t> &vec) -> void {
   DumpU16(obj.division_, vec);
   for (const auto &it : obj.items_) {
     DumpTrack(*it, vec);
-    if (auto e = tea::err::init(); e != nullptr) {
-      tea::err::raise<tea::err_enum::invalid_param>("dump midi failure", e);
+    if (auto e = err::init(); e != nullptr) {
+      err::raise<err_enum::invalid_param>("dump midi failure", e);
       return;
     }
   }

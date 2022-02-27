@@ -1,5 +1,5 @@
-#ifndef LIB_MILKTEA_COMMAND_PIPELINE_H_
-#define LIB_MILKTEA_COMMAND_PIPELINE_H_
+#ifndef LIB_MILKTEA_PIPELINE_H_
+#define LIB_MILKTEA_PIPELINE_H_
 
 #include <map>
 #include <set>
@@ -8,13 +8,12 @@
 #include <sstream>
 #include <functional>
 
-#include <milktea_command/cursor.h>
+#include <milktea/cursor.h>
 
-namespace MilkTea_Command {
+namespace MilkTea {
 
 template<typename container_type, typename extra_type>
 class Pipeline final {
-  static constexpr char TAG[] = "MilkTea_Command::Pipeline";
   using self_type = Pipeline<container_type, extra_type>;
   using value_type = typename container_type::value_type;
   using cursor_type = Cursor<container_type>;
@@ -32,10 +31,6 @@ class Pipeline final {
       command_type f
     ) && {
     for (auto it : candidate) {
-      if (callbacks_.count(it) != 0) {
-        auto s = MilkTea::ToString::From()(it);
-        MilkTea_throwf(InvalidParam, "append a redundant candidate: %s", s.data());
-      }
       callbacks_[it] = f;
     }
     return std::move(*this);
@@ -98,10 +93,6 @@ class Pipeline final {
     {
       for (auto i = value_map.begin(), n = value_map.end(); i != n; ++i) {
         for (auto &it : i->second) {
-          if (candidate_map.count(it) != 0) {
-            auto s = MilkTea::ToString::From()(it);
-            MilkTea_throwf(InvalidParam, "append a redundant sub candidate: %s", s.data());
-          }
           candidate_map[it] = i->first;
         }
       }
@@ -144,10 +135,8 @@ class Pipeline final {
   std::map<value_type, command_type> callbacks_;
   container_type &container_;
   extra_type &extra_;
-  MilkTea_NonCopy(Pipeline);
-  MilkTea_NonMoveAssign(Pipeline);
 };
 
-} // namespace MilkTea_command
+} // namespace MilkTea
 
-#endif // ifndef LIB_MILKTEA_COMMAND_PIPELINE_H_
+#endif // ifndef LIB_MILKTEA_PIPELINE_H_

@@ -1,5 +1,5 @@
-#ifndef LIB_MILKTEA_WRAPPER_FROMSTRING_H_
-#define LIB_MILKTEA_WRAPPER_FROMSTRING_H_
+#ifndef LIB_MILKTEA_FROMSTRING_H_
+#define LIB_MILKTEA_FROMSTRING_H_
 
 #include <cstdint>
 #include <tuple>
@@ -116,4 +116,4 @@ size_t ToInt(const char s[], size_t n, T *v = nullptr) {
 
 } // namespace MilkTea
 
-#endif // ifndef LIB_MILKTEA_WRAPPER_FROMSTRING_H_
+#endif // ifndef LIB_MILKTEA_FROMSTRING_H_

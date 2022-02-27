@@ -1,18 +1,16 @@
-#ifndef LIB_MILKTEA_COMMAND_DISPATCHER_H_
-#define LIB_MILKTEA_COMMAND_DISPATCHER_H_
+#ifndef LIB_MILKTEA_DISPATCHER_H_
+#define LIB_MILKTEA_DISPATCHER_H_
 
 #include <functional>
 #include <map>
 #include <string>
 #include <sstream>
 
-#include <milktea.h>
-
-namespace MilkTea_Command {
+namespace MilkTea {
 
 template<typename container_type, typename context_type>
 struct DispatcherHelper {
-  static constexpr char TAG[] = "MilkTea_Command::Dispatcher";
+  static constexpr char TAG[] = "MilkTea::Dispatcher";
   using value_type = typename container_type::value_type;
   using command_type = std::function<void(container_type &, context_type &)>;
   using map_type = std::map<value_type, command_type>;
@@ -38,10 +36,6 @@ struct DispatcherGenerator<container_type, context_type, T, Y...> final {
   static map_type Make() {
     auto m = DispatcherGenerator<container_type, context_type, Y...>::Make();
     auto n = T::Name();
-    if (m.count(n) != 0) {
-      auto s = MilkTea::ToString::From()(n);
-      MilkTea_throwf(InvalidParam, "Make: duplicate %s", s.data());
-    }
     m[n] = T::Start;
     return m;
   }
@@ -55,23 +49,23 @@ class Dispatcher final {
   using map_type = typename helper_type::map_type;
  public:
   template<typename ...T>
-  void Start(T...) && {
+  bool Start(T...) && {
     auto m = DispatcherGenerator<container_type, context_type, T...>::Make();
     if (m.empty()) {
-      MilkTea_throw(InvalidParam, "Start need commands");
+      return false;
     }
     if (auto h = container_.begin(); h != container_.end()) {
       if (auto i = m.find(*h); i != m.end()) {
         container_.erase(h);
         i->second(container_, context_);
-        return;
+        return true;
       }
     }
     if (auto v = value_type(); m.count(v) != 0) {
       m[v](container_, context_);
-      return;
+      return true;
     }
-    MilkTea_logW("missing a default command");
+    return false;
   }
   Dispatcher(container_type &container, context_type &context)
   : container_(container),
@@ -79,10 +73,8 @@ class Dispatcher final {
  private:
   container_type &container_;
   context_type &context_;
-  MilkTea_NonCopy(Dispatcher);
-  MilkTea_NonMove(Dispatcher);
 };
 
-} // namespace MilkTea_command
+} // namespace MilkTea
 
-#endif // ifndef LIB_MILKTEA_COMMAND_DISPATCHER_H_
+#endif // ifndef LIB_MILKTEA_DISPATCHER_H_
