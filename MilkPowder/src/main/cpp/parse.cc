@@ -287,7 +287,7 @@ auto ParseTrack(reader_type &reader) -> Track * {
     len -= n;
     return reader(bytes, n);
   };
-  std::vector<std::unique_ptr<Message>> items;
+  std::vector<Track::item_type> items;
   uint8_t last = 0;
   while (len != 0) {
     auto it = ParseMessage(func, last);
@@ -346,7 +346,7 @@ auto ParseMidi(reader_type &reader) -> Midi * {
     err::raise<err_enum::io_failure>("parse midi head info", e);
     return nullptr;
   }
-  std::vector<std::unique_ptr<Track>> items;
+  std::vector<Midi::item_type> items;
   for (uint16_t i = 0; i != count; ++i) {
     auto track = ParseTrack(reader);
     if (track == nullptr) {
@@ -359,6 +359,23 @@ auto ParseMidi(reader_type &reader) -> Midi * {
     items.emplace_back(track);
   }
   return new Midi(format, division, std::move(items));
+}
+
+auto Midi::Parse(file::input func) -> MilkPowder::Midi * {
+  auto invoke = func.invoke;
+  if (invoke == nullptr) {
+    err::raise<err_enum::null_obj>("parse midi but the invoke param is nullptr");
+    return nullptr;
+  }
+  defer d = [func]() {
+    if (auto close = func.close; close != nullptr) {
+      close(func.capture);
+    }
+  };
+  reader_type reader = [invoke, capture = func.capture](uint8_t bytes[], size_t len) -> size_t {
+    return invoke(capture, bytes, len);
+  };
+  return unwrap_cast(*ParseMidi(reader));
 }
 
 } // namespace internal

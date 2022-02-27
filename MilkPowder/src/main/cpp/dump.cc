@@ -147,6 +147,26 @@ auto DumpMidi(const Midi &obj, std::vector<uint8_t> &vec) -> void {
   }
 }
 
+auto Midi::Dump(file::output func) const -> void {
+  auto invoke = func.invoke;
+  if (invoke == nullptr) {
+    err::raise<err_enum::null_obj>("dump midi but the invoke param is nullptr");
+    return;
+  }
+  defer d = [func]() {
+    if (auto close = func.close; close != nullptr) {
+      close(func.capture);
+    }
+  };
+  std::vector<uint8_t> vec;
+  DumpMidi(*this, vec);
+  if (auto e = err::init(); e != nullptr) {
+    err::raise<err_enum::io_failure>("dump midi", e);
+    return;
+  }
+  invoke(func.capture, vec.data(), vec.size());
+}
+
 } // namespace internal
 
 } // namespace MilkPowder

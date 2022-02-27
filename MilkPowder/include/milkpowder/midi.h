@@ -30,6 +30,10 @@ TEA_API struct MilkPowder_Midi_t * (TEA_CALL *
 MilkPowder_Midi_Parse)(tea_file_input_t);
 
 extern
+TEA_API void (TEA_CALL *
+MilkPowder_Midi_Dump)(const struct MilkPowder_Midi_t *, tea_file_output_t);
+
+extern
 TEA_API uint16_t (TEA_CALL *
 MilkPowder_Midi_GetFormat)(const struct MilkPowder_Midi_t *);
 

@@ -20,11 +20,11 @@ auto tea::internal::log::cell() -> logger & {
 
 namespace {
 
-using namespace tea;
-using namespace meta;
-using namespace internal;
+using namespace tea::meta;
 
-using Err = errors::Err;
+using namespace tea::internal;
+
+using errors::Err;
 
 auto err_emit = function_handle<tea_err_type_t, const char *, tea_err_t *>::invoke<&Err::emit>;
 auto err_type_of = field_handle::getter<&Err::type_>;
@@ -34,7 +34,7 @@ auto err_suppressed = method_handle<>::invoke<&Err::suppressed>;
 auto err_is = method_handle<tea_err_type_t>::invoke<&Err::is>;
 auto err_dump = method_handle<tea_err_dump_recv_t>::invoke<&Err::dump>;
 
-auto log_print = function_handle<log_level, const char *, const char *>::invoke<&log::print>;
+auto log_print = function_handle<tea::log_level, const char *, const char *>::invoke<&log::print>;
 auto log_priority = function_handle<>::invoke<&log::priority>;
 auto logger_setup = function_handle<const log::logger *>::invoke<&log::setup>;
 

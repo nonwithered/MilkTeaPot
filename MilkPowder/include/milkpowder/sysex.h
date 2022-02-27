@@ -27,12 +27,16 @@ TEA_API void (TEA_CALL *
 MilkPowder_Sysex_Destroy)(struct MilkPowder_Sysex_t *);
 
 extern
-TEA_API uint8_t (TEA_CALL *
+TEA_API uint32_t (TEA_CALL *
 MilkPowder_Sysex_GetCount)(const struct MilkPowder_Sysex_t *);
 
 extern
 TEA_API uint32_t (TEA_CALL *
 MilkPowder_Sysex_GetArgs)(const struct MilkPowder_Sysex_t *, uint32_t index, const uint8_t **);
+
+extern
+TEA_API uint32_t (TEA_CALL *
+MilkPowder_Sysex_GetDelta)(const struct MilkPowder_Sysex_t *, uint32_t index);
 
 extern
 TEA_API struct MilkPowder_Sysex_t * (TEA_CALL *

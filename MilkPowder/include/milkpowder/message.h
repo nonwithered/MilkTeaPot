@@ -18,6 +18,18 @@ struct MilkPowder_Meta_t;
 struct MilkPowder_Sysex_t;
 
 extern
+TEA_API uint8_t (TEA_CALL *
+MilkPowder_Message_GetType)(const struct MilkPowder_Message_t *);
+
+extern
+TEA_API uint32_t (TEA_CALL *
+MilkPowder_Message_GetDelta)(const struct MilkPowder_Message_t *);
+
+extern
+TEA_API void (TEA_CALL *
+MilkPowder_Message_SetDelta)(struct MilkPowder_Message_t *, uint32_t delta);
+
+extern
 TEA_API struct MilkPowder_Message_t * (TEA_CALL *
 MilkPowder_Message_FromEvent)(struct MilkPowder_Event_t *);
 
@@ -40,18 +52,6 @@ MilkPowder_Message_FromSysex)(struct MilkPowder_Sysex_t *);
 extern
 TEA_API const struct MilkPowder_Sysex_t * (TEA_CALL *
 MilkPowder_Message_ToSysex)(const struct MilkPowder_Message_t *);
-
-extern
-TEA_API uint8_t (TEA_CALL *
-MilkPowder_Message_GetType)(const struct MilkPowder_Message_t *);
-
-extern
-TEA_API uint32_t (TEA_CALL *
-MilkPowder_Message_GetDelta)(const struct MilkPowder_Message_t *);
-
-extern
-TEA_API void (TEA_CALL *
-MilkPowder_Message_SetDelta)(struct MilkPowder_Message_t *, uint32_t delta);
 
 #ifdef __cplusplus
 } // extern "C"

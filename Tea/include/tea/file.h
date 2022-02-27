@@ -29,15 +29,25 @@ struct tea_file_output_t {
 
 #ifdef __cplusplus
 
+namespace tea {
+namespace file {
+
+using input = tea_file_input_t;
+using output = tea_file_output_t;
+
+} // namespace file
+
 template<>
-struct tea::meta::func_sign<tea_file_input_t> {
+struct meta::func_sign<file::input> {
   using type = size_t(uint8_t *, size_t);
 };
 
 template<>
-struct tea::meta::func_sign<tea_file_output_t> {
+struct meta::func_sign<file::output> {
   using type = size_t(const uint8_t *, size_t);
 };
+
+} // namespace tea
 
 #endif // ifdef __cplusplus
 
