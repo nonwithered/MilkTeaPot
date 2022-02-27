@@ -63,11 +63,17 @@ enum SoyMilk_Player_State_t {
  * SEEKING -> SUSPEND uint64_t OnSeekEnd
  */
 struct SoyMilk_Player_OnStateChange_recv_t {
-  struct SoyMilk_Player_OnStateChange_recv_capture_t *capture;
-  void (TEA_CALL *close)(struct SoyMilk_Player_OnStateChange_recv_capture_t *);
-  void (TEA_CALL *invoke)(struct SoyMilk_Player_OnStateChange_recv_capture_t *,
-                          enum SoyMilk_Player_State_t old_state, enum SoyMilk_Player_State_t new_state,
-                          struct SoyMilk_Player_OnStateChange_recv_data_t *);
+  struct SoyMilk_Player_OnStateChange_recv_ctx_t *ctx;
+  void (TEA_CALL *close)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *);
+  void (TEA_CALL *OnPrepare)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *, uint64_t);
+  void (TEA_CALL *OnStart)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *);
+  void (TEA_CALL *OnResume)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *);
+  void (TEA_CALL *OnPause)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *, uint64_t);
+  void (TEA_CALL *OnStop)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *);
+  void (TEA_CALL *OnReset)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *);
+  void (TEA_CALL *OnComplete)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *);
+  void (TEA_CALL *OnSeekBegin)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *);
+  void (TEA_CALL *OnSeekEnd)(struct SoyMilk_Player_OnStateChange_recv_ctx_t *, uint64_t);
 };
 
 struct SoyMilk_Player_OnRenderFrame_recv_t {
@@ -164,47 +170,47 @@ class OnPlayerStateChangeListener : tea::remove_copy {
   explicit OnPlayerStateChangeListener(OnPlayerStateChangeListener * proxy = nullptr)
   : proxy_(proxy) {}
   virtual ~OnPlayerStateChangeListener() = default;
-  auto OnPrepare(duration_type time) -> void {
+  virtual auto OnPrepare(duration_type time) -> void {
     if (proxy_) {
       proxy_->OnPrepare(time);
     }
   }
-  auto OnStart() -> void {
+  virtual auto OnStart() -> void {
     if (proxy_) {
       proxy_->OnStart();
     }
   }
-  auto OnResume() -> void {
+  virtual auto OnResume() -> void {
     if (proxy_) {
       proxy_->OnResume();
     }
   }
-  auto OnPause(duration_type time) -> void {
+  virtual auto OnPause(duration_type time) -> void {
     if (proxy_) {
       proxy_->OnPause(time);
     }
   }
-  auto OnStop() -> void {
+  virtual auto OnStop() -> void {
     if (proxy_) {
       proxy_->OnStop();
     }
   }
-  auto OnReset() -> void {
+  virtual auto OnReset() -> void {
     if (proxy_) {
       proxy_->OnReset();
     }
   }
-  auto OnComplete() -> void {
+  virtual auto OnComplete() -> void {
     if (proxy_) {
       proxy_->OnComplete();
     }
   }
-  auto OnSeekBegin() -> void {
+  virtual auto OnSeekBegin() -> void {
     if (proxy_) {
       proxy_->OnSeekBegin();
     }
   }
-  auto OnSeekEnd(duration_type time) -> void {
+  virtual auto OnSeekEnd(duration_type time) -> void {
     if (proxy_) {
       proxy_->OnSeekEnd(time);
     }
@@ -216,9 +222,8 @@ class OnPlayerStateChangeListener : tea::remove_copy {
 } // namespace SoyMilk
 
 template<>
-struct tea::meta::func_sign<SoyMilk_Player_OnStateChange_recv_t> {
-  using type = void(SoyMilk_Player_State_t, SoyMilk_Player_State_t,
-                    SoyMilk_Player_OnStateChange_recv_data_t *);
+struct tea::meta::cast_pair<SoyMilk::OnPlayerStateChangeListener> {
+  using type = SoyMilk_Player_OnStateChange_recv_ctx_t;
 };
 
 template<>
@@ -260,57 +265,42 @@ struct SoyMilk_FrameData_t : tea::mask_type<SoyMilk::FrameData> {
 
 struct SoyMilk_Player_t : tea::mask_type<SoyMilk::Player> {
  private:
+  template<void (SoyMilk::OnPlayerStateChangeListener:: *func)(SoyMilk::duration_type)>
   static
-  auto get_tempo(SoyMilk_Player_OnStateChange_recv_data_t *param) -> SoyMilk::duration_type {
-    auto p = reinterpret_cast<uint64_t *>(param);
-    auto i = static_cast<int64_t>(*p);
-    return SoyMilk::duration_type(i);
+  auto OnListen(SoyMilk_Player_OnStateChange_recv_ctx_t *ctx, uint64_t time) -> void {
+    auto &listener = *reinterpret_cast<SoyMilk::OnPlayerStateChangeListener *>(ctx);
+    auto position = SoyMilk::duration_type(static_cast<int64_t>(time));
+    (listener.*func)(position);
   }
  public:
   using State = SoyMilk_Player_State_t;
   static
   auto init(std::unique_ptr<SoyMilk::OnPlayerStateChangeListener> listener,
-            std::function<void(SoyMilk::FrameData *)> func_render,
+            std::function<void(SoyMilk::FrameData *&)> render,
             std::function<void(std::function<void()>)> main_post,
             std::function<void(std::function<void()>, SoyMilk::duration_type)> renderer_post) -> SoyMilk::Player * {
-    std::function<void(State, State, SoyMilk_Player_OnStateChange_recv_data_t *)> func_listener =
-    [listen = std::shared_ptr<SoyMilk::OnPlayerStateChangeListener>(listener.release())](State old_state, State new_state, SoyMilk_Player_OnStateChange_recv_data_t *param) {
-      if (old_state == SoyMilk_Player_State_PREPARING && new_state == SoyMilk_Player_State_PREPARED) {
-        listen->OnPrepare(get_tempo(param));
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_STARTED && new_state == SoyMilk_Player_State_SUSPEND) {
-        listen->OnStart();
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_RESUMED && new_state == SoyMilk_Player_State_PLAYING) {
-        listen->OnResume();
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_PAUSED && new_state == SoyMilk_Player_State_SUSPEND) {
-        listen->OnPause(get_tempo(param));
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_STOPPED && new_state == SoyMilk_Player_State_PREPARED) {
-        listen->OnStop();
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_RESET && new_state == SoyMilk_Player_State_INIT) {
-        listen->OnReset();
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_PLAYING && new_state == SoyMilk_Player_State_PREPARED) {
-        listen->OnComplete();
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_SUSPEND && new_state == SoyMilk_Player_State_SEEKING) {
-        listen->OnSeekBegin();
-        return;
-      }
-      if (old_state == SoyMilk_Player_State_SEEKING && new_state == SoyMilk_Player_State_SUSPEND) {
-        listen->OnSeekEnd(get_tempo(param));
-        return;
-      }
+    using ctx_t = SoyMilk_Player_OnStateChange_recv_ctx_t;
+    using listener_t = SoyMilk::OnPlayerStateChangeListener;
+    using namespace tea::meta;
+    auto recv = SoyMilk_Player_OnStateChange_recv_t {
+      .ctx = reinterpret_cast<ctx_t *>(listener.release()),
+      .close = Class<listener_t>::destroy,
+      .OnPrepare = function_handle<ctx_t *, uint64_t>::invoke<&OnListen<&listener_t::OnPrepare>>,
+      .OnStart = method_handle<>::invoke<&listener_t::OnStart>,
+      .OnResume = method_handle<>::invoke<&listener_t::OnResume>,
+      .OnPause = function_handle<ctx_t *, uint64_t>::invoke<&OnListen<&listener_t::OnPause>>,
+      .OnStop = method_handle<>::invoke<&listener_t::OnStop>,
+      .OnReset = method_handle<>::invoke<&listener_t::OnReset>,
+      .OnComplete = method_handle<>::invoke<&listener_t::OnComplete>,
+      .OnSeekBegin = method_handle<>::invoke<&listener_t::OnSeekBegin>,
+      .OnSeekEnd = function_handle<ctx_t *, uint64_t>::invoke<&OnListen<&listener_t::OnSeekEnd>>,
+    };
+    std::function<void(SoyMilk::FrameData *)> func_render =
+    [render_frame = std::move(render)](SoyMilk::FrameData *ptr) {
+      tea::defer d = [&ptr]() {
+        tea::drop(ptr);
+      };
+      render_frame(ptr);
     };
     std::function<void(SoyMilk_Player_Action_t)> func_main_post =
     [post = std::move(main_post)](SoyMilk_Player_Action_t action) {
@@ -324,10 +314,10 @@ struct SoyMilk_Player_t : tea::mask_type<SoyMilk::Player> {
         action.invoke(action.capture);
       }, SoyMilk::duration_type(static_cast<int64_t>(delay)));
     };
-    return SoyMilk_Player_Create(tea::meta::closure_cast<SoyMilk_Player_OnStateChange_recv_t>(std::move(func_listener)),
-                                 tea::meta::closure_cast<SoyMilk_Player_OnRenderFrame_recv_t>(std::move(func_render)),
-                                 tea::meta::closure_cast<SoyMilk_Player_Executor_t>(std::move(func_main_post)),
-                                 tea::meta::closure_cast<SoyMilk_Player_Scheduled_t>(std::move(func_renderer_post)));
+    return SoyMilk_Player_Create(recv,
+                                 closure_cast<SoyMilk_Player_OnRenderFrame_recv_t>(std::move(func_render)),
+                                 closure_cast<SoyMilk_Player_Executor_t>(std::move(func_main_post)),
+                                 closure_cast<SoyMilk_Player_Scheduled_t>(std::move(func_renderer_post)));
   }
   auto drop() && -> void {
     SoyMilk_Player_Destroy(get());
