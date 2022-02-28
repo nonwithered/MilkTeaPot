@@ -1,12 +1,13 @@
 #ifndef SOYMILK_CLOCK_H_
 #define SOYMILK_CLOCK_H_
 
-#include <soymilk/common.h>
+#include <soymilk.h>
 
 namespace SoyMilk {
 
+namespace internal {
+
 class TickClock final {
-  static constexpr char TAG[] = "SoyMilk::TickClock";
  public:
   explicit TickClock(uint16_t division)
   : division_(division),
@@ -22,7 +23,7 @@ class TickClock final {
     }
     tempo_map_.emplace_back(tick_current, tempo);
   }
-  tempo_type operator()(uint64_t tick_begin, uint64_t tick_end) const {
+  duration_type operator()(uint64_t tick_begin, uint64_t tick_end) const {
     uint32_t tick_delta = static_cast<uint32_t>(tick_end - tick_begin);
     if (BaseOnTimeCode()) {
       return ComputeByTimeCode(tick_delta);
@@ -35,7 +36,7 @@ class TickClock final {
     }
     uint32_t tick_until = tick_next - tick_begin;
     tick_delta -= tick_until;
-    tempo_type time = Compute(tick_until, GetTempo(*cursor_last));
+    duration_type time = Compute(tick_until, GetTempo(*cursor_last));
     auto cursor_end = Find(tick_end);
     for (auto i = cursor_next, n = cursor_end; i != n; ++i) {
       tick_until = GetTick(*(i + 1)) - GetTick(*i);
@@ -46,11 +47,11 @@ class TickClock final {
     return time;
   }
  private:
-  tempo_type Compute(uint32_t tick, uint32_t tempo) const {
+  duration_type Compute(uint32_t tick, uint32_t tempo) const {
     uint64_t count = tick;
     count *= tempo;
     count /= division_;
-    return tempo_type(static_cast<int64_t>(count));
+    return duration_type(static_cast<int64_t>(count));
   }
   std::vector<std::tuple<uint64_t, uint32_t>>::const_iterator Find(uint64_t tick) const {
     for (auto i = tempo_map_.begin(), n = tempo_map_.end(); ; ++i) {
@@ -63,8 +64,8 @@ class TickClock final {
   bool BaseOnTimeCode() const {
     return (division_ & 0x8000) != 0;
   }
-  tempo_type ComputeByTimeCode(uint32_t tick) const {
-    auto duration = std::chrono::duration_cast<tempo_type>(std::chrono::seconds(1));
+  duration_type ComputeByTimeCode(uint32_t tick) const {
+    auto duration = std::chrono::duration_cast<duration_type>(std::chrono::seconds(1));
     duration *= tick;
     duration /= GetAccuracy();
     return duration;
@@ -86,6 +87,7 @@ class TickClock final {
   std::vector<std::tuple<uint64_t, uint32_t>> tempo_map_;
 };
 
+} // namespace internal
 } // namespace SoyMilk
 
 #endif // ifndef SOYMILK_CLOCK_H_

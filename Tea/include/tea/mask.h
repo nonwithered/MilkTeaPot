@@ -45,6 +45,41 @@ auto drop(T ptr) -> void {
   ptr = nullptr;
 }
 
+template<typename T>
+class owner_ptr final : remove_copy {
+ public:
+  owner_ptr(T *&&ptr) : ptr_(ptr) {
+    ptr = nullptr;
+  }
+  owner_ptr(owner_ptr<T> &&another) : owner_ptr(another.release()) {}
+  ~owner_ptr() {
+    reset(nullptr);
+  }
+  auto operator*() -> T & {
+    return *ptr_;
+  }
+  auto operator*() const -> const T & {
+    return *ptr_;
+  }
+  auto reset(T *ptr = nullptr) -> void {
+    drop(std::move(ptr_));
+    ptr_ = ptr;
+  }
+  auto release() -> T * {
+    T *ptr = nullptr;
+    std::swap(ptr, ptr_);
+    return ptr;
+  }
+  auto get() -> T * {
+    return ptr_;
+  }
+  auto get() const -> const T * {
+    return ptr_;
+  }
+ private:
+  T *ptr_;
+};
+
 } // namespace tea
 
 #endif // ifdef __cplusplus

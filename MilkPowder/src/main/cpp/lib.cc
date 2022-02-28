@@ -96,8 +96,9 @@ namespace {
 
 auto Event_Create = Class<Event>::create<uint32_t, uint8_t, uint8_t, uint8_t>;
 auto Event_Destroy = Class<Event>::destroy;
+auto Event_Clone = method_handle<>::invoke<&Event::Clone>;
 
-auto Event_GetType = field_handle::getter<&Event::type_>;
+auto Event_GetType = method_handle<>::invoke<&Event::type>;
 auto Event_GetArgs = method_handle<uint8_t *>::invoke<&Event::args>;
 
 auto Event_FromMessage = function_handle<MilkPowder::Message *>::invoke<&Event::FromMessage>;
@@ -109,6 +110,7 @@ extern "C" {
 
 TEA_FUNC(MilkPowder, Event_Create);
 TEA_FUNC(MilkPowder, Event_Destroy);
+TEA_FUNC(MilkPowder, Event_Clone);
 
 TEA_FUNC(MilkPowder, Event_GetType);
 TEA_FUNC(MilkPowder, Event_GetArgs);
@@ -122,6 +124,7 @@ namespace {
 
 auto Meta_Create = Class<Meta>::create<uint32_t, uint8_t, const uint8_t *, uint32_t>;
 auto Meta_Destroy = Class<Meta>::destroy;
+auto Meta_Clone = method_handle<>::invoke<&Meta::Clone>;
 
 auto Meta_GetType = field_handle::getter<&Meta::type_>;
 auto Meta_GetArgs = method_handle<const uint8_t **>::invoke<&Meta::args>;
@@ -135,6 +138,7 @@ extern "C" {
 
 TEA_FUNC(MilkPowder, Meta_Create);
 TEA_FUNC(MilkPowder, Meta_Destroy);
+TEA_FUNC(MilkPowder, Meta_Clone);
 
 TEA_FUNC(MilkPowder, Meta_GetType);
 TEA_FUNC(MilkPowder, Meta_GetArgs);
@@ -148,6 +152,7 @@ namespace {
 
 auto Sysex_Create = Class<Sysex>::create<const uint32_t *, const uint8_t *const *, const uint32_t *, uint32_t>;
 auto Sysex_Destroy = Class<Sysex>::destroy;
+auto Sysex_Clone = method_handle<>::invoke<&Sysex::Clone>;
 
 auto Sysex_GetCount = method_handle<>::invoke<&Sysex::size>;
 auto Sysex_GetArgs = method_handle<uint32_t, const uint8_t **>::invoke<&Sysex::args>;
@@ -162,6 +167,7 @@ extern "C" {
 
 TEA_FUNC(MilkPowder, Sysex_Create);
 TEA_FUNC(MilkPowder, Sysex_Destroy);
+TEA_FUNC(MilkPowder, Sysex_Clone);
 
 TEA_FUNC(MilkPowder, Sysex_GetCount);
 TEA_FUNC(MilkPowder, Sysex_GetArgs);

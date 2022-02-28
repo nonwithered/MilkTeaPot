@@ -25,6 +25,10 @@ TEA_API void (TEA_CALL *
 MilkPowder_Meta_Destroy)(struct MilkPowder_Meta_t *);
 
 extern
+TEA_API struct MilkPowder_Meta_t * (TEA_CALL *
+MilkPowder_Meta_Clone)(const struct MilkPowder_Meta_t *);
+
+extern
 TEA_API uint8_t (TEA_CALL *
 MilkPowder_Meta_GetType)(const struct MilkPowder_Meta_t *);
 
@@ -59,6 +63,9 @@ struct MilkPowder_Meta_t : tea::mask_type<MilkPowder::Meta> {
   }
   auto drop() && -> void {
     MilkPowder_Meta_Destroy(get());
+  }
+  auto clone() const -> MilkPowder::Meta * {
+    return MilkPowder_Meta_Clone(get());
   }
   auto type() const -> uint8_t {
     return MilkPowder_Meta_GetType(get());

@@ -121,6 +121,7 @@ struct MilkPowder_Message_t : tea::mask_type<MilkPowder::Message> {
     auto t = type();
     return t == 0xf0;
   }
+  auto clone() const -> MilkPowder::Message *;
 };
 
 #endif // ifdef __cplusplus

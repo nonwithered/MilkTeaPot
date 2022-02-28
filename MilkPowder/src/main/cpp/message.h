@@ -1,7 +1,6 @@
 #ifndef MILKPOWDER_MESSAGE_H_
 #define MILKPOWDER_MESSAGE_H_
 
-#include <cstdint>
 #include <vector>
 #include <memory>
 #include <functional>

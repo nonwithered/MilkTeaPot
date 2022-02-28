@@ -3,15 +3,18 @@
 
 #include <vector>
 
-#include <soymilk/common.h>
+#include <tea.h>
+
+#include <soymilk.h>
 
 #include "frame.h"
 #include "sorter.h"
 
 namespace SoyMilk {
 
-class FrameBufferCursorImpl final {
-  static constexpr char TAG[] = "SoyMilk::FrameBufferCursorImpl";
+namespace internal {
+
+class FrameBufferCursorImpl final{
   using queue_type = FrameBufferSorterImpl::queue_type;
   using iterator_type = queue_type::const_iterator;
  public:
@@ -25,7 +28,7 @@ class FrameBufferCursorImpl final {
   }
   void operator++() {
     if (iterator_ == tail_) {
-      MilkTea_assert("next but tail");
+      return;
     }
     ++iterator_;
   }
@@ -34,28 +37,28 @@ class FrameBufferCursorImpl final {
    iterator_type iterator_;
 };
 
-class FrameBufferQueueImpl final {
-  static constexpr char TAG[] = "SoyMilk::FrameBufferQueueImpl";
+class FrameBufferQueueImpl final : tea::with_log<FrameBufferQueueImpl>, tea::remove_move {
   using queue_type = FrameBufferSorterImpl::queue_type;
   using cursor_type = FrameBufferCursorImpl;
  public:
+  static constexpr char TAG[] = "FrameBufferQueue";
   FrameBufferQueueImpl()
   : queue_() {}
-  tempo_type Fill(std::vector<MilkPowder::MidiConstWrapper> vec) {
+  duration_type Fill(std::vector<const MilkPowder::Midi *> vec) {
     auto &queue = queue_;
     if (!queue.empty()) {
-      MilkTea_assert("fill but not empty");
+      log<W>("fill but not empty");
+      return duration_type::zero();
     }
-
-    auto time_begin = TeaPot::TimerUnit::Now();
+    auto time_begin = Now();
     queue = FrameBufferSorterImpl::Generate(std::move(vec));
-    auto time_end = TeaPot::TimerUnit::Now();
+    auto time_end = Now();
     auto time_duration = time_end - time_begin;
-    MilkTea_logI("fill midi fbo queue during %" PRId64 " us", time_duration.count());
+    log<I>("fill midi fbo queue during %" PRId64 " us", time_duration.count());
 
     if (queue.empty()) {
-      MilkTea_logW("fill but empty");
-      return tempo_type(-1);
+      log<W>("fill but empty");
+      return duration_type(-1);
     }
     return queue_.back().time();
   }
@@ -75,10 +78,9 @@ class FrameBufferQueueImpl final {
   }
  private:
   queue_type queue_;
-  MilkTea_NonCopy(FrameBufferQueueImpl)
-  MilkTea_NonMove(FrameBufferQueueImpl)
 };
 
+} // namespace internal
 } // namespace SoyMilk
 
 #endif // ifndef SOYMILK_BUFFER_H_

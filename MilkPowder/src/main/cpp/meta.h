@@ -59,11 +59,14 @@ struct Meta : Message {
   : Message(delta, 0xff),
     type_(type),
     args_(std::move(args)) {}
-  auto args(const uint8_t **p) -> uint32_t {
+  auto args(const uint8_t **p) const -> uint32_t {
     if (p != nullptr) {
       *p = args_.data();
     }
     return args_.size();
+  }
+  auto Clone() const -> MilkPowder::Meta * {
+    return unwrap_cast(*new Meta(*this));
   }
 };
 

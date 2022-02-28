@@ -24,6 +24,7 @@ target_include_directories(${PROJECT_NAME}_static
 
 target_link_libraries(${PROJECT_NAME}_static
     PUBLIC milkpowder_static
+    PRIVATE milktea_static
 )
 
 add_library(${PROJECT_NAME}_shared SHARED ${src_paths})
@@ -34,4 +35,5 @@ target_include_directories(${PROJECT_NAME}_shared
 
 target_link_libraries(${PROJECT_NAME}_shared
     PUBLIC milkpowder_shared
+    PRIVATE milktea_shared
 )

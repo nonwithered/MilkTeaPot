@@ -27,6 +27,10 @@ TEA_API void (TEA_CALL *
 MilkPowder_Sysex_Destroy)(struct MilkPowder_Sysex_t *);
 
 extern
+TEA_API struct MilkPowder_Sysex_t * (TEA_CALL *
+MilkPowder_Sysex_Clone)(const struct MilkPowder_Sysex_t *);
+
+extern
 TEA_API uint32_t (TEA_CALL *
 MilkPowder_Sysex_GetCount)(const struct MilkPowder_Sysex_t *);
 
@@ -74,6 +78,9 @@ struct MilkPowder_Sysex_t : tea::mask_type<MilkPowder::Sysex> {
   }
   auto drop() && -> void {
     MilkPowder_Sysex_Destroy(get());
+  }
+  auto clone() const -> MilkPowder::Sysex * {
+    return MilkPowder_Sysex_Clone(get());
   }
   auto size() const -> uint32_t {
     return MilkPowder_Sysex_GetCount(get());

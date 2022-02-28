@@ -19,10 +19,6 @@ extern "C" {
 struct SoyMilk_FrameData_t;
 
 extern
-TEA_API void (TEA_CALL *
-SoyMilk_FrameData_Destroy)(struct SoyMilk_FrameData_t *);
-
-extern
 TEA_API uint64_t (TEA_CALL *
 SoyMilk_FrameData_GetTime)(const struct SoyMilk_FrameData_t *);
 
@@ -79,7 +75,7 @@ struct SoyMilk_Player_OnStateChange_recv_t {
 struct SoyMilk_Player_OnRenderFrame_recv_t {
   struct SoyMilk_Player_OnRenderFrame_recv_capture_t *capture;
   void (TEA_CALL *close)(struct SoyMilk_Player_OnRenderFrame_recv_capture_t *);
-  void (TEA_CALL *invoke)(struct SoyMilk_Player_OnRenderFrame_recv_capture_t *, struct SoyMilk_FrameData_t *);
+  void (TEA_CALL *invoke)(struct SoyMilk_Player_OnRenderFrame_recv_capture_t *, const struct SoyMilk_FrameData_t *);
 };
 
 struct SoyMilk_Player_Action_t {
@@ -164,6 +160,18 @@ namespace SoyMilk {
 using FrameData = SoyMilk_FrameData_t;
 using Player = SoyMilk_Player_t;
 using duration_type = std::chrono::microseconds;
+using clock_type = std::chrono::system_clock;
+using time_point_type = std::chrono::time_point<clock_type, duration_type>;
+using duration_type = SoyMilk::duration_type;
+using action_type = std::function<void()>;
+using executor_type = std::function<void(action_type)>;
+using scheduled_type = std::function<void(action_type, duration_type)>;
+using State_t = SoyMilk_Player_State_t;
+
+inline
+time_point_type Now() {
+  return std::chrono::time_point_cast<duration_type>(clock_type::now());
+}
 
 class OnPlayerStateChangeListener : tea::remove_copy {
  public:
@@ -273,12 +281,24 @@ struct SoyMilk_Player_t : tea::mask_type<SoyMilk::Player> {
     (listener.*func)(position);
   }
  public:
-  using State = SoyMilk_Player_State_t;
+  struct State : tea::empty_class {
+    static inline constexpr auto INIT = SoyMilk_Player_State_INIT;
+    static inline constexpr auto PREPARING = SoyMilk_Player_State_PREPARING;
+    static inline constexpr auto PREPARED = SoyMilk_Player_State_PREPARED;
+    static inline constexpr auto SUSPEND = SoyMilk_Player_State_SUSPEND;
+    static inline constexpr auto PLAYING = SoyMilk_Player_State_PLAYING;
+    static inline constexpr auto SEEKING = SoyMilk_Player_State_SEEKING;
+    static inline constexpr auto STARTED = SoyMilk_Player_State_STARTED;
+    static inline constexpr auto RESUMED = SoyMilk_Player_State_RESUMED;
+    static inline constexpr auto PAUSED = SoyMilk_Player_State_PAUSED;
+    static inline constexpr auto STOPPED = SoyMilk_Player_State_STOPPED;
+    static inline constexpr auto RESET = SoyMilk_Player_State_RESET;
+  };
   static
   auto init(std::unique_ptr<SoyMilk::OnPlayerStateChangeListener> listener,
             std::function<void(SoyMilk::FrameData *&)> render,
-            std::function<void(std::function<void()>)> main_post,
-            std::function<void(std::function<void()>, SoyMilk::duration_type)> renderer_post) -> SoyMilk::Player * {
+            SoyMilk::executor_type main_post,
+            SoyMilk::scheduled_type renderer_post) -> SoyMilk::Player * {
     using ctx_t = SoyMilk_Player_OnStateChange_recv_ctx_t;
     using listener_t = SoyMilk::OnPlayerStateChangeListener;
     using namespace tea::meta;
@@ -325,7 +345,7 @@ struct SoyMilk_Player_t : tea::mask_type<SoyMilk::Player> {
   auto state() -> State {
     return SoyMilk_Player_GetState(get());
   }
-  auto Prepare(tea::slice<MilkPowder::Midi *> arr, std::function<void(std::function<void()>)> async_post) -> bool {
+  auto Prepare(tea::slice<tea::owner_ptr<MilkPowder::Midi>> arr, SoyMilk::executor_type async_post) -> bool {
     if (arr.data() == nullptr) {
       tea::err::raise<tea::err_enum::null_obj>("player prepare but array is nullptr");
       return false;
@@ -340,7 +360,12 @@ struct SoyMilk_Player_t : tea::mask_type<SoyMilk::Player> {
         action.invoke(action.capture);
       });
     };
-    return SoyMilk_Player_Prepare(get(), arr.data(), arr.size(), tea::meta::closure_cast<SoyMilk_Player_Executor_t>(std::move(func_async_post)));
+    auto count = arr.size();
+    std::vector<MilkPowder::Midi *> vec(count);
+    for (size_t i = 0; i != count; ++i) {
+      vec[i] = arr[i].release();
+    }
+    return SoyMilk_Player_Prepare(get(), vec.data(), count, tea::meta::closure_cast<SoyMilk_Player_Executor_t>(std::move(func_async_post)));
   }
   auto Start() -> bool {
     return SoyMilk_Player_Start(get());

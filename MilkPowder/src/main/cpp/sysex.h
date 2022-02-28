@@ -95,6 +95,9 @@ struct Sysex : Message {
     return std::get<0>(items_[index]);
   }
   std::vector<item_type> items_;
+  auto Clone() const -> MilkPowder::Sysex * {
+    return unwrap_cast(*new Sysex(*this));
+  }
 };
 
 } // namespace internal

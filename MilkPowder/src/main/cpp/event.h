@@ -64,6 +64,12 @@ struct Event : Message {
     }
     return args_[0];
   }
+  auto type() const -> uint8_t {
+    return type_;
+  }
+  auto Clone() const -> MilkPowder::Event * {
+    return unwrap_cast(*new Event(*this));
+  }
 };
 
 } // namespace internal

@@ -9,6 +9,9 @@
 #include <tea/def.h>
 
 #include <milkpowder/message.h>
+#include <milkpowder/event.h>
+#include <milkpowder/meta.h>
+#include <milkpowder/sysex.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +46,20 @@ namespace MilkPowder {
 using Track = MilkPowder_Track_t;
 
 } // namespace MilkPowder
+
+inline
+auto MilkPowder::Message::clone() const -> MilkPowder::Message * {
+  if (is_event()) {
+    return MilkPowder::Message::from_event(to_event()->clone());
+  }
+  if (is_meta()) {
+    return MilkPowder::Message::from_meta(to_meta()->clone());
+  }
+  if (is_sysex()) {
+    return MilkPowder::Message::from_sysex(to_sysex()->clone());
+  }
+  return nullptr;
+}
 
 struct MilkPowder_Track_t : tea::mask_type<MilkPowder::Track> {
   static

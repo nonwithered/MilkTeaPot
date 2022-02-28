@@ -4,13 +4,16 @@
 #include <vector>
 #include <map>
 
-#include <soymilk/common.h>
+#include <tea.h>
+
+#include <soymilk.h>
 
 namespace SoyMilk {
 
+namespace internal {
+
 class FrameTrackImpl final {
-  static constexpr char TAG[] = "SoyMilk::FrameTrackImpl";
-  using items_type = std::vector<MilkPowder::MessageMutableWrapper>;
+  using items_type = std::vector<tea::owner_ptr<MilkPowder::Message>>;
  public:
   FrameTrackImpl() : FrameTrackImpl(items_type{}) {}
   FrameTrackImpl(const FrameTrackImpl &another) : FrameTrackImpl(another.items_) {}
@@ -21,12 +24,12 @@ class FrameTrackImpl final {
   void operator=(FrameTrackImpl &&another) {
     items_ = std::move(another.items_);
   }
-  void Append(MilkPowder::MessageMutableWrapper item) {
+  void Append(tea::owner_ptr<MilkPowder::Message> item) {
     items_.emplace_back(std::move(item));
   }
-  void GetItems(std::function<void(MilkPowder::MessageConstWrapper)> f) const {
+  void GetItems(std::function<void(const MilkPowder::Message *)> f) const {
     std::for_each(items_.begin(), items_.end(), [f](auto &it) {
-      f(it.get());
+      f(it);
     });
   }
  private:
@@ -35,7 +38,6 @@ class FrameTrackImpl final {
 };
 
 class FrameMidiImpl final {
-  static constexpr char TAG[] = "SoyMilk::FrameMidiImpl";
   using key_type = uint16_t;
   using items_type = std::map<key_type, FrameTrackImpl>;
  public:
@@ -55,7 +57,7 @@ class FrameMidiImpl final {
     }
     return it->second;
   }
-  void GetItems(std::function<void(uint16_t, MilkPowder::MessageConstWrapper)> f) const {
+  void GetItems(std::function<void(uint16_t, const MilkPowder::Message *)> f) const {
     std::for_each(items_.begin(), items_.end(), [f](auto &trk) {
       auto ntrk = trk.first;
       trk.second.GetItems([f, ntrk](auto msg) {
@@ -89,7 +91,7 @@ class FramePackageImpl final {
     }
     return it->second;
   }
-  void GetItems(std::function<void(size_t, uint16_t, MilkPowder::MessageConstWrapper)> f) const {
+  void GetItems(std::function<void(size_t, uint16_t, const MilkPowder::Message *)> f) const {
     std::for_each(items_.begin(), items_.end(), [f](auto &midi) {
       auto index = midi.first;
       midi.second.GetItems([f, index](auto ntrk, auto msg) {
@@ -103,17 +105,16 @@ class FramePackageImpl final {
 };
 
 class FrameBufferImpl final {
-  static constexpr char TAG[] = "SoyMilk::FrameBufferImpl";
  public:
   FrameBufferImpl() = default;
-  FrameBufferImpl(tempo_type time, FramePackageImpl items)
+  FrameBufferImpl(duration_type time, FramePackageImpl items)
   : time_(std::move(time)),
     items_(std::move(items)) {}
   FrameBufferImpl(const FrameBufferImpl &another)
   : FrameBufferImpl(another.time_, another.items_) {}
   FrameBufferImpl(FrameBufferImpl &&another)
   : FrameBufferImpl(std::move(another.time_), std::move(another.items_)) {}
-  tempo_type time() const {
+  duration_type time() const {
     return time_;
   }
   void operator=(const FrameBufferImpl &another) {
@@ -124,14 +125,15 @@ class FrameBufferImpl final {
     time_ = std::move(another.time_);
     items_ = std::move(another.items_);
   }
-  void GetItems(std::function<void(size_t, uint16_t, MilkPowder::MessageConstWrapper)> f) const {
+  void GetItems(std::function<void(size_t, uint16_t, const MilkPowder::Message *)> f) const {
     items_.GetItems(f);
   }
  private:
-  tempo_type time_;
+  duration_type time_;
   FramePackageImpl items_;
 };
 
+} // namespace internal
 } // namespace SoyMilk
 
 #endif // ifndef SOYMILK_FRAME_H_
